@@ -337,6 +337,7 @@
      */
     createThreadElement(node, depth, ancestorHasMore) {
       const container = document.createElement('div');
+      container.className = 'cw-threader-thread-item';
       
       const messageType = this.threadBuilder.getMessageType(node.mid);
       const typeLabel = this.getTypeLabel(messageType);
@@ -346,6 +347,34 @@
       const shortText = node.messageText.length > 80 
         ? node.messageText.substring(0, 80) + '...' 
         : node.messageText;
+
+      // メッセージ行のラッパー（祖先線 + L字線 + メッセージ本体）
+      const messageRow = document.createElement('div');
+      messageRow.className = 'cw-threader-message-row';
+
+      // 祖先の縦線を描画（depth > 0 の場合）
+      if (depth > 0) {
+        const ancestorLinesContainer = document.createElement('div');
+        ancestorLinesContainer.className = 'cw-threader-ancestor-lines';
+        
+        // ancestorHasMore の最後の要素は「自分に後続の兄弟がいるか」
+        // それ以外は祖先レベルの情報
+        for (let i = 0; i < ancestorHasMore.length - 1; i++) {
+          const lineEl = document.createElement('div');
+          lineEl.className = 'cw-threader-ancestor-line';
+          if (ancestorHasMore[i]) {
+            lineEl.classList.add('has-more');
+          }
+          ancestorLinesContainer.appendChild(lineEl);
+        }
+        
+        messageRow.appendChild(ancestorLinesContainer);
+        
+        // L字接続線
+        const connectLine = document.createElement('div');
+        connectLine.className = 'cw-threader-connect-line';
+        messageRow.appendChild(connectLine);
+      }
 
       const messageEl = document.createElement('div');
       messageEl.className = 'cw-threader-message';
@@ -371,42 +400,11 @@
         this.scrollToMessage(node.mid);
       });
 
-      container.appendChild(messageEl);
+      messageRow.appendChild(messageEl);
+      container.appendChild(messageRow);
 
       // 子メッセージを追加
       if (node.children && node.children.length > 0) {
-        const childrenWrapper = document.createElement('div');
-        childrenWrapper.className = 'cw-threader-children-wrapper';
-        
-        // 祖先の縦線を描画するコンテナ（depth > 0 の場合のみ）
-        if (ancestorHasMore.length > 0) {
-          const ancestorLinesContainer = document.createElement('div');
-          ancestorLinesContainer.className = 'cw-threader-ancestor-lines';
-          
-          // 各祖先レベルの縦線を追加
-          ancestorHasMore.forEach((hasMore, index) => {
-            const lineEl = document.createElement('div');
-            lineEl.className = 'cw-threader-ancestor-line';
-            if (hasMore) {
-              lineEl.classList.add('has-more');
-            }
-            ancestorLinesContainer.appendChild(lineEl);
-          });
-          
-          childrenWrapper.appendChild(ancestorLinesContainer);
-        }
-        
-        // 折りたたみ用のL字線
-        const threadLine = document.createElement('div');
-        threadLine.className = 'cw-threader-collapse-line';
-        threadLine.title = 'クリックで折りたたみ';
-        
-        // 折りたたみ時の返信数表示
-        const collapsedInfo = document.createElement('span');
-        collapsedInfo.className = 'cw-threader-collapsed-info';
-        collapsedInfo.textContent = `${replyCount}件の返信`;
-        threadLine.appendChild(collapsedInfo);
-        
         const childrenContainer = document.createElement('div');
         childrenContainer.className = 'cw-threader-children';
         
@@ -415,25 +413,10 @@
           // 現在の子に後続の兄弟があるかどうかを祖先情報に追加
           const newAncestorHasMore = [...ancestorHasMore, !isLastChild];
           const childEl = this.createThreadElement(child, depth + 1, newAncestorHasMore);
-          
-          // 最後の子以外には、この階層の縦線継続マーカーを追加
-          if (!isLastChild) {
-            childEl.classList.add('has-sibling-below');
-          }
-          
           childrenContainer.appendChild(childEl);
         });
         
-        // L字線クリックで折りたたみ
-        threadLine.addEventListener('click', (e) => {
-          e.stopPropagation();
-          childrenContainer.classList.toggle('collapsed');
-          threadLine.classList.toggle('collapsed');
-        });
-        
-        childrenWrapper.appendChild(threadLine);
-        childrenWrapper.appendChild(childrenContainer);
-        container.appendChild(childrenWrapper);
+        container.appendChild(childrenContainer);
       }
 
       return container;

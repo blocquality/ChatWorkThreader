@@ -146,31 +146,94 @@
   border-bottom: none;
 }
 
+/* スレッドアイテム */
+.cw-threader-thread-item {
+  /* 各メッセージのコンテナ */
+}
+
+/* メッセージ行（祖先線 + L字線 + メッセージ本体） */
+.cw-threader-message-row {
+  display: flex;
+  align-items: flex-start;
+}
+
 /* メッセージ（Reddit/YouTube風） */
 .cw-threader-message {
   display: flex;
-  padding: 8px 12px;
+  padding: 8px 12px 8px 0;
   cursor: pointer;
   transition: background 0.15s ease;
   position: relative;
+  flex: 1;
+  min-width: 0;
 }
 
 .cw-threader-message:hover {
   background: #f2f2f2;
 }
 
-/* スレッドライン（Reddit風） */
-.cw-threader-thread-line {
-  position: absolute;
-  left: 23px;
-  top: 32px;
-  bottom: 0;
-  width: 2px;
-  background: #e0e0e0;
+/* 祖先の縦線コンテナ */
+.cw-threader-ancestor-lines {
+  display: flex;
+  flex-shrink: 0;
 }
 
-.cw-threader-message:hover .cw-threader-thread-line {
-  background: #909090;
+/* 各祖先レベルの縦線 */
+.cw-threader-ancestor-line {
+  width: 24px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* 後続の兄弟がある場合のみ縦線を表示 */
+.cw-threader-ancestor-line.has-more::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 100%;
+  width: 2px;
+  background: #e0e0e0;
+  border-radius: 1px;
+}
+
+/* L字接続線 */
+.cw-threader-connect-line {
+  width: 24px;
+  flex-shrink: 0;
+  position: relative;
+  min-height: 32px;
+}
+
+/* L字の縦部分 */
+.cw-threader-connect-line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 16px;
+  width: 2px;
+  background: #e0e0e0;
+  border-radius: 1px;
+}
+
+/* L字の横部分 */
+.cw-threader-connect-line::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  width: 12px;
+  height: 2px;
+  background: #e0e0e0;
+  border-radius: 1px;
+}
+
+/* 子メッセージコンテナ */
+.cw-threader-children {
+  /* 子メッセージを縦に並べる */
 }
 
 /* アバター */
@@ -248,149 +311,10 @@
   overflow: hidden;
 }
 
-/* 子メッセージ（インデント） */
-.cw-threader-children-wrapper {
-  display: flex;
-  position: relative;
-  padding-left: 12px; /* アバターの中心（24px/2） */
-}
-
-/* 祖先の縦線コンテナ */
-.cw-threader-ancestor-lines {
-  display: flex;
-  flex-shrink: 0;
-}
-
-/* 各祖先レベルの縦線 */
-.cw-threader-ancestor-line {
-  width: 24px; /* アバターの幅に合わせる */
-  position: relative;
-  flex-shrink: 0;
-}
-
-/* 後続の兄弟がある場合のみ縦線を表示 */
-.cw-threader-ancestor-line.has-more::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  height: 100%;
-  width: 2px;
-  background: #e0e0e0;
-  border-radius: 1px;
-}
-
-/* 折りたたみ用のL字線（クリック可能） */
-.cw-threader-collapse-line {
-  width: 24px; /* アバターの幅に合わせる */
-  flex-shrink: 0;
-  cursor: pointer;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  min-height: 24px;
-}
-
-/* 折りたたみ時もL字線の幅を維持（縦線の位置がずれないように） */
-.cw-threader-collapse-line.collapsed {
-  width: 24px;
-}
-
-/* 縦線部分（最初の子への接続のみ） */
-.cw-threader-collapse-line::before {
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  height: 20px; /* 固定：L字の縦部分のみ */
-  width: 2px;
-  background: #e0e0e0;
-  border-radius: 1px;
-  transition: background 0.15s ease;
-}
-
-/* 横線部分（L字の底辺） */
-.cw-threader-collapse-line::after {
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  width: 10px;
-  height: 2px;
-  background: #e0e0e0;
-  border-radius: 1px;
-  transition: background 0.15s ease;
-}
-
-.cw-threader-collapse-line:hover::before,
-.cw-threader-collapse-line:hover::after {
-  background: #1976d2;
-}
-
-.cw-threader-collapse-line.collapsed::before {
-  background: #1976d2;
-  height: 20px;
-}
-
-.cw-threader-collapse-line.collapsed::after {
-  top: 10px;
-  left: 50%;
-  width: 50%;
-  background: #1976d2;
-}
-
-/* 折りたたみ時の返信数表示 */
-.cw-threader-collapsed-info {
-  display: none;
-  position: absolute;
-  top: 4px;
-  left: 100%;
-  margin-left: 2px;
-  font-size: 11px;
-  color: #1976d2;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.cw-threader-collapse-line.collapsed .cw-threader-collapsed-info {
-  display: block;
-}
-
-.cw-threader-children {
-  flex: 1;
-  min-width: 0;
-}
-
-.cw-threader-children.collapsed {
-  display: none;
-}
-
-.cw-threader-children .cw-threader-message {
-  padding: 6px 12px 6px 0;
-}
-
-.cw-threader-children .cw-threader-avatar {
-  width: 24px;
-  height: 24px;
-}
-
-.cw-threader-children .cw-threader-username {
-  font-size: 11px;
-}
-
-.cw-threader-children .cw-threader-message-body {
-  font-size: 12px;
-}
-
-/* 深いネスト用 */
-.cw-threader-children .cw-threader-children-wrapper {
-  margin-left: 0;
-}
-
-/* 祖先縦線のホバー効果 */
-.cw-threader-children-wrapper:hover .cw-threader-ancestor-line.has-more::before {
+/* ホバー効果 */
+.cw-threader-message-row:hover .cw-threader-ancestor-line.has-more::before,
+.cw-threader-message-row:hover .cw-threader-connect-line::before,
+.cw-threader-message-row:hover .cw-threader-connect-line::after {
   background: #909090;
 }
 
