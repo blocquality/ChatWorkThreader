@@ -251,8 +251,8 @@
 /* 子メッセージ（インデント） */
 .cw-threader-children-wrapper {
   display: flex;
-  margin-left: 23px;
   position: relative;
+  padding-left: 12px; /* アバターの中心（24px/2） */
 }
 
 /* 祖先の縦線コンテナ */
@@ -263,8 +263,9 @@
 
 /* 各祖先レベルの縦線 */
 .cw-threader-ancestor-line {
-  width: 20px;
+  width: 24px; /* アバターの幅に合わせる */
   position: relative;
+  flex-shrink: 0;
 }
 
 /* 後続の兄弟がある場合のみ縦線を表示 */
@@ -282,7 +283,7 @@
 
 /* 折りたたみ用のL字線（クリック可能） */
 .cw-threader-collapse-line {
-  width: 20px;
+  width: 24px; /* アバターの幅に合わせる */
   flex-shrink: 0;
   cursor: pointer;
   position: relative;
@@ -293,7 +294,7 @@
 
 /* 折りたたみ時もL字線の幅を維持（縦線の位置がずれないように） */
 .cw-threader-collapse-line.collapsed {
-  width: 20px;
+  width: 24px;
 }
 
 /* 縦線部分（デフォルトは下まで伸びる） */
@@ -371,8 +372,8 @@
 }
 
 .cw-threader-children .cw-threader-avatar {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
 }
 
 .cw-threader-children .cw-threader-username {

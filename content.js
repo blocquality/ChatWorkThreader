@@ -378,19 +378,23 @@
         const childrenWrapper = document.createElement('div');
         childrenWrapper.className = 'cw-threader-children-wrapper';
         
-        // 祖先の縦線を描画するコンテナ
-        const ancestorLinesContainer = document.createElement('div');
-        ancestorLinesContainer.className = 'cw-threader-ancestor-lines';
-        
-        // 各祖先レベルの縦線を追加
-        ancestorHasMore.forEach((hasMore, index) => {
-          const lineEl = document.createElement('div');
-          lineEl.className = 'cw-threader-ancestor-line';
-          if (hasMore) {
-            lineEl.classList.add('has-more');
-          }
-          ancestorLinesContainer.appendChild(lineEl);
-        });
+        // 祖先の縦線を描画するコンテナ（depth > 0 の場合のみ）
+        if (ancestorHasMore.length > 0) {
+          const ancestorLinesContainer = document.createElement('div');
+          ancestorLinesContainer.className = 'cw-threader-ancestor-lines';
+          
+          // 各祖先レベルの縦線を追加
+          ancestorHasMore.forEach((hasMore, index) => {
+            const lineEl = document.createElement('div');
+            lineEl.className = 'cw-threader-ancestor-line';
+            if (hasMore) {
+              lineEl.classList.add('has-more');
+            }
+            ancestorLinesContainer.appendChild(lineEl);
+          });
+          
+          childrenWrapper.appendChild(ancestorLinesContainer);
+        }
         
         // 折りたたみ用のL字線
         const threadLine = document.createElement('div');
@@ -427,7 +431,6 @@
           threadLine.classList.toggle('collapsed');
         });
         
-        childrenWrapper.appendChild(ancestorLinesContainer);
         childrenWrapper.appendChild(threadLine);
         childrenWrapper.appendChild(childrenContainer);
         container.appendChild(childrenWrapper);
