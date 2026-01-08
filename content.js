@@ -207,10 +207,10 @@
       this.panel.id = 'cw-threader-panel';
       this.panel.innerHTML = `
         <div class="cw-threader-header">
-          <h3>📜 スレッド一覧</h3>
+          <h3>スレッド</h3>
           <div class="cw-threader-controls">
-            <button id="cw-threader-refresh" title="更新">🔄</button>
-            <button id="cw-threader-close" title="閉じる">✕</button>
+            <button id="cw-threader-refresh" title="更新">↻</button>
+            <button id="cw-threader-close" title="閉じる">×</button>
           </div>
         </div>
         <div class="cw-threader-content">
@@ -249,43 +249,70 @@
         .sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp));
 
       sortedThreads.forEach(thread => {
+        const threadWrapper = document.createElement('div');
+        threadWrapper.className = 'cw-threader-thread';
+        
         const threadEl = this.createThreadElement(thread, 0);
-        container.appendChild(threadEl);
+        threadWrapper.appendChild(threadEl);
+        container.appendChild(threadWrapper);
       });
     }
 
     /**
-     * スレッド要素を作成（再帰）
+     * 返信数をカウント（再帰）
+     */
+    countReplies(node) {
+      let count = 0;
+      if (node.children) {
+        count = node.children.length;
+        node.children.forEach(child => {
+          count += this.countReplies(child);
+        });
+      }
+      return count;
+    }
+
+    /**
+     * スレッド要素を作成（Reddit/YouTube風）
      */
     createThreadElement(node, depth) {
-      const threadEl = document.createElement('div');
-      threadEl.className = 'cw-threader-message';
-      threadEl.setAttribute('data-depth', depth);
-      threadEl.style.marginLeft = `${depth * 20}px`;
-
+      const container = document.createElement('div');
+      
       const messageType = this.threadBuilder.getMessageType(node.mid);
       const typeLabel = this.getTypeLabel(messageType);
+      const replyCount = this.countReplies(node);
 
       // メッセージテキストを省略
-      const shortText = node.messageText.length > 50 
-        ? node.messageText.substring(0, 50) + '...' 
+      const shortText = node.messageText.length > 80 
+        ? node.messageText.substring(0, 80) + '...' 
         : node.messageText;
 
-      threadEl.innerHTML = `
-        <div class="cw-threader-message-header">
-          ${node.avatarUrl ? `<img src="${node.avatarUrl}" class="cw-threader-avatar" alt="">` : ''}
-          <span class="cw-threader-username">${this.escapeHtml(node.userName)}</span>
-          <span class="cw-threader-type ${this.getTypeClass(messageType)}">${typeLabel}</span>
-          <span class="cw-threader-time">${node.timeText}</span>
+      const messageEl = document.createElement('div');
+      messageEl.className = 'cw-threader-message';
+      messageEl.innerHTML = `
+        <div class="cw-threader-avatar-wrap">
+          ${node.avatarUrl 
+            ? `<img src="${node.avatarUrl}" class="cw-threader-avatar" alt="">` 
+            : `<div class="cw-threader-avatar"></div>`}
         </div>
-        <div class="cw-threader-message-body">${this.escapeHtml(shortText)}</div>
+        <div class="cw-threader-msg-content">
+          <div class="cw-threader-message-header">
+            <span class="cw-threader-username">${this.escapeHtml(node.userName)}</span>
+            <span class="cw-threader-time">· ${node.timeText}</span>
+            ${typeLabel ? `<span class="cw-threader-type ${this.getTypeClass(messageType)}">${typeLabel}</span>` : ''}
+            ${depth === 0 && replyCount > 0 ? `<span class="cw-threader-reply-count">${replyCount}件の返信</span>` : ''}
+          </div>
+          <div class="cw-threader-message-body">${this.escapeHtml(shortText)}</div>
+        </div>
       `;
 
       // クリックでメッセージにスクロール
-      threadEl.addEventListener('click', (e) => {
+      messageEl.addEventListener('click', (e) => {
         e.stopPropagation();
         this.scrollToMessage(node.mid);
       });
+
+      container.appendChild(messageEl);
 
       // 子メッセージを追加
       if (node.children && node.children.length > 0) {
@@ -297,10 +324,10 @@
           childrenContainer.appendChild(childEl);
         });
         
-        threadEl.appendChild(childrenContainer);
+        container.appendChild(childrenContainer);
       }
 
-      return threadEl;
+      return container;
     }
 
     /**
