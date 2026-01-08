@@ -60,14 +60,23 @@
         // メッセージ本文を取得
         const preEl = el.querySelector('pre');
         let messageText = '';
+        let replyTargetUserName = null; // 返信先のユーザー名（本文から取得）
         if (preEl) {
           // 返信バッジ以外のテキストを取得
           const clonedPre = preEl.cloneNode(true);
           const replyBadges = clonedPre.querySelectorAll('[data-cwtag]');
           replyBadges.forEach(badge => badge.remove());
-          messageText = clonedPre.textContent.trim();
-          // 「〇〇さん」の行を除去
-          messageText = messageText.replace(/^.+さん\n/, '');
+          let rawText = clonedPre.textContent.trim();
+          
+          // 「〇〇さん」の行を抽出してから除去（改行またはスペースに対応）
+          const userNameMatch = rawText.match(/^(.+?)さん[\r\n\s]+/);
+          if (userNameMatch) {
+            replyTargetUserName = userNameMatch[1]; // 「さん」を除いたユーザー名
+            rawText = rawText.replace(/^.+?さん[\r\n\s]+/, '');
+          }
+          
+          // 先頭の空白・改行を除去
+          messageText = rawText.trim();
         }
 
         // タイムスタンプを取得
@@ -78,7 +87,6 @@
         // 返信元を解析
         const replyTag = el.querySelector('[data-cwtag^="[rp"]');
         let parentMid = null;
-        let parentUserName = null;
         let parentAid = null;
         if (replyTag) {
           const cwtag = replyTag.getAttribute('data-cwtag');
@@ -92,8 +100,6 @@
           if (aidMatch) {
             parentAid = aidMatch[1];
           }
-          // 返信タグのテキストから返信先ユーザー名を取得
-          parentUserName = replyTag.textContent.trim();
         }
 
         const messageData = {
@@ -104,7 +110,7 @@
           timestamp,
           timeText,
           parentMid,
-          parentUserName,
+          parentUserName: replyTargetUserName, // 本文から取得したユーザー名を使用
           parentAid,
           avatarUrl,
           element: el
