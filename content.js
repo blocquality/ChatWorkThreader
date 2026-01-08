@@ -357,7 +357,6 @@
             <span class="cw-threader-username">${this.escapeHtml(node.userName)}</span>
             <span class="cw-threader-time">· ${node.timeText}</span>
             ${typeLabel ? `<span class="cw-threader-type ${this.getTypeClass(messageType)}">${typeLabel}</span>` : ''}
-            ${replyCount > 0 ? `<span class="cw-threader-reply-count">${replyCount}件の返信</span>` : ''}
           </div>
           <div class="cw-threader-message-body">${this.escapeHtml(shortText)}</div>
         </div>
@@ -381,11 +380,11 @@
         threadLine.className = 'cw-threader-collapse-line';
         threadLine.title = 'クリックで折りたたみ';
         
-        // 折りたたみ時のプラスマーク
-        const plusMark = document.createElement('span');
-        plusMark.className = 'cw-threader-plus';
-        plusMark.textContent = '+';
-        threadLine.appendChild(plusMark);
+        // 折りたたみ時の返信数表示
+        const collapsedInfo = document.createElement('span');
+        collapsedInfo.className = 'cw-threader-collapsed-info';
+        collapsedInfo.textContent = `${replyCount}件の返信`;
+        threadLine.appendChild(collapsedInfo);
         
         const childrenContainer = document.createElement('div');
         childrenContainer.className = 'cw-threader-children';

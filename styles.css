@@ -263,6 +263,13 @@
   position: relative;
   display: flex;
   justify-content: center;
+  min-height: 24px;
+}
+
+/* 折りたたみ時はL字線の幅を広げて返信数テキスト表示 */
+.cw-threader-collapse-line.collapsed {
+  width: auto;
+  min-width: 80px;
 }
 
 /* 縦線部分 */
@@ -299,26 +306,29 @@
 
 .cw-threader-collapse-line.collapsed::before {
   background: #1976d2;
+  height: 20px;
 }
 
 .cw-threader-collapse-line.collapsed::after {
-  display: none;
+  top: 10px;
+  left: 10px;
+  width: 12px;
+  background: #1976d2;
 }
 
-/* 折りたたみ時の＋マーク */
-.cw-threader-plus {
+/* 折りたたみ時の返信数表示 */
+.cw-threader-collapsed-info {
   display: none;
   position: absolute;
-  top: 2px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  font-weight: bold;
+  top: 6px;
+  left: 18px;
+  font-size: 11px;
   color: #1976d2;
-  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
-.cw-threader-collapse-line.collapsed .cw-threader-plus {
+.cw-threader-collapse-line.collapsed .cw-threader-collapsed-info {
   display: block;
 }
 
