@@ -262,29 +262,48 @@
         return;
       }
 
-      // 返信でないメッセージ（ルートメッセージ）を抽出
-      const rootMessages = allMessages.filter(msg => !msg.parentMid);
-      
-      // タイムスタンプでソート（新しい順）
-      rootMessages.sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp));
+      // 既にスレッドに含まれるメッセージのmidを追跡
+      const displayedMids = new Set();
 
-      rootMessages.forEach(msg => {
+      // スレッド（返信関係があるもの）を先に処理
+      const threads = this.threadBuilder.threads;
+      const sortedThreads = Array.from(threads.values())
+        .sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp));
+
+      sortedThreads.forEach(thread => {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = 'cw-threader-thread';
         
-        // スレッドツリーを構築して表示
-        const thread = this.threadBuilder.buildThreadTree(msg.mid);
-        if (thread) {
-          const threadEl = this.createThreadElement(thread, 0);
-          messageWrapper.appendChild(threadEl);
-        } else {
-          // 単独メッセージの場合
-          const msgEl = this.createSingleMessageElement(msg);
-          messageWrapper.appendChild(msgEl);
-        }
+        const threadEl = this.createThreadElement(thread, 0);
+        messageWrapper.appendChild(threadEl);
+        container.appendChild(messageWrapper);
         
+        // スレッドに含まれるすべてのmidを記録
+        this.collectMids(thread, displayedMids);
+      });
+
+      // スレッドに含まれない単独メッセージを表示
+      const standaloneMessages = allMessages.filter(msg => !displayedMids.has(msg.mid));
+      standaloneMessages.sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp));
+
+      standaloneMessages.forEach(msg => {
+        const messageWrapper = document.createElement('div');
+        messageWrapper.className = 'cw-threader-thread';
+        
+        const msgEl = this.createSingleMessageElement(msg);
+        messageWrapper.appendChild(msgEl);
         container.appendChild(messageWrapper);
       });
+    }
+
+    /**
+     * スレッドツリーからすべてのmidを収集
+     */
+    collectMids(node, midSet) {
+      midSet.add(node.mid);
+      if (node.children) {
+        node.children.forEach(child => this.collectMids(child, midSet));
+      }
     }
 
     /**
