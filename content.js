@@ -78,6 +78,8 @@
         // 返信元を解析
         const replyTag = el.querySelector('[data-cwtag^="[rp"]');
         let parentMid = null;
+        let parentUserName = null;
+        let parentAid = null;
         if (replyTag) {
           const cwtag = replyTag.getAttribute('data-cwtag');
           // [rp aid=XXXX to=ROOMID-MESSAGEID] 形式をパース
@@ -85,6 +87,13 @@
           if (match) {
             parentMid = match[2];
           }
+          // 返信先のユーザーIDを取得
+          const aidMatch = cwtag.match(/aid=(\d+)/);
+          if (aidMatch) {
+            parentAid = aidMatch[1];
+          }
+          // 返信タグのテキストから返信先ユーザー名を取得
+          parentUserName = replyTag.textContent.trim();
         }
 
         const messageData = {
@@ -95,6 +104,8 @@
           timestamp,
           timeText,
           parentMid,
+          parentUserName,
+          parentAid,
           avatarUrl,
           element: el
         };
@@ -167,19 +178,54 @@
      */
     buildThreadTree(mid) {
       const message = this.messages.get(mid);
-      if (!message) {
-        return null;
-      }
-
       const children = this.childrenMap.get(mid) || [];
       const childTrees = children
         .map(childMid => this.buildThreadTree(childMid))
         .filter(tree => tree !== null)
         .sort((a, b) => parseInt(a.timestamp) - parseInt(b.timestamp));
 
+      if (!message) {
+        // メッセージが見つからない場合、子メッセージから親情報を推測してプレースホルダーを作成
+        if (childTrees.length === 0) {
+          return null;
+        }
+        
+        // 最初の子メッセージから返信先情報を取得
+        const firstChild = childTrees[0];
+        const placeholder = this.createPlaceholderMessage(mid, firstChild);
+        
+        return {
+          ...placeholder,
+          children: childTrees
+        };
+      }
+
       return {
         ...message,
         children: childTrees
+      };
+    }
+
+    /**
+     * プレースホルダーメッセージを作成（返信元が見つからない場合）
+     */
+    createPlaceholderMessage(mid, firstChild) {
+      // 子メッセージに保存された返信先情報を使用
+      const parentUserName = firstChild.parentUserName || '不明なユーザー';
+      
+      return {
+        mid,
+        rid: firstChild.rid,
+        userName: parentUserName,
+        messageText: '（メッセージを読み込めませんでした）',
+        timestamp: '',
+        timeText: '',
+        parentMid: null,
+        parentUserName: null,
+        parentAid: null,
+        avatarUrl: '',
+        element: null,
+        isPlaceholder: true
       };
     }
 
@@ -378,6 +424,9 @@
 
       const messageEl = document.createElement('div');
       messageEl.className = 'cw-threader-message';
+      if (node.isPlaceholder) {
+        messageEl.classList.add('cw-threader-placeholder');
+      }
       messageEl.innerHTML = `
         <div class="cw-threader-avatar-wrap">
           ${node.avatarUrl 
@@ -387,18 +436,20 @@
         <div class="cw-threader-msg-content">
           <div class="cw-threader-message-header">
             <span class="cw-threader-username">${this.escapeHtml(node.userName)}</span>
-            <span class="cw-threader-time">· ${node.timeText}</span>
+            ${node.timeText ? `<span class="cw-threader-time">· ${node.timeText}</span>` : ''}
             ${typeLabel ? `<span class="cw-threader-type ${this.getTypeClass(messageType)}">${typeLabel}</span>` : ''}
           </div>
           <div class="cw-threader-message-body">${this.escapeHtml(shortText)}</div>
         </div>
       `;
 
-      // クリックでメッセージにスクロール
-      messageEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.scrollToMessage(node.mid);
-      });
+      // クリックでメッセージにスクロール（プレースホルダーの場合は無効）
+      if (!node.isPlaceholder) {
+        messageEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.scrollToMessage(node.mid);
+        });
+      }
 
       messageRow.appendChild(messageEl);
       container.appendChild(messageRow);

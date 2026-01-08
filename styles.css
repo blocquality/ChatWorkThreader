@@ -300,6 +300,21 @@
   color: #f57c00;
 }
 
+/* プレースホルダーメッセージ（読み込めなかったメッセージ） */
+.cw-threader-message.cw-threader-placeholder {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.cw-threader-message.cw-threader-placeholder:hover {
+  background: transparent;
+}
+
+.cw-threader-message.cw-threader-placeholder .cw-threader-message-body {
+  font-style: italic;
+  color: #909090;
+}
+
 .cw-threader-message-body {
   font-size: 13px;
   color: #1a1a1a;
