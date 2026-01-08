@@ -250,23 +250,20 @@
 
     /**
      * メッセージを表示（YouTube/Redditコメント欄風）
+     * 返信関係のあるスレッドのみ表示
      */
     renderThreads() {
       const container = this.panel.querySelector('.cw-threader-threads');
       container.innerHTML = '';
 
-      const allMessages = this.threadBuilder.allMessages;
+      // スレッド（返信関係があるもの）のみ表示
+      const threads = this.threadBuilder.threads;
 
-      if (allMessages.length === 0) {
-        container.innerHTML = '<div class="cw-threader-empty">メッセージが見つかりませんでした</div>';
+      if (threads.size === 0) {
+        container.innerHTML = '<div class="cw-threader-empty">スレッドが見つかりませんでした</div>';
         return;
       }
 
-      // 既にスレッドに含まれるメッセージのmidを追跡
-      const displayedMids = new Set();
-
-      // スレッド（返信関係があるもの）を先に処理
-      const threads = this.threadBuilder.threads;
       const sortedThreads = Array.from(threads.values())
         .sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp));
 
@@ -277,69 +274,7 @@
         const threadEl = this.createThreadElement(thread, 0);
         messageWrapper.appendChild(threadEl);
         container.appendChild(messageWrapper);
-        
-        // スレッドに含まれるすべてのmidを記録
-        this.collectMids(thread, displayedMids);
       });
-
-      // スレッドに含まれない単独メッセージを表示
-      const standaloneMessages = allMessages.filter(msg => !displayedMids.has(msg.mid));
-      standaloneMessages.sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp));
-
-      standaloneMessages.forEach(msg => {
-        const messageWrapper = document.createElement('div');
-        messageWrapper.className = 'cw-threader-thread';
-        
-        const msgEl = this.createSingleMessageElement(msg);
-        messageWrapper.appendChild(msgEl);
-        container.appendChild(messageWrapper);
-      });
-    }
-
-    /**
-     * スレッドツリーからすべてのmidを収集
-     */
-    collectMids(node, midSet) {
-      midSet.add(node.mid);
-      if (node.children) {
-        node.children.forEach(child => this.collectMids(child, midSet));
-      }
-    }
-
-    /**
-     * 単独メッセージ要素を作成
-     */
-    createSingleMessageElement(node) {
-      const container = document.createElement('div');
-      
-      const shortText = node.messageText.length > 100 
-        ? node.messageText.substring(0, 100) + '...' 
-        : node.messageText;
-
-      const messageEl = document.createElement('div');
-      messageEl.className = 'cw-threader-message';
-      messageEl.innerHTML = `
-        <div class="cw-threader-avatar-wrap">
-          ${node.avatarUrl 
-            ? `<img src="${node.avatarUrl}" class="cw-threader-avatar" alt="">` 
-            : `<div class="cw-threader-avatar"></div>`}
-        </div>
-        <div class="cw-threader-msg-content">
-          <div class="cw-threader-message-header">
-            <span class="cw-threader-username">${this.escapeHtml(node.userName)}</span>
-            <span class="cw-threader-time">· ${node.timeText}</span>
-          </div>
-          <div class="cw-threader-message-body">${this.escapeHtml(shortText)}</div>
-        </div>
-      `;
-
-      messageEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.scrollToMessage(node.mid);
-      });
-
-      container.appendChild(messageEl);
-      return container;
     }
 
     /**
@@ -400,6 +335,14 @@
 
       // 子メッセージを追加
       if (node.children && node.children.length > 0) {
+        const childrenWrapper = document.createElement('div');
+        childrenWrapper.className = 'cw-threader-children-wrapper';
+        
+        // 折りたたみ用の縦線
+        const threadLine = document.createElement('div');
+        threadLine.className = 'cw-threader-collapse-line';
+        threadLine.title = 'クリックで折りたたみ';
+        
         const childrenContainer = document.createElement('div');
         childrenContainer.className = 'cw-threader-children';
         
@@ -408,7 +351,16 @@
           childrenContainer.appendChild(childEl);
         });
         
-        container.appendChild(childrenContainer);
+        // 縦線クリックで折りたたみ
+        threadLine.addEventListener('click', (e) => {
+          e.stopPropagation();
+          childrenContainer.classList.toggle('collapsed');
+          threadLine.classList.toggle('collapsed');
+        });
+        
+        childrenWrapper.appendChild(threadLine);
+        childrenWrapper.appendChild(childrenContainer);
+        container.appendChild(childrenWrapper);
       }
 
       return container;

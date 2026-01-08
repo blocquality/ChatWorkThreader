@@ -218,23 +218,57 @@
 }
 
 /* 子メッセージ（インデント） */
-.cw-threader-children {
-  margin-left: 34px;
-  position: relative;
+.cw-threader-children-wrapper {
+  display: flex;
+  margin-left: 23px;
 }
 
-.cw-threader-children::before {
+/* 折りたたみ用の縦線（クリック可能） */
+.cw-threader-collapse-line {
+  width: 20px;
+  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.cw-threader-collapse-line::before {
   content: '';
   position: absolute;
-  left: -11px;
   top: 0;
   bottom: 8px;
   width: 2px;
   background: #e0e0e0;
+  border-radius: 1px;
+  transition: background 0.15s ease, width 0.15s ease;
 }
 
-.cw-threader-children:hover::before {
-  background: #bdbdbd;
+.cw-threader-collapse-line:hover::before {
+  background: #1976d2;
+  width: 3px;
+}
+
+.cw-threader-collapse-line.collapsed::before {
+  background: #1976d2;
+}
+
+.cw-threader-collapse-line.collapsed::after {
+  content: '＋';
+  position: absolute;
+  top: 4px;
+  font-size: 10px;
+  color: #1976d2;
+  font-weight: bold;
+}
+
+.cw-threader-children {
+  flex: 1;
+  min-width: 0;
+}
+
+.cw-threader-children.collapsed {
+  display: none;
 }
 
 .cw-threader-children .cw-threader-message {
@@ -255,8 +289,8 @@
 }
 
 /* 深いネスト用 */
-.cw-threader-children .cw-threader-children {
-  margin-left: 30px;
+.cw-threader-children .cw-threader-children-wrapper {
+  margin-left: 0;
 }
 
 /* 折りたたみボタン */
