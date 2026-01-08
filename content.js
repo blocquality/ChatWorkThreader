@@ -322,7 +322,6 @@
       container.appendChild(messageEl);
       return container;
     }
-    }
 
     /**
      * 返信数をカウント（再帰）
