@@ -224,6 +224,7 @@
       this.panel = document.createElement('div');
       this.panel.id = 'cw-threader-panel';
       this.panel.innerHTML = `
+        <div class="cw-threader-resize-handle"></div>
         <div class="cw-threader-header">
           <h3>スレッド</h3>
           <div class="cw-threader-controls">
@@ -238,6 +239,9 @@
 
       document.body.appendChild(this.panel);
 
+      // リサイズハンドルの設定
+      this.setupResizeHandle();
+
       // イベントリスナーを設定
       document.getElementById('cw-threader-close').addEventListener('click', () => {
         this.hide();
@@ -245,6 +249,40 @@
 
       document.getElementById('cw-threader-refresh').addEventListener('click', () => {
         this.refresh();
+      });
+    }
+
+    /**
+     * リサイズハンドルを設定
+     */
+    setupResizeHandle() {
+      const handle = this.panel.querySelector('.cw-threader-resize-handle');
+      let isResizing = false;
+      let startX = 0;
+      let startWidth = 0;
+
+      handle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startX = e.clientX;
+        startWidth = this.panel.offsetWidth;
+        document.body.style.cursor = 'ew-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        const diff = startX - e.clientX;
+        const newWidth = Math.min(Math.max(startWidth + diff, 280), 800);
+        this.panel.style.width = newWidth + 'px';
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (isResizing) {
+          isResizing = false;
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+        }
       });
     }
 
@@ -319,7 +357,7 @@
             <span class="cw-threader-username">${this.escapeHtml(node.userName)}</span>
             <span class="cw-threader-time">· ${node.timeText}</span>
             ${typeLabel ? `<span class="cw-threader-type ${this.getTypeClass(messageType)}">${typeLabel}</span>` : ''}
-            ${depth === 0 && replyCount > 0 ? `<span class="cw-threader-reply-count">${replyCount}件の返信</span>` : ''}
+            ${replyCount > 0 ? `<span class="cw-threader-reply-count">${replyCount}件の返信</span>` : ''}
           </div>
           <div class="cw-threader-message-body">${this.escapeHtml(shortText)}</div>
         </div>
@@ -481,6 +519,63 @@
   }
 
   /**
+   * メッセージ変更を監視
+   */
+  function observeMessages(threadUI) {
+    // タイムラインのコンテナを探す
+    const findTimelineContainer = () => {
+      // data-mid を持つ要素の親を探す
+      const messageEl = document.querySelector('[data-mid]');
+      if (messageEl) {
+        // 親をたどってタイムラインコンテナを見つける
+        let parent = messageEl.parentElement;
+        while (parent) {
+          if (parent.children.length > 3) {
+            return parent;
+          }
+          parent = parent.parentElement;
+        }
+      }
+      return document.body;
+    };
+
+    let debounceTimer = null;
+    const observer = new MutationObserver((mutations) => {
+      // data-mid を持つ要素が追加/削除されたかチェック
+      let hasMessageChange = false;
+      
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          for (const node of mutation.addedNodes) {
+            if (node.nodeType === 1 && (node.hasAttribute?.('data-mid') || node.querySelector?.('[data-mid]'))) {
+              hasMessageChange = true;
+              break;
+            }
+          }
+          if (hasMessageChange) break;
+        }
+      }
+
+      if (hasMessageChange && threadUI.isVisible) {
+        // デバウンス：短時間に大量の更新が来た場合に備える
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          console.log('ChatWork Threader: メッセージ変更を検知、更新中...');
+          threadUI.refresh();
+        }, 500);
+      }
+    });
+
+    const container = findTimelineContainer();
+    observer.observe(container, {
+      childList: true,
+      subtree: true
+    });
+
+    console.log('ChatWork Threader: メッセージ監視を開始');
+  }
+
+  /**
    * 初期化
    */
   function init() {
@@ -494,6 +589,9 @@
         const threadUI = new ThreadUI(threadBuilder);
         
         createToggleButton(threadUI);
+        
+        // メッセージの変更を監視
+        observeMessages(threadUI);
         
         console.log('ChatWork Threader initialized');
       }
