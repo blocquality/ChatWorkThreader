@@ -297,14 +297,14 @@
   width: 24px;
 }
 
-/* 縦線部分（デフォルトは下まで伸びる） */
+/* 縦線部分（最初の子への接続のみ） */
 .cw-threader-collapse-line::before {
   content: '';
   position: absolute;
   top: -8px;
   left: 50%;
   transform: translateX(-50%);
-  height: calc(100% + 8px);
+  height: 20px; /* 固定：L字の縦部分のみ */
   width: 2px;
   background: #e0e0e0;
   border-radius: 1px;
