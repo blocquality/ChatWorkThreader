@@ -376,10 +376,16 @@
         const childrenWrapper = document.createElement('div');
         childrenWrapper.className = 'cw-threader-children-wrapper';
         
-        // 折りたたみ用の縦線
+        // 折りたたみ用のL字線
         const threadLine = document.createElement('div');
         threadLine.className = 'cw-threader-collapse-line';
         threadLine.title = 'クリックで折りたたみ';
+        
+        // 折りたたみ時のプラスマーク
+        const plusMark = document.createElement('span');
+        plusMark.className = 'cw-threader-plus';
+        plusMark.textContent = '+';
+        threadLine.appendChild(plusMark);
         
         const childrenContainer = document.createElement('div');
         childrenContainer.className = 'cw-threader-children';
@@ -389,7 +395,7 @@
           childrenContainer.appendChild(childEl);
         });
         
-        // 縦線クリックで折りたたみ
+        // L字線クリックで折りたたみ
         threadLine.addEventListener('click', (e) => {
           e.stopPropagation();
           childrenContainer.classList.toggle('collapsed');
@@ -508,14 +514,38 @@
   function createToggleButton(threadUI) {
     const button = document.createElement('button');
     button.id = 'cw-threader-toggle';
-    button.innerHTML = '🌳';
-    button.title = 'スレッド表示を切り替え';
+    button.innerHTML = '🌳<span class="cw-threader-shortcut">Shift+S</span>';
+    button.title = 'スレッド表示を切り替え (Shift+S)';
     
     button.addEventListener('click', () => {
       threadUI.toggle();
     });
 
     document.body.appendChild(button);
+  }
+
+  /**
+   * ショートカットキーを設定
+   */
+  function setupShortcutKey(threadUI) {
+    document.addEventListener('keydown', (e) => {
+      // Shift + S でスレッド表示をトグル
+      if (e.shiftKey && e.key.toLowerCase() === 's') {
+        // 入力フィールドにフォーカスがある場合は無視
+        const activeEl = document.activeElement;
+        const isInputFocused = activeEl && (
+          activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          activeEl.isContentEditable ||
+          activeEl.getAttribute('contenteditable') === 'true'
+        );
+        
+        if (!isInputFocused) {
+          e.preventDefault();
+          threadUI.toggle();
+        }
+      }
+    });
   }
 
   /**
@@ -589,6 +619,9 @@
         const threadUI = new ThreadUI(threadBuilder);
         
         createToggleButton(threadUI);
+        
+        // ショートカットキーを設定
+        setupShortcutKey(threadUI);
         
         // メッセージの変更を監視
         observeMessages(threadUI);

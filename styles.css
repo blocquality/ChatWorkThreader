@@ -6,9 +6,9 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 44px;
+  min-width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: 22px;
   background: #1a1a1a;
   border: none;
   color: white;
@@ -20,11 +20,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
+  padding: 0 14px;
 }
 
 #cw-threader-toggle:hover {
   transform: scale(1.05);
   background: #333;
+}
+
+#cw-threader-toggle .cw-threader-shortcut {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.7;
+  letter-spacing: 0.5px;
 }
 
 /* パネル */
@@ -243,9 +252,10 @@
 .cw-threader-children-wrapper {
   display: flex;
   margin-left: 23px;
+  position: relative;
 }
 
-/* 折りたたみ用の縦線（クリック可能） */
+/* 折りたたみ用のL字線（クリック可能） */
 .cw-threader-collapse-line {
   width: 20px;
   flex-shrink: 0;
@@ -255,20 +265,36 @@
   justify-content: center;
 }
 
+/* 縦線部分 */
 .cw-threader-collapse-line::before {
   content: '';
   position: absolute;
-  top: 0;
-  bottom: 8px;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 16px;
   width: 2px;
   background: #e0e0e0;
   border-radius: 1px;
-  transition: background 0.15s ease, width 0.15s ease;
+  transition: background 0.15s ease;
 }
 
-.cw-threader-collapse-line:hover::before {
+/* 横線部分（L字の底辺） */
+.cw-threader-collapse-line::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 10px;
+  height: 2px;
+  background: #e0e0e0;
+  border-radius: 1px;
+  transition: background 0.15s ease;
+}
+
+.cw-threader-collapse-line:hover::before,
+.cw-threader-collapse-line:hover::after {
   background: #1976d2;
-  width: 3px;
 }
 
 .cw-threader-collapse-line.collapsed::before {
@@ -276,12 +302,24 @@
 }
 
 .cw-threader-collapse-line.collapsed::after {
-  content: '＋';
+  display: none;
+}
+
+/* 折りたたみ時の＋マーク */
+.cw-threader-plus {
+  display: none;
   position: absolute;
-  top: 4px;
-  font-size: 10px;
-  color: #1976d2;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
   font-weight: bold;
+  color: #1976d2;
+  line-height: 1;
+}
+
+.cw-threader-collapse-line.collapsed .cw-threader-plus {
+  display: block;
 }
 
 .cw-threader-children {
