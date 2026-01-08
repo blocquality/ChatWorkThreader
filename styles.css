@@ -266,10 +266,9 @@
   min-height: 24px;
 }
 
-/* 折りたたみ時はL字線の幅を広げて返信数テキスト表示 */
+/* 折りたたみ時もL字線の幅を維持（縦線の位置がずれないように） */
 .cw-threader-collapse-line.collapsed {
-  width: auto;
-  min-width: 80px;
+  width: 20px;
 }
 
 /* 縦線部分 */
@@ -312,7 +311,7 @@
 .cw-threader-collapse-line.collapsed::after {
   top: 10px;
   left: 50%;
-  width: 12px;
+  width: 50%;
   background: #1976d2;
 }
 
@@ -320,8 +319,9 @@
 .cw-threader-collapsed-info {
   display: none;
   position: absolute;
-  top: 6px;
-  left: 18px;
+  top: 4px;
+  left: 100%;
+  margin-left: 2px;
   font-size: 11px;
   color: #1976d2;
   white-space: nowrap;
