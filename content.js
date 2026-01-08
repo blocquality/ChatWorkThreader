@@ -309,7 +309,7 @@
         const messageWrapper = document.createElement('div');
         messageWrapper.className = 'cw-threader-thread';
         
-        const threadEl = this.createThreadElement(thread, 0);
+        const threadEl = this.createThreadElement(thread, 0, []);
         messageWrapper.appendChild(threadEl);
         container.appendChild(messageWrapper);
       });
@@ -331,8 +331,11 @@
 
     /**
      * スレッド要素を作成（Reddit/YouTube風）
+     * @param {Object} node - メッセージノード
+     * @param {number} depth - ネストの深さ
+     * @param {boolean[]} ancestorHasMore - 各祖先レベルで後続の兄弟があるかどうか
      */
-    createThreadElement(node, depth) {
+    createThreadElement(node, depth, ancestorHasMore) {
       const container = document.createElement('div');
       
       const messageType = this.threadBuilder.getMessageType(node.mid);
@@ -375,6 +378,20 @@
         const childrenWrapper = document.createElement('div');
         childrenWrapper.className = 'cw-threader-children-wrapper';
         
+        // 祖先の縦線を描画するコンテナ
+        const ancestorLinesContainer = document.createElement('div');
+        ancestorLinesContainer.className = 'cw-threader-ancestor-lines';
+        
+        // 各祖先レベルの縦線を追加
+        ancestorHasMore.forEach((hasMore, index) => {
+          const lineEl = document.createElement('div');
+          lineEl.className = 'cw-threader-ancestor-line';
+          if (hasMore) {
+            lineEl.classList.add('has-more');
+          }
+          ancestorLinesContainer.appendChild(lineEl);
+        });
+        
         // 折りたたみ用のL字線
         const threadLine = document.createElement('div');
         threadLine.className = 'cw-threader-collapse-line';
@@ -389,8 +406,17 @@
         const childrenContainer = document.createElement('div');
         childrenContainer.className = 'cw-threader-children';
         
-        node.children.forEach(child => {
-          const childEl = this.createThreadElement(child, depth + 1);
+        node.children.forEach((child, index) => {
+          const isLastChild = index === node.children.length - 1;
+          // 現在の子に後続の兄弟があるかどうかを祖先情報に追加
+          const newAncestorHasMore = [...ancestorHasMore, !isLastChild];
+          const childEl = this.createThreadElement(child, depth + 1, newAncestorHasMore);
+          
+          // 最後の子以外には、この階層の縦線継続マーカーを追加
+          if (!isLastChild) {
+            childEl.classList.add('has-sibling-below');
+          }
+          
           childrenContainer.appendChild(childEl);
         });
         
@@ -401,6 +427,7 @@
           threadLine.classList.toggle('collapsed');
         });
         
+        childrenWrapper.appendChild(ancestorLinesContainer);
         childrenWrapper.appendChild(threadLine);
         childrenWrapper.appendChild(childrenContainer);
         container.appendChild(childrenWrapper);

@@ -255,6 +255,31 @@
   position: relative;
 }
 
+/* 祖先の縦線コンテナ */
+.cw-threader-ancestor-lines {
+  display: flex;
+  flex-shrink: 0;
+}
+
+/* 各祖先レベルの縦線 */
+.cw-threader-ancestor-line {
+  width: 20px;
+  position: relative;
+}
+
+/* 後続の兄弟がある場合のみ縦線を表示 */
+.cw-threader-ancestor-line.has-more::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 100%;
+  width: 2px;
+  background: #e0e0e0;
+  border-radius: 1px;
+}
+
 /* 折りたたみ用のL字線（クリック可能） */
 .cw-threader-collapse-line {
   width: 20px;
@@ -271,14 +296,14 @@
   width: 20px;
 }
 
-/* 縦線部分 */
+/* 縦線部分（デフォルトは下まで伸びる） */
 .cw-threader-collapse-line::before {
   content: '';
   position: absolute;
   top: -8px;
   left: 50%;
   transform: translateX(-50%);
-  height: 16px;
+  height: calc(100% + 8px);
   width: 2px;
   background: #e0e0e0;
   border-radius: 1px;
@@ -361,6 +386,11 @@
 /* 深いネスト用 */
 .cw-threader-children .cw-threader-children-wrapper {
   margin-left: 0;
+}
+
+/* 祖先縦線のホバー効果 */
+.cw-threader-children-wrapper:hover .cw-threader-ancestor-line.has-more::before {
+  background: #909090;
 }
 
 /* 折りたたみボタン */
