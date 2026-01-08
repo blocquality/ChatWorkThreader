@@ -311,7 +311,7 @@
 
 .cw-threader-collapse-line.collapsed::after {
   top: 10px;
-  left: 10px;
+  left: 50%;
   width: 12px;
   background: #1976d2;
 }
