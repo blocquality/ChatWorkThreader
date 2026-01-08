@@ -20,6 +20,7 @@
       this.threads = new Map();  // root mid -> thread tree
       this.replyMap = new Map(); // mid -> parent mid
       this.childrenMap = new Map(); // mid -> [child mids]
+      this.allMessages = []; // すべてのメッセージを時系列で保持
     }
 
     /**
@@ -27,6 +28,8 @@
      */
     collectMessages() {
       const messageElements = document.querySelectorAll('[data-mid]');
+      let lastUserName = '';
+      let lastAvatarUrl = '';
       
       messageElements.forEach(el => {
         const mid = el.getAttribute('data-mid');
@@ -34,9 +37,25 @@
         
         if (!mid) return;
 
-        // ユーザー名を取得
+        // ユーザー名を取得（連続投稿の場合は前のユーザー名を使用）
         const userNameEl = el.querySelector('[data-testid="timeline_user-name"]');
-        const userName = userNameEl ? userNameEl.textContent.trim() : '不明';
+        let userName = userNameEl ? userNameEl.textContent.trim() : '';
+        
+        // アバター画像を取得
+        const avatarEl = el.querySelector('.userIconImage');
+        let avatarUrl = avatarEl ? avatarEl.src : '';
+
+        // ユーザー名がない場合は前のメッセージの送信者を使用（ChatWorkの連続投稿表示）
+        if (!userName && lastUserName) {
+          userName = lastUserName;
+          avatarUrl = avatarUrl || lastAvatarUrl;
+        }
+        
+        // 次のメッセージ用に保存
+        if (userName) {
+          lastUserName = userName;
+          lastAvatarUrl = avatarUrl;
+        }
 
         // メッセージ本文を取得
         const preEl = el.querySelector('pre');
@@ -47,6 +66,8 @@
           const replyBadges = clonedPre.querySelectorAll('[data-cwtag]');
           replyBadges.forEach(badge => badge.remove());
           messageText = clonedPre.textContent.trim();
+          // 「〇〇さん」の行を除去
+          messageText = messageText.replace(/^.+さん\n/, '');
         }
 
         // タイムスタンプを取得
@@ -66,10 +87,6 @@
           }
         }
 
-        // アバター画像を取得
-        const avatarEl = el.querySelector('.userIconImage');
-        const avatarUrl = avatarEl ? avatarEl.src : '';
-
         const messageData = {
           mid,
           rid,
@@ -83,6 +100,7 @@
         };
 
         this.messages.set(mid, messageData);
+        this.allMessages.push(messageData);
 
         if (parentMid) {
           this.replyMap.set(mid, parentMid);
@@ -231,31 +249,79 @@
     }
 
     /**
-     * スレッドを表示
+     * メッセージを表示（YouTube/Redditコメント欄風）
      */
     renderThreads() {
       const container = this.panel.querySelector('.cw-threader-threads');
       container.innerHTML = '';
 
-      const threads = this.threadBuilder.threads;
+      const allMessages = this.threadBuilder.allMessages;
 
-      if (threads.size === 0) {
-        container.innerHTML = '<div class="cw-threader-empty">スレッドが見つかりませんでした</div>';
+      if (allMessages.length === 0) {
+        container.innerHTML = '<div class="cw-threader-empty">メッセージが見つかりませんでした</div>';
         return;
       }
 
-      // タイムスタンプでソート
-      const sortedThreads = Array.from(threads.values())
-        .sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp));
+      // 返信でないメッセージ（ルートメッセージ）を抽出
+      const rootMessages = allMessages.filter(msg => !msg.parentMid);
+      
+      // タイムスタンプでソート（新しい順）
+      rootMessages.sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp));
 
-      sortedThreads.forEach(thread => {
-        const threadWrapper = document.createElement('div');
-        threadWrapper.className = 'cw-threader-thread';
+      rootMessages.forEach(msg => {
+        const messageWrapper = document.createElement('div');
+        messageWrapper.className = 'cw-threader-thread';
         
-        const threadEl = this.createThreadElement(thread, 0);
-        threadWrapper.appendChild(threadEl);
-        container.appendChild(threadWrapper);
+        // スレッドツリーを構築して表示
+        const thread = this.threadBuilder.buildThreadTree(msg.mid);
+        if (thread) {
+          const threadEl = this.createThreadElement(thread, 0);
+          messageWrapper.appendChild(threadEl);
+        } else {
+          // 単独メッセージの場合
+          const msgEl = this.createSingleMessageElement(msg);
+          messageWrapper.appendChild(msgEl);
+        }
+        
+        container.appendChild(messageWrapper);
       });
+    }
+
+    /**
+     * 単独メッセージ要素を作成
+     */
+    createSingleMessageElement(node) {
+      const container = document.createElement('div');
+      
+      const shortText = node.messageText.length > 100 
+        ? node.messageText.substring(0, 100) + '...' 
+        : node.messageText;
+
+      const messageEl = document.createElement('div');
+      messageEl.className = 'cw-threader-message';
+      messageEl.innerHTML = `
+        <div class="cw-threader-avatar-wrap">
+          ${node.avatarUrl 
+            ? `<img src="${node.avatarUrl}" class="cw-threader-avatar" alt="">` 
+            : `<div class="cw-threader-avatar"></div>`}
+        </div>
+        <div class="cw-threader-msg-content">
+          <div class="cw-threader-message-header">
+            <span class="cw-threader-username">${this.escapeHtml(node.userName)}</span>
+            <span class="cw-threader-time">· ${node.timeText}</span>
+          </div>
+          <div class="cw-threader-message-body">${this.escapeHtml(shortText)}</div>
+        </div>
+      `;
+
+      messageEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.scrollToMessage(node.mid);
+      });
+
+      container.appendChild(messageEl);
+      return container;
+    }
     }
 
     /**
@@ -420,6 +486,7 @@
       this.threadBuilder.threads.clear();
       this.threadBuilder.replyMap.clear();
       this.threadBuilder.childrenMap.clear();
+      this.threadBuilder.allMessages = [];
       
       this.threadBuilder.collectMessages();
       this.threadBuilder.buildThreads();
