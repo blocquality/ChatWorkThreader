@@ -497,7 +497,7 @@
               </div>
             ` : ''}
           </div>
-          <div class="cw-threader-message-body">${this.escapeHtml(node.messageText)}</div>
+          <div class="cw-threader-message-body">${this.formatMessageText(node.messageText)}</div>
         </div>
       `;
 
@@ -577,6 +577,16 @@
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    /**
+     * メッセージテキストをフォーマット（HTMLエスケープ + 改行をbrタグに変換）
+     */
+    formatMessageText(text) {
+      // まずHTMLエスケープ
+      const escaped = this.escapeHtml(text);
+      // 改行コード（\r\n, \r, \n）を<br>タグに変換
+      return escaped.replace(/\r\n|\r|\n/g, '<br>');
     }
 
     /**
