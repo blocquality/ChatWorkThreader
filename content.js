@@ -223,7 +223,8 @@
         rid: firstChild.rid,
         userName: parentUserName,
         messageText: '（メッセージを読み込めませんでした）',
-        timestamp: '',
+        // ソート用に子メッセージのタイムスタンプを使用（推定値）
+        timestamp: firstChild.timestamp || '',
         timeText: '',
         parentMid: null,
         parentUserName: null,
@@ -394,8 +395,23 @@
         return;
       }
 
+      // ルートメッセージのタイムスタンプで新しい順にソート
+      // タイムスタンプがない場合はmid（メッセージID）でソート（midは時系列で割り当てられる）
       const sortedThreads = Array.from(threads.values())
-        .sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp));
+        .sort((a, b) => {
+          const aTime = parseInt(a.timestamp) || 0;
+          const bTime = parseInt(b.timestamp) || 0;
+          
+          // 両方タイムスタンプがある場合はタイムスタンプで比較
+          if (aTime && bTime) {
+            return bTime - aTime;
+          }
+          
+          // タイムスタンプがない場合はmidで比較（新しい順）
+          const aMid = parseInt(a.mid) || 0;
+          const bMid = parseInt(b.mid) || 0;
+          return bMid - aMid;
+        });
 
       sortedThreads.forEach(thread => {
         const messageWrapper = document.createElement('div');
