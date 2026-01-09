@@ -687,8 +687,8 @@
     }
 
     /**
-     * ChatWorkのメッセージ欄コンテナを取得
-     * リサイズハンドル（#_subContentAreaHandle）を基準にメッセージ欄を特定
+     * ChatWorkのメッセージ欄・リサイズハンドル・概要欄を含む親コンテナを取得
+     * スレッドパネルを開いた時、リサイズハンドルがスレッドパネルの左端に来るようにする
      */
     findChatworkMainElement() {
       if (this.chatworkMainElement && document.contains(this.chatworkMainElement)) {
@@ -698,16 +698,14 @@
       // リサイズハンドルを探す
       const resizeHandle = document.getElementById('_subContentAreaHandle');
       if (resizeHandle) {
-        // リサイズハンドルの前の兄弟要素がメッセージ欄のはず
-        const messagePaneContainer = resizeHandle.previousElementSibling;
-        if (messagePaneContainer) {
-          this.chatworkMainElement = messagePaneContainer;
+        // リサイズハンドルの親要素（メッセージ欄+ハンドル+概要欄を含むコンテナ）を取得
+        const parentContainer = resizeHandle.parentElement;
+        if (parentContainer) {
+          this.chatworkMainElement = parentContainer;
           this.originalStyles = {
-            width: messagePaneContainer.style.width || '',
-            flexGrow: messagePaneContainer.style.flexGrow || '',
-            flexShrink: messagePaneContainer.style.flexShrink || ''
+            marginRight: parentContainer.style.marginRight || ''
           };
-          return messagePaneContainer;
+          return parentContainer;
         }
       }
       
@@ -715,33 +713,25 @@
     }
 
     /**
-     * ChatWorkのメッセージ欄の幅を調整
-     * メッセージ欄と概要欄の境界を左に移動させる
+     * ChatWorkのコンテナにmargin-rightを設定
+     * これにより、リサイズハンドルがスレッドパネルの左端に位置する
      * @param {number} panelWidth - スレッドパネルの幅
      */
     adjustChatworkMainContent(panelWidth) {
       const mainElement = this.findChatworkMainElement();
       if (mainElement) {
-        // 現在の幅を取得
-        const currentWidth = mainElement.offsetWidth;
-        const newWidth = currentWidth - panelWidth;
-        
-        // 幅を縮める（最小300pxを確保）
-        mainElement.style.width = Math.max(newWidth, 300) + 'px';
-        mainElement.style.flexGrow = '0';
-        mainElement.style.flexShrink = '0';
-        mainElement.style.transition = 'width 0.25s ease';
+        // margin-rightでスレッドパネル分のスペースを確保
+        mainElement.style.marginRight = panelWidth + 'px';
+        mainElement.style.transition = 'margin-right 0.25s ease';
       }
     }
 
     /**
-     * ChatWorkのメッセージ欄を元に戻す
+     * ChatWorkのコンテナを元に戻す
      */
     restoreChatworkMainContent() {
       if (this.chatworkMainElement && this.originalStyles) {
-        this.chatworkMainElement.style.width = this.originalStyles.width;
-        this.chatworkMainElement.style.flexGrow = this.originalStyles.flexGrow;
-        this.chatworkMainElement.style.flexShrink = this.originalStyles.flexShrink;
+        this.chatworkMainElement.style.marginRight = this.originalStyles.marginRight;
       }
     }
   }
