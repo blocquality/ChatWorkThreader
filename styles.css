@@ -176,7 +176,7 @@
 
 /* 各祖先レベルの縦線 */
 .cw-threader-ancestor-line {
-  width: 24px;
+  width: 44px;
   position: relative;
   flex-shrink: 0;
 }
@@ -186,7 +186,7 @@
   content: '';
   position: absolute;
   top: 0;
-  left: 50%;
+  left: 22px;
   transform: translateX(-50%);
   height: 100%;
   width: 2px;
@@ -196,13 +196,13 @@
 
 /* L字接続線 */
 .cw-threader-connect-line {
-  width: 32px;
+  width: 44px;
   flex-shrink: 0;
   position: relative;
   min-height: 32px;
 }
 
-/* L字の縦部分 */
+/* L字の縦部分（親アバターの中心から開始: margin-left 10px + avatar半径 12px = 22px） */
 .cw-threader-connect-line::before {
   content: '';
   position: absolute;
@@ -221,7 +221,7 @@
   position: absolute;
   top: 20px;
   left: 22px;
-  width: 12px;
+  width: 22px;
   height: 2px;
   background: #e0e0e0;
   border-radius: 1px;
