@@ -558,6 +558,8 @@
       if (!this.panel) {
         this.createPanel();
       }
+      // 表示時はright: 0にする
+      this.panel.style.right = '0';
       this.panel.classList.add('visible');
       this.isVisible = true;
       this.refresh();
@@ -568,6 +570,9 @@
      */
     hide() {
       if (this.panel) {
+        // 現在のパネル幅を取得して、その分だけ右に移動させる（完全に画面外に出す）
+        const currentWidth = this.panel.offsetWidth;
+        this.panel.style.right = `-${currentWidth}px`;
         this.panel.classList.remove('visible');
       }
       this.isVisible = false;
