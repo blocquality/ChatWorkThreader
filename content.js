@@ -688,46 +688,26 @@
 
     /**
      * ChatWorkのメッセージ欄コンテナを取得
-     * メッセージ欄と概要欄が横並びになっている構造で、メッセージ欄側のコンテナを特定
+     * リサイズハンドル（#_subContentAreaHandle）を基準にメッセージ欄を特定
      */
     findChatworkMainElement() {
       if (this.chatworkMainElement && document.contains(this.chatworkMainElement)) {
         return this.chatworkMainElement;
       }
       
-      // メッセージタイムラインのコンテナを探す
-      // data-mid を持つメッセージ要素の親コンテナを特定
-      const messageEl = document.querySelector('[data-mid]._message');
-      if (messageEl) {
-        // メッセージ要素から親をたどって、flex containerの子要素（メッセージ欄コンテナ）を見つける
-        let parent = messageEl.parentElement;
-        let candidate = null;
-        
-        while (parent && parent !== document.body) {
-          const parentStyle = window.getComputedStyle(parent.parentElement || parent);
-          
-          // 親がflexboxで横並び、かつ兄弟要素がある場合（メッセージ欄と概要欄の並び）
-          if (parent.parentElement && 
-              (parentStyle.display === 'flex' || parentStyle.display === 'inline-flex') &&
-              parent.parentElement.children.length >= 2) {
-            // flexアイテムで、flex-growやwidthが設定されていそうな要素
-            const style = window.getComputedStyle(parent);
-            if (style.flexGrow !== '0' || style.width !== 'auto') {
-              candidate = parent;
-            }
-          }
-          
-          parent = parent.parentElement;
-        }
-        
-        if (candidate) {
-          this.chatworkMainElement = candidate;
+      // リサイズハンドルを探す
+      const resizeHandle = document.getElementById('_subContentAreaHandle');
+      if (resizeHandle) {
+        // リサイズハンドルの前の兄弟要素がメッセージ欄のはず
+        const messagePaneContainer = resizeHandle.previousElementSibling;
+        if (messagePaneContainer) {
+          this.chatworkMainElement = messagePaneContainer;
           this.originalStyles = {
-            marginRight: candidate.style.marginRight || '',
-            flexShrink: candidate.style.flexShrink || '',
-            minWidth: candidate.style.minWidth || ''
+            width: messagePaneContainer.style.width || '',
+            flexGrow: messagePaneContainer.style.flexGrow || '',
+            flexShrink: messagePaneContainer.style.flexShrink || ''
           };
-          return candidate;
+          return messagePaneContainer;
         }
       }
       
@@ -742,12 +722,15 @@
     adjustChatworkMainContent(panelWidth) {
       const mainElement = this.findChatworkMainElement();
       if (mainElement) {
-        // margin-rightでメッセージ欄の右側にスペースを確保
-        // これによりメッセージ欄自体が縮み、概要欄との境界が左に移動する
-        mainElement.style.marginRight = panelWidth + 'px';
-        mainElement.style.flexShrink = '1';
-        mainElement.style.minWidth = '300px';
-        mainElement.style.transition = 'margin-right 0.25s ease';
+        // 現在の幅を取得
+        const currentWidth = mainElement.offsetWidth;
+        const newWidth = currentWidth - panelWidth;
+        
+        // 幅を縮める（最小300pxを確保）
+        mainElement.style.width = Math.max(newWidth, 300) + 'px';
+        mainElement.style.flexGrow = '0';
+        mainElement.style.flexShrink = '0';
+        mainElement.style.transition = 'width 0.25s ease';
       }
     }
 
@@ -756,9 +739,9 @@
      */
     restoreChatworkMainContent() {
       if (this.chatworkMainElement && this.originalStyles) {
-        this.chatworkMainElement.style.marginRight = this.originalStyles.marginRight;
+        this.chatworkMainElement.style.width = this.originalStyles.width;
+        this.chatworkMainElement.style.flexGrow = this.originalStyles.flexGrow;
         this.chatworkMainElement.style.flexShrink = this.originalStyles.flexShrink;
-        this.chatworkMainElement.style.minWidth = this.originalStyles.minWidth;
       }
     }
   }
