@@ -5,7 +5,8 @@
 	"description": "ChatWorkのメッセージをスレッド形式でツリー表示する拡張機能",
 	"permissions": [
 		"activeTab",
-		"scripting"
+		"scripting",
+		"storage"
 	],
 	"host_permissions": [
 		"https://*.chatwork.com/*"

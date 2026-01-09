@@ -298,6 +298,81 @@
       this.isVisible = false;
       this.chatworkMainElement = null;
       this.originalStyles = null;
+      this.currentRoomId = null;
+      this.toggleStates = {}; // roomId -> { threadMid: boolean }
+    }
+
+    /**
+     * 現在のルームIDを取得
+     */
+    getCurrentRoomId() {
+      // URLから取得: https://www.chatwork.com/#!rid123456
+      const hash = window.location.hash;
+      const match = hash.match(/rid(\d+)/);
+      if (match) {
+        return match[1];
+      }
+      // data-rid属性から取得
+      const messageEl = document.querySelector('[data-rid]');
+      if (messageEl) {
+        return messageEl.getAttribute('data-rid');
+      }
+      return null;
+    }
+
+    /**
+     * ストレージキーを生成
+     */
+    getStorageKey() {
+      return 'cw-threader-toggle-states';
+    }
+
+    /**
+     * ルームのトグル状態を読み込み
+     */
+    async loadToggleStates() {
+      const roomId = this.getCurrentRoomId();
+      if (!roomId) return;
+      
+      this.currentRoomId = roomId;
+      
+      try {
+        const result = await chrome.storage.local.get(this.getStorageKey());
+        const allStates = result[this.getStorageKey()] || {};
+        this.toggleStates = allStates[roomId] || {};
+      } catch (e) {
+        console.error('ChatWork Threader: トグル状態の読み込みに失敗', e);
+        this.toggleStates = {};
+      }
+    }
+
+    /**
+     * トグル状態を保存
+     */
+    async saveToggleState(threadMid, isOpen) {
+      const roomId = this.currentRoomId;
+      if (!roomId) return;
+
+      this.toggleStates[threadMid] = isOpen;
+
+      try {
+        const result = await chrome.storage.local.get(this.getStorageKey());
+        const allStates = result[this.getStorageKey()] || {};
+        allStates[roomId] = this.toggleStates;
+        await chrome.storage.local.set({ [this.getStorageKey()]: allStates });
+      } catch (e) {
+        console.error('ChatWork Threader: トグル状態の保存に失敗', e);
+      }
+    }
+
+    /**
+     * スレッドのトグル状態を取得（デフォルトはtrue=開いている）
+     */
+    getToggleState(threadMid) {
+      if (this.toggleStates.hasOwnProperty(threadMid)) {
+        return this.toggleStates[threadMid];
+      }
+      return true; // デフォルトは開いている状態
     }
 
     /**
@@ -551,13 +626,23 @@
         if (isRootWithReplies) {
           const toggleCheckbox = messageEl.querySelector('.cw-threader-toggle-switch input');
           if (toggleCheckbox) {
+            // 保存された状態を復元
+            const savedState = this.getToggleState(node.mid);
+            toggleCheckbox.checked = savedState;
+            if (!savedState) {
+              childrenContainer.style.display = 'none';
+            }
+
             toggleCheckbox.addEventListener('change', (e) => {
               e.stopPropagation();
-              if (toggleCheckbox.checked) {
+              const isOpen = toggleCheckbox.checked;
+              if (isOpen) {
                 childrenContainer.style.display = '';
               } else {
                 childrenContainer.style.display = 'none';
               }
+              // トグル状態を保存
+              this.saveToggleState(node.mid, isOpen);
             });
           }
         }
@@ -639,10 +724,13 @@
     /**
      * パネルを表示
      */
-    show() {
+    async show() {
       if (!this.panel) {
         this.createPanel();
       }
+      
+      // ルームのトグル状態を読み込み
+      await this.loadToggleStates();
       
       // 先にメッセージを収集してスレッドを構築（幅計算のため）
       this.threadBuilder.messages.clear();
@@ -700,7 +788,13 @@
     /**
      * スレッドを更新
      */
-    refresh() {
+    async refresh() {
+      // ルームが変わっている可能性があるので再読み込み
+      const newRoomId = this.getCurrentRoomId();
+      if (newRoomId !== this.currentRoomId) {
+        await this.loadToggleStates();
+      }
+
       this.threadBuilder.messages.clear();
       this.threadBuilder.threads.clear();
       this.threadBuilder.replyMap.clear();
