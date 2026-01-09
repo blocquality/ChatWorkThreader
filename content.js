@@ -681,7 +681,9 @@
   function createToggleButton(threadUI) {
     const button = document.createElement('button');
     button.id = 'cw-threader-toggle';
-    button.innerHTML = '🌳<span class="cw-threader-shortcut">Shift+S</span>';
+    // 拡張機能のアイコンを使用
+    const iconUrl = chrome.runtime.getURL('icon128.png');
+    button.innerHTML = `<img src="${iconUrl}" class="cw-threader-icon" alt="スレッド"><span class="cw-threader-shortcut">Shift+S</span>`;
     button.title = 'スレッド表示を切り替え (Shift+S)';
     
     button.addEventListener('click', () => {

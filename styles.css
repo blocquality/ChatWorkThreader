@@ -9,12 +9,12 @@
   min-width: 44px;
   height: 44px;
   border-radius: 22px;
-  background: #1a1a1a;
-  border: none;
-  color: white;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #333;
   font-size: 20px;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   z-index: 10000;
   transition: all 0.2s ease;
   display: flex;
@@ -26,13 +26,20 @@
 
 #cw-threader-toggle:hover {
   transform: scale(1.05);
-  background: #333;
+  background: #f5f5f5;
+}
+
+#cw-threader-toggle .cw-threader-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 
 #cw-threader-toggle .cw-threader-shortcut {
   font-size: 10px;
   font-weight: 500;
-  opacity: 0.7;
+  color: #666;
+  opacity: 0.8;
   letter-spacing: 0.5px;
 }
 
