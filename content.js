@@ -28,6 +28,7 @@
      */
     collectMessages() {
       const messageElements = document.querySelectorAll('[data-mid]');
+      console.log('ChatWork Threader: 収集対象メッセージ数:', messageElements.length);
       let lastUserName = '';
       let lastAvatarUrl = '';
       
@@ -76,6 +77,9 @@
             messageText = rawText.trim();
           }
         }
+        
+        // デバッグログ
+        console.log(`ChatWork Threader: mid=${mid}, userName=${userName}, messageText=${messageText.substring(0, 30)}`);
 
         // タイムスタンプを取得
         const timeEl = el.querySelector('[data-tm]');
