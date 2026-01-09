@@ -505,7 +505,7 @@
             ${node.timestamp ? `<span class="cw-threader-time">· ${this.formatDateTime(node.timestamp)}</span>` : ''}
             ${isRootWithReplies ? `
               <div class="cw-threader-toggle-wrap">
-                <span class="cw-threader-reply-label">${replyCount}件の返信</span>
+                <span class="cw-threader-reply-label">${replyCount} Reply</span>
                 <label class="cw-threader-toggle-switch">
                   <input type="checkbox" checked>
                   <span class="cw-threader-toggle-slider"></span>
