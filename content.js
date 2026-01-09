@@ -778,6 +778,8 @@
     
     button.addEventListener('click', () => {
       threadUI.toggle();
+      // クリック後にフォーカスを解除（ショートカットキーが効くようにする）
+      button.blur();
     });
 
     document.body.appendChild(button);
