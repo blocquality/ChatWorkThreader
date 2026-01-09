@@ -296,7 +296,7 @@
       this.panel = null;
       this.isVisible = false;
       this.chatworkMainElement = null;
-      this.originalMarginRight = '';
+      this.originalPaddingRight = '';
     }
 
     /**
@@ -687,28 +687,46 @@
     }
 
     /**
-     * ChatWorkのメインコンテンツ要素を取得
+     * ChatWorkのメッセージタイムライン要素を取得
+     * 概要欄ではなく、メッセージ欄のみを対象にする
      */
     findChatworkMainElement() {
       if (this.chatworkMainElement && document.contains(this.chatworkMainElement)) {
         return this.chatworkMainElement;
       }
       
-      // ChatWorkのメインコンテンツエリアを探す
-      // 複数のセレクタを試す（ChatWorkのDOM構造が変わる可能性があるため）
+      // メッセージタイムラインのコンテナを探す
+      // data-mid を持つメッセージ要素の親コンテナを特定
+      const messageEl = document.querySelector('[data-mid]._message');
+      if (messageEl) {
+        // メッセージ要素から親をたどって、タイムラインコンテナを見つける
+        let parent = messageEl.parentElement;
+        while (parent) {
+          // スクロール可能なコンテナ（タイムライン）を探す
+          const style = window.getComputedStyle(parent);
+          const isScrollable = style.overflowY === 'auto' || style.overflowY === 'scroll';
+          
+          if (isScrollable && parent.children.length > 1) {
+            this.chatworkMainElement = parent;
+            this.originalPaddingRight = parent.style.paddingRight || '';
+            return parent;
+          }
+          parent = parent.parentElement;
+        }
+      }
+      
+      // フォールバック：#_timeLine または類似のセレクタを試す
       const selectors = [
-        '#_mainContent',
-        '#_wrapper',
-        '[role="main"]',
-        '.sc-eBAZHg',  // サンプルから確認したクラス
-        '#root > div > div:last-child'  // フォールバック
+        '#_timeLine',
+        '[data-testid="timeline"]',
+        '.sc-eBAZHg'  // サンプルから確認したクラス
       ];
       
       for (const selector of selectors) {
         const element = document.querySelector(selector);
         if (element) {
           this.chatworkMainElement = element;
-          this.originalMarginRight = element.style.marginRight || '';
+          this.originalPaddingRight = element.style.paddingRight || '';
           return element;
         }
       }
@@ -717,24 +735,26 @@
     }
 
     /**
-     * ChatWorkのメインコンテンツエリアの幅を調整
+     * ChatWorkのメッセージタイムラインの幅を調整
      * @param {number} panelWidth - スレッドパネルの幅
      */
     adjustChatworkMainContent(panelWidth) {
       const mainElement = this.findChatworkMainElement();
       if (mainElement) {
-        mainElement.style.marginRight = panelWidth + 'px';
-        mainElement.style.transition = 'margin-right 0.25s ease';
+        // padding-rightで内側から幅を調整（概要欄は影響を受けない）
+        mainElement.style.paddingRight = panelWidth + 'px';
+        mainElement.style.transition = 'padding-right 0.25s ease';
+        mainElement.style.boxSizing = 'border-box';
       }
     }
 
     /**
-     * ChatWorkのメインコンテンツエリアを元に戻す
+     * ChatWorkのメッセージタイムラインを元に戻す
      */
     restoreChatworkMainContent() {
       const mainElement = this.findChatworkMainElement();
       if (mainElement) {
-        mainElement.style.marginRight = this.originalMarginRight;
+        mainElement.style.paddingRight = this.originalPaddingRight;
       }
     }
   }
