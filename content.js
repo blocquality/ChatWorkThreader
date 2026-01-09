@@ -27,7 +27,8 @@
      * ページからメッセージを収集
      */
     collectMessages() {
-      const messageElements = document.querySelectorAll('[data-mid]');
+      // _message クラスを持つ実際のメッセージ要素のみを収集（返信バッジ内の参照を除外）
+      const messageElements = document.querySelectorAll('[data-mid]._message');
       console.log('ChatWork Threader: 収集対象メッセージ数:', messageElements.length);
       let lastUserName = '';
       let lastAvatarUrl = '';
