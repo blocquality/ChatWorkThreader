@@ -247,6 +247,19 @@
   z-index: 1;
 }
 
+/* 子がある場合、アバターの下から縦線を出す */
+.cw-threader-message.has-children .cw-threader-avatar-wrap::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: calc(100% + 8px);
+  background: #e0e0e0;
+  border-radius: 1px;
+}
+
 .cw-threader-avatar {
   width: 24px;
   height: 24px;
