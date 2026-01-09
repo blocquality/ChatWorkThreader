@@ -842,6 +842,17 @@
       
       this.threadBuilder.collectMessages();
       this.threadBuilder.buildThreads();
+      
+      // 最大階層に応じてパネル幅を再計算
+      const maxDepth = this.threadBuilder.getOverallMaxDepth();
+      const panelWidth = this.calculatePanelWidth(maxDepth);
+      this.panel.style.width = panelWidth + 'px';
+      
+      // ChatWorkのメインコンテンツエリアの幅も調整
+      if (this.isVisible) {
+        this.adjustChatworkMainContent(panelWidth);
+      }
+      
       this.renderThreads();
     }
 
