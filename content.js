@@ -332,12 +332,23 @@
       this.setupResizeHandle();
 
       // イベントリスナーを設定
-      document.getElementById('cw-threader-close').addEventListener('click', () => {
+      const closeBtn = document.getElementById('cw-threader-close');
+      closeBtn.addEventListener('click', () => {
         this.hide();
+        closeBtn.blur();
       });
 
-      document.getElementById('cw-threader-refresh').addEventListener('click', () => {
+      const refreshBtn = document.getElementById('cw-threader-refresh');
+      refreshBtn.addEventListener('click', () => {
         this.refresh();
+        refreshBtn.blur();
+      });
+
+      // パネル内のボタンクリック後にフォーカスを解除（ショートカットキーが効くようにする）
+      this.panel.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+          e.target.blur();
+        }
       });
     }
 
