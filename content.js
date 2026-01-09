@@ -415,12 +415,16 @@
           ancestorLinesContainer.appendChild(lineEl);
         }
         
-        messageRow.appendChild(ancestorLinesContainer);
-        
-        // L字接続線
+        // L字接続線を祖先線コンテナ内に配置（親アバターの中心から伸ばすため）
         const connectLine = document.createElement('div');
         connectLine.className = 'cw-threader-connect-line';
-        messageRow.appendChild(connectLine);
+        // 後続の兄弟がある場合は縦線を下まで伸ばす
+        if (ancestorHasMore[ancestorHasMore.length - 1]) {
+          connectLine.classList.add('has-more');
+        }
+        ancestorLinesContainer.appendChild(connectLine);
+        
+        messageRow.appendChild(ancestorLinesContainer);
       }
 
       const messageEl = document.createElement('div');
