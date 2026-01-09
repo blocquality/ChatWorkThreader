@@ -317,8 +317,8 @@
         <div class="cw-threader-header">
           <h3>スレッド</h3>
           <div class="cw-threader-controls">
-            <button id="cw-threader-refresh" title="更新">↻</button>
-            <button id="cw-threader-close" title="閉じる">×</button>
+            <button id="cw-threader-refresh" title="更新" tabindex="-1">↻</button>
+            <button id="cw-threader-close" title="閉じる" tabindex="-1">×</button>
           </div>
         </div>
         <div class="cw-threader-content">
@@ -332,23 +332,12 @@
       this.setupResizeHandle();
 
       // イベントリスナーを設定
-      const closeBtn = document.getElementById('cw-threader-close');
-      closeBtn.addEventListener('click', () => {
+      document.getElementById('cw-threader-close').addEventListener('click', () => {
         this.hide();
-        closeBtn.blur();
       });
 
-      const refreshBtn = document.getElementById('cw-threader-refresh');
-      refreshBtn.addEventListener('click', () => {
+      document.getElementById('cw-threader-refresh').addEventListener('click', () => {
         this.refresh();
-        refreshBtn.blur();
-      });
-
-      // パネル内のボタンクリック後にフォーカスを解除（ショートカットキーが効くようにする）
-      this.panel.addEventListener('click', (e) => {
-        if (e.target.tagName === 'BUTTON') {
-          e.target.blur();
-        }
       });
     }
 
@@ -782,6 +771,7 @@
   function createToggleButton(threadUI) {
     const button = document.createElement('button');
     button.id = 'cw-threader-toggle';
+    button.tabIndex = -1; // フォーカスを受け取らないようにする（ショートカットキーの動作を維持）
     // 拡張機能のアイコンを使用
     const iconUrl = chrome.runtime.getURL('icon128.png');
     button.innerHTML = `<img src="${iconUrl}" class="cw-threader-icon" alt="スレッド"><span class="cw-threader-shortcut">Shift+S</span>`;
@@ -789,8 +779,6 @@
     
     button.addEventListener('click', () => {
       threadUI.toggle();
-      // クリック後にフォーカスを解除（ショートカットキーが効くようにする）
-      button.blur();
     });
 
     document.body.appendChild(button);
