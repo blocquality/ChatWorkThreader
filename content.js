@@ -713,15 +713,32 @@
     }
 
     /**
+     * ChatWorkの概要欄の幅を取得
+     */
+    getSubContentAreaWidth() {
+      const subContentArea = document.getElementById('_subContentArea');
+      if (subContentArea) {
+        return subContentArea.offsetWidth;
+      }
+      return 0;
+    }
+
+    /**
      * ChatWorkのコンテナにmargin-rightを設定
-     * これにより、リサイズハンドルがスレッドパネルの左端に位置する
+     * 概要欄の幅を考慮して、スレッドパネル分のスペースを確保
      * @param {number} panelWidth - スレッドパネルの幅
      */
     adjustChatworkMainContent(panelWidth) {
       const mainElement = this.findChatworkMainElement();
       if (mainElement) {
-        // margin-rightでスレッドパネル分のスペースを確保
-        mainElement.style.marginRight = panelWidth + 'px';
+        // 概要欄の幅を取得
+        const subContentWidth = this.getSubContentAreaWidth();
+        
+        // 移動距離 = スレッドパネルの幅 - 概要欄の幅
+        // 概要欄はスレッドパネルの下に隠れるので、その分は移動不要
+        const moveDistance = Math.max(0, panelWidth - subContentWidth);
+        
+        mainElement.style.marginRight = moveDistance + 'px';
         mainElement.style.transition = 'margin-right 0.25s ease';
       }
     }
