@@ -201,7 +201,7 @@
 
 /* L字接続線 */
 .cw-threader-connect-line {
-  width: 22px;
+  width: 32px;
   flex-shrink: 0;
   position: relative;
   min-height: 32px;
@@ -226,7 +226,7 @@
   position: absolute;
   top: 20px;
   left: 22px;
-  right: 0;
+  width: 12px;
   height: 2px;
   background: #e0e0e0;
   border-radius: 1px;
