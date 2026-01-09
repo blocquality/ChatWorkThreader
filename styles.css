@@ -176,7 +176,7 @@
 
 /* 各祖先レベルの縦線 */
 .cw-threader-ancestor-line {
-  width: 24px;
+  width: 32px;
   position: relative;
   flex-shrink: 0;
 }
@@ -186,7 +186,7 @@
   content: '';
   position: absolute;
   top: 0;
-  left: 50%;
+  left: 22px;
   transform: translateX(-50%);
   height: 100%;
   width: 2px;
@@ -221,7 +221,7 @@
   position: absolute;
   top: 20px;
   left: 22px;
-  width: 12px;
+  width: 10px;
   height: 2px;
   background: #e0e0e0;
   border-radius: 1px;

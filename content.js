@@ -436,21 +436,26 @@
 
       // 祖先の縦線を描画（depth > 0 の場合）
       if (depth > 0) {
-        const ancestorLinesContainer = document.createElement('div');
-        ancestorLinesContainer.className = 'cw-threader-ancestor-lines';
-        
         // ancestorHasMore の最後の要素は「自分に後続の兄弟がいるか」
         // それ以外は祖先レベルの情報
-        for (let i = 0; i < ancestorHasMore.length - 1; i++) {
-          const lineEl = document.createElement('div');
-          lineEl.className = 'cw-threader-ancestor-line';
-          if (ancestorHasMore[i]) {
-            lineEl.classList.add('has-more');
-          }
-          ancestorLinesContainer.appendChild(lineEl);
-        }
+        const ancestorCount = ancestorHasMore.length - 1;
         
-        messageRow.appendChild(ancestorLinesContainer);
+        // 祖先線がある場合のみコンテナを追加
+        if (ancestorCount > 0) {
+          const ancestorLinesContainer = document.createElement('div');
+          ancestorLinesContainer.className = 'cw-threader-ancestor-lines';
+          
+          for (let i = 0; i < ancestorCount; i++) {
+            const lineEl = document.createElement('div');
+            lineEl.className = 'cw-threader-ancestor-line';
+            if (ancestorHasMore[i]) {
+              lineEl.classList.add('has-more');
+            }
+            ancestorLinesContainer.appendChild(lineEl);
+          }
+          
+          messageRow.appendChild(ancestorLinesContainer);
+        }
         
         // L字接続線
         const connectLine = document.createElement('div');
