@@ -105,24 +105,24 @@
 
 .cw-threader-controls {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
 .cw-threader-controls button {
   background: transparent;
   border: none;
   color: #606060;
-  width: 56px;
-  height: 56px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 24px;
+  font-size: 20px;
   transition: background 0.15s ease;
   outline: none;
 }
 
 .cw-threader-controls button:hover {
-  background: #e0e0e0;
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .cw-threader-controls button:focus {
