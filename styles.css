@@ -207,7 +207,7 @@
   content: '';
   position: absolute;
   top: 0;
-  left: 32px;
+  left: 22px;
   transform: translateX(-50%);
   height: 20px;
   width: 2px;
@@ -220,8 +220,8 @@
   content: '';
   position: absolute;
   top: 20px;
-  left: 32px;
-  width: 12px;
+  left: 22px;
+  width: 22px;
   height: 2px;
   background: #e0e0e0;
   border-radius: 1px;
