@@ -23,3 +23,18 @@ git checkout main
 git pull origin main
 git checkout -b feature/新機能名
 ```
+
+## 自動実行ルール
+
+**重要**: 作業が完了したら、ユーザーの指示を待たずに以下を自動で実行すること。
+
+1. `git add -A` で全ての変更をステージング
+2. `git commit -m "適切なコミットメッセージ"` でコミット
+3. `git push` でリモートに同期
+
+### コミットメッセージ規則
+- feat: 新機能追加
+- fix: バグ修正
+- refactor: リファクタリング
+- docs: ドキュメント更新
+- style: コードスタイル修正
