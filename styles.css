@@ -52,8 +52,9 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* visible クラスは状態表示用、right位置はJSで動的に設定 */
 #cw-threader-panel.visible {
-  right: 0;
+  /* right: 0 はJSで設定 */
   transition: right 0.25s ease;
 }
 
