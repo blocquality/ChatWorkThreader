@@ -172,6 +172,10 @@
 .cw-threader-ancestor-lines {
   display: flex;
   flex-shrink: 0;
+  /* ルートメッセージのアバター中心に合わせるためのマージン */
+  /* margin-left(10px) + avatar半径(12px) - 最初の要素の中心(12px) = 10px */
+  margin-left: 10px;
+  align-self: stretch; /* 行全体の高さに伸ばす */
 }
 
 /* 各祖先レベルの縦線 */
@@ -185,31 +189,31 @@
 .cw-threader-ancestor-line.has-more::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 22px;
+  top: -8px; /* 前の行のパディング分だけ上に延長して接続 */
+  left: 50%;
   transform: translateX(-50%);
-  height: 100%;
+  height: calc(100% + 8px); /* 上に伸ばした分を含める */
   width: 2px;
   background: #e0e0e0;
   border-radius: 1px;
 }
 
-/* L字接続線 */
+/* L字接続線（祖先線コンテナ内に配置） */
 .cw-threader-connect-line {
-  width: 44px;
+  width: 24px; /* 祖先線と同じ幅 */
   flex-shrink: 0;
   position: relative;
   min-height: 32px;
 }
 
-/* L字の縦部分（親アバターの中心から開始: margin-left 10px + avatar半径 12px = 22px） */
+/* L字の縦部分 - 要素の中心（親アバターの中心）から下に伸びる */
 .cw-threader-connect-line::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 22px;
+  top: -8px; /* 前の行のパディング分だけ上に延長して接続 */
+  left: 50%; /* 要素の中心 = 親アバターの中心 */
   transform: translateX(-50%);
-  height: 20px;
+  height: 28px; /* 20px + 上に伸ばした8px */
   width: 2px;
   background: #e0e0e0;
   border-radius: 1px;
@@ -220,12 +224,17 @@
   content: '';
   position: absolute;
   top: 20px;
-  left: 22px;
-  width: 22px;
+  left: 50%; /* 縦線と同じ位置から開始 */
+  width: 12px; /* 横に伸ばして次の要素（子アバター）に向かう */
   height: 2px;
   background: #e0e0e0;
   border-radius: 1px;
   transform: translateY(-50%);
+}
+
+/* 後続の兄弟がある場合、L字の縦線を下まで延長 */
+.cw-threader-connect-line.has-more::before {
+  height: calc(100% + 8px); /* 上に伸ばした分を含めて行全体をカバー */
 }
 
 /* アバター */
