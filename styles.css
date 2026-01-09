@@ -351,24 +351,64 @@
   color: #1a1a1a;
 }
 
-/* 返信トグルボタン */
-.cw-threader-toggle-btn {
-  background: #f0f0f0;
-  border: 1px solid #d0d0d0;
-  color: #606060;
-  font-size: 11px;
-  cursor: pointer;
-  padding: 2px 8px;
+/* 返信トグルラッパー */
+.cw-threader-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-left: auto;
-  border-radius: 12px;
-  transition: all 0.15s ease;
-  white-space: nowrap;
 }
 
-.cw-threader-toggle-btn:hover {
-  background: #e0e0e0;
-  border-color: #b0b0b0;
-  color: #1a1a1a;
+.cw-threader-reply-label {
+  font-size: 11px;
+  color: #606060;
+}
+
+/* iOS風トグルスイッチ */
+.cw-threader-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  cursor: pointer;
+}
+
+.cw-threader-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.cw-threader-toggle-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #d0d0d0;
+  border-radius: 22px;
+  transition: all 0.3s ease;
+}
+
+.cw-threader-toggle-slider::before {
+  position: absolute;
+  content: '';
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.cw-threader-toggle-switch input:checked + .cw-threader-toggle-slider {
+  background-color: #2196F3;
+}
+
+.cw-threader-toggle-switch input:checked + .cw-threader-toggle-slider::before {
+  transform: translateX(18px);
 }
 
 /* 返信数バッジ */

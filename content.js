@@ -443,7 +443,15 @@
           <div class="cw-threader-message-header">
             <span class="cw-threader-username">${this.escapeHtml(node.userName)}</span>
             ${node.timeText ? `<span class="cw-threader-time">· ${node.timeText}</span>` : ''}
-            ${isRootWithReplies ? `<button class="cw-threader-toggle-btn" data-expanded="true" title="返信を表示/非表示">▼ ${replyCount}件の返信</button>` : ''}
+            ${isRootWithReplies ? `
+              <div class="cw-threader-toggle-wrap">
+                <span class="cw-threader-reply-label">${replyCount}件の返信</span>
+                <label class="cw-threader-toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="cw-threader-toggle-slider"></span>
+                </label>
+              </div>
+            ` : ''}
           </div>
           <div class="cw-threader-message-body">${this.escapeHtml(shortText)}</div>
         </div>
@@ -452,8 +460,8 @@
       // クリックでメッセージにスクロール（プレースホルダーの場合は無効）
       if (!node.isPlaceholder) {
         messageEl.addEventListener('click', (e) => {
-          // トグルボタンをクリックした場合はスクロールしない
-          if (e.target.classList.contains('cw-threader-toggle-btn')) {
+          // トグルスイッチをクリックした場合はスクロールしない
+          if (e.target.closest('.cw-threader-toggle-wrap')) {
             return;
           }
           e.stopPropagation();
@@ -479,21 +487,16 @@
         
         container.appendChild(childrenContainer);
 
-        // ルートメッセージの場合、トグルボタンのイベントを設定
+        // ルートメッセージの場合、トグルスイッチのイベントを設定
         if (isRootWithReplies) {
-          const toggleBtn = messageEl.querySelector('.cw-threader-toggle-btn');
-          if (toggleBtn) {
-            toggleBtn.addEventListener('click', (e) => {
+          const toggleCheckbox = messageEl.querySelector('.cw-threader-toggle-switch input');
+          if (toggleCheckbox) {
+            toggleCheckbox.addEventListener('change', (e) => {
               e.stopPropagation();
-              const isExpanded = toggleBtn.getAttribute('data-expanded') === 'true';
-              if (isExpanded) {
-                childrenContainer.style.display = 'none';
-                toggleBtn.setAttribute('data-expanded', 'false');
-                toggleBtn.textContent = `▶ ${replyCount}件の返信`;
-              } else {
+              if (toggleCheckbox.checked) {
                 childrenContainer.style.display = '';
-                toggleBtn.setAttribute('data-expanded', 'true');
-                toggleBtn.textContent = `▼ ${replyCount}件の返信`;
+              } else {
+                childrenContainer.style.display = 'none';
               }
             });
           }
