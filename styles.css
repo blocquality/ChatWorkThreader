@@ -201,7 +201,7 @@
 
 /* L字接続線 */
 .cw-threader-connect-line {
-  width: 24px;
+  width: 22px;
   flex-shrink: 0;
   position: relative;
   min-height: 32px;
@@ -212,7 +212,7 @@
   content: '';
   position: absolute;
   top: 0;
-  left: 50%;
+  left: 22px;
   transform: translateX(-50%);
   height: 20px;
   width: 2px;
@@ -225,8 +225,8 @@
   content: '';
   position: absolute;
   top: 20px;
-  left: 50%;
-  width: 12px;
+  left: 22px;
+  right: 0;
   height: 2px;
   background: #e0e0e0;
   border-radius: 1px;
@@ -245,19 +245,6 @@
   margin-right: 10px;
   position: relative;
   z-index: 1;
-}
-
-/* 子がある場合、アバターの下から縦線を出す */
-.cw-threader-message.has-children .cw-threader-avatar-wrap::after {
-  content: '';
-  position: absolute;
-  top: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 2px;
-  height: calc(100% + 8px);
-  background: #e0e0e0;
-  border-radius: 1px;
 }
 
 .cw-threader-avatar {

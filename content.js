@@ -433,9 +433,6 @@
       if (node.isPlaceholder) {
         messageEl.classList.add('cw-threader-placeholder');
       }
-      if (node.children && node.children.length > 0) {
-        messageEl.classList.add('has-children');
-      }
       messageEl.innerHTML = `
         <div class="cw-threader-avatar-wrap">
           ${node.avatarUrl 
