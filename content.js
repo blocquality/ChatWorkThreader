@@ -57,26 +57,24 @@
           lastAvatarUrl = avatarUrl;
         }
 
-        // メッセージ本文を取得
+        // メッセージ本文を取得（<pre>内の<span>から直接取得）
         const preEl = el.querySelector('pre');
         let messageText = '';
-        let replyTargetUserName = null; // 返信先のユーザー名（本文から取得）
+        let replyTargetUserName = null;
         if (preEl) {
-          // 返信バッジ以外のテキストを取得
-          const clonedPre = preEl.cloneNode(true);
-          const replyBadges = clonedPre.querySelectorAll('[data-cwtag]');
-          replyBadges.forEach(badge => badge.remove());
-          let rawText = clonedPre.textContent.trim();
-          
-          // 「〇〇さん」の行を抽出してから除去（改行またはスペースに対応）
-          const userNameMatch = rawText.match(/^(.+?)さん[\r\n\s]+/);
-          if (userNameMatch) {
-            replyTargetUserName = userNameMatch[1]; // 「さん」を除いたユーザー名
-            rawText = rawText.replace(/^.+?さん[\r\n\s]+/, '');
+          const spanEl = preEl.querySelector('span');
+          if (spanEl) {
+            let rawText = spanEl.textContent.trim();
+            
+            // 「〇〇さん」の行を抽出してから除去
+            const userNameMatch = rawText.match(/^(.+?)さん[\r\n\s]+/);
+            if (userNameMatch) {
+              replyTargetUserName = userNameMatch[1];
+              rawText = rawText.replace(/^.+?さん[\r\n\s]+/, '');
+            }
+            
+            messageText = rawText.trim();
           }
-          
-          // 先頭の空白・改行を除去
-          messageText = rawText.trim();
         }
 
         // タイムスタンプを取得
