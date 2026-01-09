@@ -395,11 +395,6 @@
       const replyCount = this.countReplies(node);
       const isRootWithReplies = depth === 0 && replyCount > 0;
 
-      // メッセージテキストを省略
-      const shortText = node.messageText.length > 80 
-        ? node.messageText.substring(0, 80) + '...' 
-        : node.messageText;
-
       // メッセージ行のラッパー（祖先線 + L字線 + メッセージ本体）
       const messageRow = document.createElement('div');
       messageRow.className = 'cw-threader-message-row';
@@ -453,7 +448,7 @@
               </div>
             ` : ''}
           </div>
-          <div class="cw-threader-message-body">${this.escapeHtml(shortText)}</div>
+          <div class="cw-threader-message-body">${this.escapeHtml(node.messageText)}</div>
         </div>
       `;
 
