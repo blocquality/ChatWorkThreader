@@ -752,9 +752,9 @@
      */
     calculatePanelWidth(maxDepth) {
       // 基本幅: 380px
-      // 1階層ごとに追加: 30px（インデント幅に合わせる）
+      // 1階層ごとに追加: 44px（CSS の ancestor-line/connect-line の幅に合わせる）
       const baseWidth = 380;
-      const widthPerDepth = 30;
+      const widthPerDepth = 44;
       const calculatedWidth = baseWidth + (maxDepth * widthPerDepth);
       // 最小280px、最大800px
       return Math.min(Math.max(calculatedWidth, 280), 800);
