@@ -239,6 +239,7 @@
 /* アバター */
 .cw-threader-avatar-wrap {
   flex-shrink: 0;
+  margin-left: 10px;
   margin-right: 10px;
   position: relative;
   z-index: 1;
