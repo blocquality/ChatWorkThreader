@@ -502,7 +502,7 @@
         <div class="cw-threader-msg-content">
           <div class="cw-threader-message-header">
             <span class="cw-threader-username">${this.escapeHtml(node.userName)}</span>
-            ${node.timeText ? `<span class="cw-threader-time">· ${node.timeText}</span>` : ''}
+            ${node.timestamp ? `<span class="cw-threader-time">· ${this.formatDateTime(node.timestamp)}</span>` : ''}
             ${isRootWithReplies ? `
               <div class="cw-threader-toggle-wrap">
                 <span class="cw-threader-reply-label">${replyCount}件の返信</span>
@@ -584,6 +584,20 @@
         case 4: return 'type-both';
         default: return '';
       }
+    }
+
+    /**
+     * タイムスタンプを「yyyy/MM/dd hh:mm」形式にフォーマット
+     */
+    formatDateTime(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(parseInt(timestamp) * 1000);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}/${month}/${day} ${hours}:${minutes}`;
     }
 
     /**
