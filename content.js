@@ -296,7 +296,7 @@
       this.panel = null;
       this.isVisible = false;
       this.chatworkMainElement = null;
-      this.originalPaddingRight = '';
+      this.originalStyles = null;
     }
 
     /**
@@ -687,8 +687,8 @@
     }
 
     /**
-     * ChatWorkのメッセージタイムライン要素を取得
-     * 概要欄ではなく、メッセージ欄のみを対象にする
+     * ChatWorkのメッセージ欄コンテナを取得
+     * メッセージ欄と概要欄が横並びになっている構造で、メッセージ欄側のコンテナを特定
      */
     findChatworkMainElement() {
       if (this.chatworkMainElement && document.contains(this.chatworkMainElement)) {
@@ -699,35 +699,35 @@
       // data-mid を持つメッセージ要素の親コンテナを特定
       const messageEl = document.querySelector('[data-mid]._message');
       if (messageEl) {
-        // メッセージ要素から親をたどって、タイムラインコンテナを見つける
+        // メッセージ要素から親をたどって、flex containerの子要素（メッセージ欄コンテナ）を見つける
         let parent = messageEl.parentElement;
-        while (parent) {
-          // スクロール可能なコンテナ（タイムライン）を探す
-          const style = window.getComputedStyle(parent);
-          const isScrollable = style.overflowY === 'auto' || style.overflowY === 'scroll';
+        let candidate = null;
+        
+        while (parent && parent !== document.body) {
+          const parentStyle = window.getComputedStyle(parent.parentElement || parent);
           
-          if (isScrollable && parent.children.length > 1) {
-            this.chatworkMainElement = parent;
-            this.originalPaddingRight = parent.style.paddingRight || '';
-            return parent;
+          // 親がflexboxで横並び、かつ兄弟要素がある場合（メッセージ欄と概要欄の並び）
+          if (parent.parentElement && 
+              (parentStyle.display === 'flex' || parentStyle.display === 'inline-flex') &&
+              parent.parentElement.children.length >= 2) {
+            // flexアイテムで、flex-growやwidthが設定されていそうな要素
+            const style = window.getComputedStyle(parent);
+            if (style.flexGrow !== '0' || style.width !== 'auto') {
+              candidate = parent;
+            }
           }
+          
           parent = parent.parentElement;
         }
-      }
-      
-      // フォールバック：#_timeLine または類似のセレクタを試す
-      const selectors = [
-        '#_timeLine',
-        '[data-testid="timeline"]',
-        '.sc-eBAZHg'  // サンプルから確認したクラス
-      ];
-      
-      for (const selector of selectors) {
-        const element = document.querySelector(selector);
-        if (element) {
-          this.chatworkMainElement = element;
-          this.originalPaddingRight = element.style.paddingRight || '';
-          return element;
+        
+        if (candidate) {
+          this.chatworkMainElement = candidate;
+          this.originalStyles = {
+            marginRight: candidate.style.marginRight || '',
+            flexShrink: candidate.style.flexShrink || '',
+            minWidth: candidate.style.minWidth || ''
+          };
+          return candidate;
         }
       }
       
@@ -735,26 +735,30 @@
     }
 
     /**
-     * ChatWorkのメッセージタイムラインの幅を調整
+     * ChatWorkのメッセージ欄の幅を調整
+     * メッセージ欄と概要欄の境界を左に移動させる
      * @param {number} panelWidth - スレッドパネルの幅
      */
     adjustChatworkMainContent(panelWidth) {
       const mainElement = this.findChatworkMainElement();
       if (mainElement) {
-        // padding-rightで内側から幅を調整（概要欄は影響を受けない）
-        mainElement.style.paddingRight = panelWidth + 'px';
-        mainElement.style.transition = 'padding-right 0.25s ease';
-        mainElement.style.boxSizing = 'border-box';
+        // margin-rightでメッセージ欄の右側にスペースを確保
+        // これによりメッセージ欄自体が縮み、概要欄との境界が左に移動する
+        mainElement.style.marginRight = panelWidth + 'px';
+        mainElement.style.flexShrink = '1';
+        mainElement.style.minWidth = '300px';
+        mainElement.style.transition = 'margin-right 0.25s ease';
       }
     }
 
     /**
-     * ChatWorkのメッセージタイムラインを元に戻す
+     * ChatWorkのメッセージ欄を元に戻す
      */
     restoreChatworkMainContent() {
-      const mainElement = this.findChatworkMainElement();
-      if (mainElement) {
-        mainElement.style.paddingRight = this.originalPaddingRight;
+      if (this.chatworkMainElement && this.originalStyles) {
+        this.chatworkMainElement.style.marginRight = this.originalStyles.marginRight;
+        this.chatworkMainElement.style.flexShrink = this.originalStyles.flexShrink;
+        this.chatworkMainElement.style.minWidth = this.originalStyles.minWidth;
       }
     }
   }
