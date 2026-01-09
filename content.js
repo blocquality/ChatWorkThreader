@@ -12,6 +12,33 @@
   }
 
   /**
+   * 現在のルームIDをURLから取得
+   */
+  function getCurrentRoomId() {
+    const match = window.location.hash.match(/#!rid(\d+)/);
+    return match ? match[1] : null;
+  }
+
+  /**
+   * トグル状態をストレージに保存
+   */
+  function saveToggleState(roomId, mid, isOpen) {
+    if (!roomId || !mid) return;
+    const key = `toggle_${roomId}_${mid}`;
+    chrome.storage.local.set({ [key]: isOpen });
+  }
+
+  /**
+   * トグル状態をストレージから取得
+   */
+  async function getToggleState(roomId, mid) {
+    if (!roomId || !mid) return true; // デフォルトは開いた状態
+    const key = `toggle_${roomId}_${mid}`;
+    const result = await chrome.storage.local.get(key);
+    return result[key] !== undefined ? result[key] : true;
+  }
+
+  /**
    * メッセージデータを解析してスレッド構造を構築
    */
   class ThreadBuilder {
@@ -626,23 +653,21 @@
         if (isRootWithReplies) {
           const toggleCheckbox = messageEl.querySelector('.cw-threader-toggle-switch input');
           if (toggleCheckbox) {
+            const roomId = getCurrentRoomId();
+            const mid = node.mid;
+
             // 保存された状態を復元
-            const savedState = this.getToggleState(node.mid);
-            toggleCheckbox.checked = savedState;
-            if (!savedState) {
-              childrenContainer.style.display = 'none';
-            }
+            getToggleState(roomId, mid).then(isOpen => {
+              toggleCheckbox.checked = isOpen;
+              childrenContainer.style.display = isOpen ? '' : 'none';
+            });
 
             toggleCheckbox.addEventListener('change', (e) => {
               e.stopPropagation();
               const isOpen = toggleCheckbox.checked;
-              if (isOpen) {
-                childrenContainer.style.display = '';
-              } else {
-                childrenContainer.style.display = 'none';
-              }
-              // トグル状態を保存
-              this.saveToggleState(node.mid, isOpen);
+              childrenContainer.style.display = isOpen ? '' : 'none';
+              // 状態をストレージに保存
+              saveToggleState(roomId, mid, isOpen);
             });
           }
         }
