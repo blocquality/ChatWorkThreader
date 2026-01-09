@@ -2,7 +2,7 @@
 	"manifest_version": 3,
 	"name": "ChatWork Threader",
 	"version": "1.0.0",
-	"description": "ChatWorkのメッセージをスレッド形式でツリー表示する拡張機能",
+	"description": "Display ChatWork messages in a threaded tree format",
 	"permissions": [
 		"activeTab",
 		"scripting",
