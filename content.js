@@ -297,7 +297,7 @@
       this.panel = null;
       this.isVisible = false;
       this.chatworkMainElement = null;
-      this.originalMarginRight = '';
+      this.originalStyles = null;
     }
 
     /**
@@ -713,29 +713,25 @@
     }
 
     /**
-     * ChatWorkのメインコンテンツ要素を取得
+     * ChatWorkのメッセージ欄・リサイズハンドル・概要欄を含む親コンテナを取得
+     * スレッドパネルを開いた時、リサイズハンドルがスレッドパネルの左端に来るようにする
      */
     findChatworkMainElement() {
       if (this.chatworkMainElement && document.contains(this.chatworkMainElement)) {
         return this.chatworkMainElement;
       }
       
-      // ChatWorkのメインコンテンツエリアを探す
-      // 複数のセレクタを試す（ChatWorkのDOM構造が変わる可能性があるため）
-      const selectors = [
-        '#_mainContent',
-        '#_wrapper',
-        '[role="main"]',
-        '.sc-eBAZHg',  // サンプルから確認したクラス
-        '#root > div > div:last-child'  // フォールバック
-      ];
-      
-      for (const selector of selectors) {
-        const element = document.querySelector(selector);
-        if (element) {
-          this.chatworkMainElement = element;
-          this.originalMarginRight = element.style.marginRight || '';
-          return element;
+      // リサイズハンドルを探す
+      const resizeHandle = document.getElementById('_subContentAreaHandle');
+      if (resizeHandle) {
+        // リサイズハンドルの親要素（メッセージ欄+ハンドル+概要欄を含むコンテナ）を取得
+        const parentContainer = resizeHandle.parentElement;
+        if (parentContainer) {
+          this.chatworkMainElement = parentContainer;
+          this.originalStyles = {
+            marginRight: parentContainer.style.marginRight || ''
+          };
+          return parentContainer;
         }
       }
       
@@ -743,24 +739,42 @@
     }
 
     /**
-     * ChatWorkのメインコンテンツエリアの幅を調整
+     * ChatWorkの概要欄の幅を取得
+     */
+    getSubContentAreaWidth() {
+      const subContentArea = document.getElementById('_subContentArea');
+      if (subContentArea) {
+        return subContentArea.offsetWidth;
+      }
+      return 0;
+    }
+
+    /**
+     * ChatWorkのコンテナにmargin-rightを設定
+     * 概要欄の幅を考慮して、スレッドパネル分のスペースを確保
      * @param {number} panelWidth - スレッドパネルの幅
      */
     adjustChatworkMainContent(panelWidth) {
       const mainElement = this.findChatworkMainElement();
       if (mainElement) {
-        mainElement.style.marginRight = panelWidth + 'px';
+        // 概要欄の幅を取得
+        const subContentWidth = this.getSubContentAreaWidth();
+        
+        // 移動距離 = スレッドパネルの幅 - 概要欄の幅
+        // 概要欄はスレッドパネルの下に隠れるので、その分は移動不要
+        const moveDistance = Math.max(0, panelWidth - subContentWidth);
+        
+        mainElement.style.marginRight = moveDistance + 'px';
         mainElement.style.transition = 'margin-right 0.25s ease';
       }
     }
 
     /**
-     * ChatWorkのメインコンテンツエリアを元に戻す
+     * ChatWorkのコンテナを元に戻す
      */
     restoreChatworkMainContent() {
-      const mainElement = this.findChatworkMainElement();
-      if (mainElement) {
-        mainElement.style.marginRight = this.originalMarginRight;
+      if (this.chatworkMainElement && this.originalStyles) {
+        this.chatworkMainElement.style.marginRight = this.originalStyles.marginRight;
       }
     }
   }
