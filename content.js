@@ -250,6 +250,41 @@
       if (hasChildren) return 2;
       return 1;
     }
+
+    /**
+     * スレッドツリーの最大階層を取得
+     * @param {Object} node - スレッドノード
+     * @param {number} currentDepth - 現在の深さ
+     * @returns {number} 最大階層
+     */
+    getMaxDepth(node, currentDepth = 0) {
+      if (!node.children || node.children.length === 0) {
+        return currentDepth;
+      }
+      let maxChildDepth = currentDepth;
+      for (const child of node.children) {
+        const childDepth = this.getMaxDepth(child, currentDepth + 1);
+        if (childDepth > maxChildDepth) {
+          maxChildDepth = childDepth;
+        }
+      }
+      return maxChildDepth;
+    }
+
+    /**
+     * 全スレッドの中で最大の階層を取得
+     * @returns {number} 最大階層
+     */
+    getOverallMaxDepth() {
+      let maxDepth = 0;
+      for (const thread of this.threads.values()) {
+        const depth = this.getMaxDepth(thread);
+        if (depth > maxDepth) {
+          maxDepth = depth;
+        }
+      }
+      return maxDepth;
+    }
   }
 
   /**
@@ -401,12 +436,16 @@
 
       // 祖先の縦線を描画（depth > 0 の場合）
       if (depth > 0) {
+        // ancestorHasMore の最後の要素は「自分に後続の兄弟がいるか」
+        // それ以外は祖先レベルの情報
+        const ancestorCount = ancestorHasMore.length - 1;
+        
+        // 祖先線コンテナを作成（L字接続線も含める）
         const ancestorLinesContainer = document.createElement('div');
         ancestorLinesContainer.className = 'cw-threader-ancestor-lines';
         
-        // ancestorHasMore の最後の要素は「自分に後続の兄弟がいるか」
-        // それ以外は祖先レベルの情報
-        for (let i = 0; i < ancestorHasMore.length - 1; i++) {
+        // 祖先線を追加
+        for (let i = 0; i < ancestorCount; i++) {
           const lineEl = document.createElement('div');
           lineEl.className = 'cw-threader-ancestor-line';
           if (ancestorHasMore[i]) {
@@ -551,17 +590,49 @@
     }
 
     /**
+     * 階層の深さに応じたパネル幅を計算
+     * @param {number} maxDepth - 最大階層
+     * @returns {number} パネル幅（px）
+     */
+    calculatePanelWidth(maxDepth) {
+      // 基本幅: 380px
+      // 1階層ごとに追加: 30px（インデント幅に合わせる）
+      const baseWidth = 380;
+      const widthPerDepth = 30;
+      const calculatedWidth = baseWidth + (maxDepth * widthPerDepth);
+      // 最小280px、最大800px
+      return Math.min(Math.max(calculatedWidth, 280), 800);
+    }
+
+    /**
      * パネルを表示
      */
     show() {
       if (!this.panel) {
         this.createPanel();
       }
+      
+      // 先にメッセージを収集してスレッドを構築（幅計算のため）
+      this.threadBuilder.messages.clear();
+      this.threadBuilder.threads.clear();
+      this.threadBuilder.replyMap.clear();
+      this.threadBuilder.childrenMap.clear();
+      this.threadBuilder.allMessages = [];
+      this.threadBuilder.collectMessages();
+      this.threadBuilder.buildThreads();
+      
+      // 最大階層に応じてパネル幅を設定
+      const maxDepth = this.threadBuilder.getOverallMaxDepth();
+      const panelWidth = this.calculatePanelWidth(maxDepth);
+      this.panel.style.width = panelWidth + 'px';
+      
       // 表示時はright: 0にする
       this.panel.style.right = '0';
       this.panel.classList.add('visible');
       this.isVisible = true;
-      this.refresh();
+      
+      // スレッドを描画（既に構築済みなので再構築は不要）
+      this.renderThreads();
     }
 
     /**

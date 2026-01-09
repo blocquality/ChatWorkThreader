@@ -120,9 +120,17 @@
 /* コンテンツエリア */
 .cw-threader-content {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   padding: 8px 0;
   background: #fff;
+  /* スクロールバーを非表示にしつつスクロール可能に */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* Chrome/Safari用スクロールバー非表示 */
+.cw-threader-content::-webkit-scrollbar {
+  display: none;
 }
 
 .cw-threader-threads {
