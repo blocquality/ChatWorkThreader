@@ -393,6 +393,7 @@
       const messageType = this.threadBuilder.getMessageType(node.mid);
       const typeLabel = this.getTypeLabel(messageType);
       const replyCount = this.countReplies(node);
+      const isRootWithReplies = depth === 0 && replyCount > 0;
 
       // メッセージテキストを省略
       const shortText = node.messageText.length > 80 
@@ -442,7 +443,7 @@
           <div class="cw-threader-message-header">
             <span class="cw-threader-username">${this.escapeHtml(node.userName)}</span>
             ${node.timeText ? `<span class="cw-threader-time">· ${node.timeText}</span>` : ''}
-            ${typeLabel ? `<span class="cw-threader-type ${this.getTypeClass(messageType)}">${typeLabel}</span>` : ''}
+            ${isRootWithReplies ? `<button class="cw-threader-toggle-btn" data-expanded="true" title="返信を表示/非表示">▼ ${replyCount}件の返信</button>` : ''}
           </div>
           <div class="cw-threader-message-body">${this.escapeHtml(shortText)}</div>
         </div>
@@ -451,6 +452,10 @@
       // クリックでメッセージにスクロール（プレースホルダーの場合は無効）
       if (!node.isPlaceholder) {
         messageEl.addEventListener('click', (e) => {
+          // トグルボタンをクリックした場合はスクロールしない
+          if (e.target.classList.contains('cw-threader-toggle-btn')) {
+            return;
+          }
           e.stopPropagation();
           this.scrollToMessage(node.mid);
         });
@@ -473,6 +478,26 @@
         });
         
         container.appendChild(childrenContainer);
+
+        // ルートメッセージの場合、トグルボタンのイベントを設定
+        if (isRootWithReplies) {
+          const toggleBtn = messageEl.querySelector('.cw-threader-toggle-btn');
+          if (toggleBtn) {
+            toggleBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const isExpanded = toggleBtn.getAttribute('data-expanded') === 'true';
+              if (isExpanded) {
+                childrenContainer.style.display = 'none';
+                toggleBtn.setAttribute('data-expanded', 'false');
+                toggleBtn.textContent = `▶ ${replyCount}件の返信`;
+              } else {
+                childrenContainer.style.display = '';
+                toggleBtn.setAttribute('data-expanded', 'true');
+                toggleBtn.textContent = `▼ ${replyCount}件の返信`;
+              }
+            });
+          }
+        }
       }
 
       return container;
@@ -482,12 +507,8 @@
      * メッセージタイプのラベルを取得
      */
     getTypeLabel(type) {
-      switch (type) {
-        case 2: return '返信元';
-        case 3: return '返信';
-        case 4: return '返信元+返信';
-        default: return '';
-      }
+      // ラベル表示は無効化
+      return '';
     }
 
     /**

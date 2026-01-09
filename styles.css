@@ -350,6 +350,26 @@
   color: #1a1a1a;
 }
 
+/* 返信トグルボタン */
+.cw-threader-toggle-btn {
+  background: #f0f0f0;
+  border: 1px solid #d0d0d0;
+  color: #606060;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 8px;
+  margin-left: auto;
+  border-radius: 12px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.cw-threader-toggle-btn:hover {
+  background: #e0e0e0;
+  border-color: #b0b0b0;
+  color: #1a1a1a;
+}
+
 /* 返信数バッジ */
 .cw-threader-reply-count {
   font-size: 11px;
