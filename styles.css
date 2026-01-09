@@ -111,20 +111,10 @@
   cursor: pointer;
   font-size: 12px;
   transition: background 0.15s ease;
-  outline: none;
 }
 
 .cw-threader-controls button:hover {
   background: #e0e0e0;
-}
-
-.cw-threader-controls button:focus {
-  outline: none;
-}
-
-.cw-threader-controls button:focus-visible {
-  outline: 2px solid #1976d2;
-  outline-offset: 1px;
 }
 
 /* コンテンツエリア */
