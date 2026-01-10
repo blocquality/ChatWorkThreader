@@ -405,7 +405,46 @@
   font-size: 14px;
 }
 
-/* 画像URL表示 */
+/* ファイルプレビューボタン */
+.cw-threader-file-previews {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.cw-threader-preview-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  padding: 4px 8px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border: 1px solid #90caf9;
+  border-radius: 4px;
+  color: #1565c0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.cw-threader-preview-btn:hover {
+  background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+  border-color: #64b5f6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.cw-threader-preview-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.cw-threader-preview-icon {
+  font-size: 12px;
+}
+
+/* 画像URL表示（後方互換性のため残す） */
 .cw-threader-images {
   margin-top: 6px;
   display: flex;

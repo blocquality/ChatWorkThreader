@@ -157,7 +157,7 @@
         let messageText = '';
         let replyTargetUserName = null;
         let quotedMessage = null;  // 引用メッセージ
-        let imageUrls = [];  // 画像URL
+        let filePreviewInfo = [];  // ファイルプレビュー情報 { fileId, mimeType, fileName }
         let toTargets = [];  // To先ユーザー
         
         if (preEl) {
@@ -180,42 +180,38 @@
             }
           });
           
-          // 画像URLを取得（ChatWork上でプレビュー表示されている画像）
-          // 1. サムネイル/プレビュー画像を探す（ダウンロードリンクは除外）
-          const previewImages = preEl.querySelectorAll('img[src*="binary"], img[src*="thumbnail"], img[src*="preview"]');
-          previewImages.forEach(imgEl => {
-            const url = imgEl.src;
-            // ユーザーアバター画像は除外
-            if (url && !url.includes('/avatar/') && !imageUrls.includes(url)) {
-              imageUrls.push(url);
+          // ファイルプレビューボタンを探す（ChatWorkのプレビュー機能を利用）
+          const previewButtons = preEl.querySelectorAll('a._filePreview[data-file-id], a[data-type="chatworkImagePreview"][data-file-id]');
+          previewButtons.forEach(btn => {
+            const fileId = btn.getAttribute('data-file-id');
+            const mimeType = btn.getAttribute('data-mime-type') || 'image/png';
+            // ファイル名を取得（近くのテキストやダウンロードリンクから）
+            const parentEl = btn.closest('[class*="file"], [class*="File"]') || btn.parentElement;
+            let fileName = '';
+            if (parentEl) {
+              const downloadLink = parentEl.querySelector('a[download], a[href*="download"]');
+              if (downloadLink) {
+                fileName = downloadLink.textContent?.trim() || downloadLink.getAttribute('download') || '';
+              }
+            }
+            if (!fileName) {
+              fileName = `file_${fileId}`;
+            }
+            
+            if (fileId && !filePreviewInfo.some(f => f.fileId === fileId)) {
+              filePreviewInfo.push({ fileId, mimeType, fileName });
             }
           });
           
-          // 2. プレビュー可能な画像リンク（クリックで拡大表示するタイプ）
-          const previewLinks = preEl.querySelectorAll('a[href*="binary"], a[href*="preview"]');
-          previewLinks.forEach(link => {
-            const href = link.href;
-            // ダウンロードリンクは除外
-            if (href && !href.includes('download') && !imageUrls.includes(href)) {
-              imageUrls.push(href);
-            }
-          });
-          
-          // 3. data-preview属性を持つ要素（ChatWorkのファイルプレビュー）
-          const previewElements = preEl.querySelectorAll('[data-preview], [data-file-preview]');
-          previewElements.forEach(el => {
-            const previewUrl = el.getAttribute('data-preview') || el.getAttribute('data-file-preview');
-            if (previewUrl && !imageUrls.includes(previewUrl)) {
-              imageUrls.push(previewUrl);
-            }
-          });
-          
-          // 4. ファイル添付エリア内の画像（サムネイル表示されているもの）
-          const fileAttachImages = preEl.querySelectorAll('[class*="file"] img, [class*="File"] img, [class*="attach"] img, [class*="Attach"] img');
-          fileAttachImages.forEach(imgEl => {
-            const url = imgEl.src;
-            if (url && !url.includes('/avatar/') && !url.includes('icon') && !imageUrls.includes(url)) {
-              imageUrls.push(url);
+          // data-file-id を持つ他の要素も確認
+          const fileElements = preEl.querySelectorAll('[data-file-id]');
+          fileElements.forEach(el => {
+            const fileId = el.getAttribute('data-file-id');
+            const mimeType = el.getAttribute('data-mime-type') || '';
+            // 画像ファイルのみ対象
+            if (fileId && mimeType.startsWith('image/') && !filePreviewInfo.some(f => f.fileId === fileId)) {
+              const fileName = el.textContent?.trim() || `file_${fileId}`;
+              filePreviewInfo.push({ fileId, mimeType, fileName });
             }
           });
           
@@ -327,7 +323,7 @@
           avatarUrl,
           element: el,
           quotedMessage,   // 引用メッセージ
-          imageUrls,       // 画像URL配列
+          filePreviewInfo, // ファイルプレビュー情報配列
           toTargets,       // To先ユーザー配列
           senderAid        // 送信者のAID
         };
@@ -450,7 +446,7 @@
         element: null,
         isPlaceholder: true,
         quotedMessage: null,
-        imageUrls: [],
+        filePreviewInfo: [],
         toTargets: [],
         senderAid: null
       };
@@ -876,10 +872,10 @@
         ? `<div class="cw-threader-quote"><span class="cw-threader-quote-icon">❝</span>${this.escapeHtml(node.quotedMessage)}</div>` 
         : '';
       
-      // 画像URL表示用HTML
-      const imageUrlsHtml = (node.imageUrls && node.imageUrls.length > 0) 
-        ? `<div class="cw-threader-images">${node.imageUrls.map(url => 
-            `<div class="cw-threader-image-link"><span class="cw-threader-image-icon">🖼</span><a href="${this.escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${this.escapeHtml(url)}">${this.truncateUrl(url)}</a></div>`
+      // ファイルプレビューボタン用HTML（ChatWorkのプレビュー機能を利用）
+      const filePreviewHtml = (node.filePreviewInfo && node.filePreviewInfo.length > 0) 
+        ? `<div class="cw-threader-file-previews">${node.filePreviewInfo.map(file => 
+            `<a class="cw-threader-preview-btn _filePreview" data-file-id="${this.escapeHtml(file.fileId)}" data-type="chatworkImagePreview" data-mime-type="${this.escapeHtml(file.mimeType)}"><span class="cw-threader-preview-icon">🖼</span>${this.escapeHtml(this.truncateFileName(file.fileName))}</a>`
           ).join('')}</div>` 
         : '';
       
@@ -906,7 +902,7 @@
           ${toTargetsHtml}
           ${quotedHtml}
           <div class="cw-threader-message-body">${this.formatMessageText(node.messageText)}</div>
-          ${imageUrlsHtml}
+          ${filePreviewHtml}
         </div>
       `;
 
@@ -915,6 +911,10 @@
         messageEl.addEventListener('click', (e) => {
           // トグルスイッチをクリックした場合はスクロールしない
           if (e.target.closest('.cw-threader-toggle-wrap')) {
+            return;
+          }
+          // プレビューボタンをクリックした場合はスクロールしない（ChatWorkの処理に任せる）
+          if (e.target.closest('.cw-threader-preview-btn')) {
             return;
           }
           e.stopPropagation();
@@ -1039,6 +1039,25 @@
         // URLパースに失敗した場合は末尾30文字
         return url.length > 30 ? '...' + url.substring(url.length - 27) : url;
       }
+    }
+
+    /**
+     * ファイル名を短縮表示する
+     */
+    truncateFileName(fileName) {
+      if (!fileName) return 'プレビュー';
+      // ファイル名が長すぎる場合は切り詰め
+      if (fileName.length > 25) {
+        // 拡張子を保持
+        const lastDot = fileName.lastIndexOf('.');
+        if (lastDot > 0 && lastDot > fileName.length - 6) {
+          const ext = fileName.substring(lastDot);
+          const name = fileName.substring(0, lastDot);
+          return name.substring(0, 20) + '...' + ext;
+        }
+        return fileName.substring(0, 22) + '...';
+      }
+      return fileName;
     }
 
     /**
