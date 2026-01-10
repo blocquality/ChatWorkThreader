@@ -181,6 +181,7 @@
           });
           
           // ファイルプレビューボタンを探す（ChatWorkのプレビュー機能を利用）
+          // パターン1: data-file-id を持つプレビューボタン
           const previewButtons = preEl.querySelectorAll('a._filePreview[data-file-id], a[data-type="chatworkImagePreview"][data-file-id]');
           previewButtons.forEach(btn => {
             const fileId = btn.getAttribute('data-file-id');
@@ -199,11 +200,39 @@
             }
             
             if (fileId && !filePreviewInfo.some(f => f.fileId === fileId)) {
-              filePreviewInfo.push({ fileId, mimeType, fileName });
+              filePreviewInfo.push({ fileId, mimeType, fileName, previewElement: btn });
             }
           });
           
-          // data-file-id を持つ他の要素も確認
+          // パターン2: data-url にfile_idが含まれるプレビューボタン（_previewLink, chatworkFilePreview）
+          const previewLinks = preEl.querySelectorAll('a._previewLink[data-url], a[data-type="chatworkFilePreview"][data-url]');
+          previewLinks.forEach(btn => {
+            const dataUrl = btn.getAttribute('data-url') || '';
+            // data-url から file_id を抽出（例: gateway/download_file.php?bin=1&file_id=1951181298&preview=1）
+            const fileIdMatch = dataUrl.match(/file_id=(\d+)/);
+            const fileId = fileIdMatch ? fileIdMatch[1] : null;
+            const mimeType = btn.getAttribute('data-mime-type') || 'application/octet-stream';
+            // ファイル名を取得（data-content-id または近くのダウンロードリンクから）
+            let fileName = btn.getAttribute('data-content-id') || '';
+            if (!fileName) {
+              const parentEl = btn.closest('[data-cwopen*="download"]') || btn.parentElement;
+              if (parentEl) {
+                const downloadLink = parentEl.querySelector('a[href*="download_file"]');
+                if (downloadLink) {
+                  fileName = downloadLink.textContent?.trim() || '';
+                }
+              }
+            }
+            if (!fileName && fileId) {
+              fileName = `file_${fileId}`;
+            }
+            
+            if (fileId && !filePreviewInfo.some(f => f.fileId === fileId)) {
+              filePreviewInfo.push({ fileId, mimeType, fileName, previewElement: btn });
+            }
+          });
+          
+          // パターン3: data-file-id を持つ他の要素も確認（画像ファイル用）
           const fileElements = preEl.querySelectorAll('[data-file-id]');
           fileElements.forEach(el => {
             const fileId = el.getAttribute('data-file-id');
@@ -211,7 +240,7 @@
             // 画像ファイルのみ対象
             if (fileId && mimeType.startsWith('image/') && !filePreviewInfo.some(f => f.fileId === fileId)) {
               const fileName = el.textContent?.trim() || `file_${fileId}`;
-              filePreviewInfo.push({ fileId, mimeType, fileName });
+              filePreviewInfo.push({ fileId, mimeType, fileName, previewElement: el });
             }
           });
           
@@ -876,9 +905,10 @@
         : '';
       
       // ファイルプレビューボタン用HTML（ChatWorkのプレビュー機能を利用）
+      // ファイル名を表示（「プレビュー」文言は使わない）
       const filePreviewHtml = (node.filePreviewInfo && node.filePreviewInfo.length > 0) 
         ? `<div class="cw-threader-file-previews">${node.filePreviewInfo.map(file => 
-            `<a class="cw-threader-preview-btn" data-file-id="${this.escapeHtml(file.fileId)}" data-mid="${this.escapeHtml(node.mid)}">プレビュー</a>`
+            `<a class="cw-threader-preview-btn" data-file-id="${this.escapeHtml(file.fileId)}" data-mid="${this.escapeHtml(node.mid)}">📎 ${this.escapeHtml(this.truncateFileName(file.fileName))}</a>`
           ).join('')}</div>` 
         : '';
       
@@ -1095,8 +1125,21 @@
         return;
       }
       
-      // 該当するファイルのプレビューボタンを探す
-      const originalPreviewBtn = messageEl.querySelector(`a._filePreview[data-file-id="${fileId}"], a[data-file-id="${fileId}"][data-type="chatworkImagePreview"]`);
+      // パターン1: data-file-id を持つプレビューボタン
+      let originalPreviewBtn = messageEl.querySelector(`a._filePreview[data-file-id="${fileId}"], a[data-file-id="${fileId}"][data-type="chatworkImagePreview"]`);
+      
+      // パターン2: data-url にfile_idが含まれるプレビューボタン
+      if (!originalPreviewBtn) {
+        const previewLinks = messageEl.querySelectorAll('a._previewLink[data-url], a[data-type="chatworkFilePreview"][data-url]');
+        for (const link of previewLinks) {
+          const dataUrl = link.getAttribute('data-url') || '';
+          if (dataUrl.includes(`file_id=${fileId}`)) {
+            originalPreviewBtn = link;
+            break;
+          }
+        }
+      }
+      
       if (originalPreviewBtn) {
         // プレビュー表示中はパネルのz-indexを下げる
         this.lowerPanelZIndex();
