@@ -65,15 +65,6 @@
   transition: right 0.25s ease;
 }
 
-/* プレビューモード時はパネルを背面に（z-indexはJSで設定） */
-#cw-threader-panel.cw-threader-preview-mode {
-  pointer-events: none; /* プレビュー表示中はパネルへの操作を無効化 */
-}
-
-#cw-threader-panel.cw-threader-preview-mode * {
-  pointer-events: none;
-}
-
 /* リサイズハンドル */
 .cw-threader-resize-handle {
   position: absolute;
