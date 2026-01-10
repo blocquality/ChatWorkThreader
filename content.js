@@ -180,22 +180,42 @@
             }
           });
           
-          // 画像URLを取得（プレビュー/ダウンロード可能な画像）
-          const imageElements = preEl.querySelectorAll('img[src*="appdata.chatwork.com"], img[src*="preview"], a[href*="preview"], img[src*="thumbnail"]');
-          imageElements.forEach(imgEl => {
-            const url = imgEl.tagName === 'IMG' ? imgEl.src : imgEl.href;
+          // 画像URLを取得（ChatWork上でプレビュー表示されている画像）
+          // 1. サムネイル/プレビュー画像を探す（ダウンロードリンクは除外）
+          const previewImages = preEl.querySelectorAll('img[src*="binary"], img[src*="thumbnail"], img[src*="preview"]');
+          previewImages.forEach(imgEl => {
+            const url = imgEl.src;
             // ユーザーアバター画像は除外
             if (url && !url.includes('/avatar/') && !imageUrls.includes(url)) {
               imageUrls.push(url);
             }
           });
           
-          // ファイルダウンロードリンクも確認
-          const fileLinks = preEl.querySelectorAll('a[data-cwtag*="dlink"], a[href*="download"]');
-          fileLinks.forEach(link => {
-            const href = link.href || link.getAttribute('data-href');
-            if (href && /\.(jpg|jpeg|png|gif|bmp|webp|svg)/i.test(href) && !imageUrls.includes(href)) {
+          // 2. プレビュー可能な画像リンク（クリックで拡大表示するタイプ）
+          const previewLinks = preEl.querySelectorAll('a[href*="binary"], a[href*="preview"]');
+          previewLinks.forEach(link => {
+            const href = link.href;
+            // ダウンロードリンクは除外
+            if (href && !href.includes('download') && !imageUrls.includes(href)) {
               imageUrls.push(href);
+            }
+          });
+          
+          // 3. data-preview属性を持つ要素（ChatWorkのファイルプレビュー）
+          const previewElements = preEl.querySelectorAll('[data-preview], [data-file-preview]');
+          previewElements.forEach(el => {
+            const previewUrl = el.getAttribute('data-preview') || el.getAttribute('data-file-preview');
+            if (previewUrl && !imageUrls.includes(previewUrl)) {
+              imageUrls.push(previewUrl);
+            }
+          });
+          
+          // 4. ファイル添付エリア内の画像（サムネイル表示されているもの）
+          const fileAttachImages = preEl.querySelectorAll('[class*="file"] img, [class*="File"] img, [class*="attach"] img, [class*="Attach"] img');
+          fileAttachImages.forEach(imgEl => {
+            const url = imgEl.src;
+            if (url && !url.includes('/avatar/') && !url.includes('icon') && !imageUrls.includes(url)) {
+              imageUrls.push(url);
             }
           });
           
