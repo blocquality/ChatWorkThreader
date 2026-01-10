@@ -1026,11 +1026,15 @@
     }
 
     /**
-     * メッセージテキストをフォーマット（HTMLエスケープ + URL自動リンク + 改行をbrタグに変換）
+     * メッセージテキストをフォーマット（HTMLエスケープ + URL自動リンク + 改行をbrタグに変換 + プレビュー文言除去）
      */
     formatMessageText(text) {
+      // 「プレビュー」という文言を除去（ボタンから挿入されたテキスト）
+      let cleanedText = text.replace(/プレビュー/g, '');
+      // 連続した空白行を1つに
+      cleanedText = cleanedText.replace(/(\r\n|\r|\n){3,}/g, '\n\n');
       // まずHTMLエスケープ
-      const escaped = this.escapeHtml(text);
+      const escaped = this.escapeHtml(cleanedText);
       // URLを自動リンク化
       const urlPattern = /(https?:\/\/[^\s<>"']+)/g;
       const withLinks = escaped.replace(urlPattern, '<a href="$1" class="cw-threader-link" target="_blank" rel="noopener noreferrer">$1</a>');
@@ -1112,8 +1116,8 @@
     lowerPanelZIndex() {
       if (!this.panel) return;
       
-      // パネルのz-indexを下げる
-      this.panel.style.zIndex = '9999';
+      // パネルのz-indexを大幅に下げてプレビューを確実に前面に
+      this.panel.style.zIndex = '1';
       
       // プレビューが閉じられたら元に戻す（クリックまたはEscキー）
       const restoreZIndex = () => {
