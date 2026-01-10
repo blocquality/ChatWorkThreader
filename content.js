@@ -1345,6 +1345,12 @@
     lowerPanelZIndex() {
       const toggleBtn = document.getElementById('cw-threader-toggle');
       
+      // 既に非表示処理中の場合はスキップ
+      if (this._previewHideInProgress) {
+        return;
+      }
+      this._previewHideInProgress = true;
+      
       // パネルとトグルボタンを即座に非表示（opacity + visibility で確実に）
       const hideElements = () => {
         if (this.panel) {
@@ -1360,8 +1366,16 @@
       // 即座に非表示
       hideElements();
       
+      // 復元済みフラグ
+      let restored = false;
+      
       // プレビューが閉じられたら元に戻す
       const restoreVisibility = () => {
+        // 既に復元済みなら何もしない
+        if (restored) return;
+        restored = true;
+        this._previewHideInProgress = false;
+        
         if (this.panel) {
           this.panel.style.opacity = '1';
           this.panel.style.visibility = 'visible';
@@ -1370,54 +1384,71 @@
           toggleBtn.style.opacity = '1';
           toggleBtn.style.visibility = 'visible';
         }
+        // イベントリスナーを削除
         document.removeEventListener('click', onClickHandler);
         document.removeEventListener('keydown', onEscKey);
         if (observer) {
           observer.disconnect();
+          observer = null;
         }
       };
       
-      // プレビューモーダルのセレクタ
+      // プレビューモーダルのセレクタ（より広範囲に対応）
       const previewSelectors = 
         '.filePreviewLayer, #_filePreviewOverlay, #_filePreview, ' +
         '[class*="FilePreview"], [class*="filePreview"], ' +
         '[class*="ImagePreview"], [class*="imagePreview"], ' +
         '[class*="previewOverlay"], [class*="PreviewOverlay"], ' +
-        '[data-testid*="preview"], [data-testid*="Preview"]';
+        '[class*="urlPreview"], [class*="UrlPreview"], ' +
+        '[data-testid*="preview"], [data-testid*="Preview"], ' +
+        '[class*="modal"]:not(#cw-threader-panel), [class*="Modal"]:not(#cw-threader-panel), ' +
+        '[class*="overlay"]:not(#cw-threader-panel), [class*="Overlay"]:not(#cw-threader-panel)';
       
       const isPreviewOpen = () => {
         const modal = document.querySelector(previewSelectors);
         return modal && document.body.contains(modal);
       };
       
+      // プレビューが一度開いたかどうか
+      let previewWasOpened = false;
+      
       const onClickHandler = (e) => {
         // 少し遅延してプレビューが閉じたかチェック
         setTimeout(() => {
-          if (!isPreviewOpen()) {
+          if (previewWasOpened && !isPreviewOpen()) {
             restoreVisibility();
           }
-        }, 150);
+        }, 200);
       };
       
       const onEscKey = (e) => {
         if (e.key === 'Escape') {
-          setTimeout(restoreVisibility, 150);
+          setTimeout(restoreVisibility, 200);
         }
       };
       
       // MutationObserverでプレビューが閉じられたことを検出
       let observer = new MutationObserver(() => {
-        if (!isPreviewOpen()) {
+        // プレビューが開いたことを検出
+        if (!previewWasOpened && isPreviewOpen()) {
+          previewWasOpened = true;
+        }
+        // プレビューが開いた後に閉じたことを検出
+        if (previewWasOpened && !isPreviewOpen()) {
           restoreVisibility();
         }
       });
       
       // 少し遅延してからイベントリスナーとObserverを開始
       setTimeout(() => {
+        // プレビューが既に開いているかチェック
+        if (isPreviewOpen()) {
+          previewWasOpened = true;
+        }
         document.addEventListener('click', onClickHandler);
         document.addEventListener('keydown', onEscKey);
         observer.observe(document.body, { childList: true, subtree: true });
-      }, 300);
+      }, 500);
       
       // 安全のため、30秒後には必ず元に戻す
       setTimeout(restoreVisibility, 30000);
