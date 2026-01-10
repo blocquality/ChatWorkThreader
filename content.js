@@ -268,7 +268,10 @@
             '[data-cwtag^="[to"]',   // To
             '[data-cwtag="[toall]"]', // ToAll
             '.chatTimeLineReply',    // 返信バッジ表示部分
-            '._replyMessage'         // 返信メッセージバッジ
+            '._replyMessage',        // 返信メッセージバッジ
+            '._filePreview',         // プレビューボタン
+            '._filePreviewButton',   // プレビューボタン
+            '[data-type="chatworkImagePreview"]' // 画像プレビューボタン
           ];
           
           const textParts = collectTextNodes(preEl, excludeSelectors);
@@ -1091,6 +1094,8 @@
       // 該当するファイルのプレビューボタンを探す
       const originalPreviewBtn = messageEl.querySelector(`a._filePreview[data-file-id="${fileId}"], a[data-file-id="${fileId}"][data-type="chatworkImagePreview"]`);
       if (originalPreviewBtn) {
+        // プレビュー表示中はパネルのz-indexを下げる
+        this.lowerPanelZIndex();
         // 元のボタンをクリック
         originalPreviewBtn.click();
         return;
@@ -1099,6 +1104,50 @@
       // ボタンが見つからない場合は、メッセージにスクロールしてユーザーに見つけてもらう
       console.warn('ChatWork Threader: プレビューボタンが見つかりません、メッセージにスクロールします', fileId);
       this.scrollToMessage(mid);
+    }
+
+    /**
+     * パネルのz-indexを一時的に下げてプレビューを前面に表示
+     */
+    lowerPanelZIndex() {
+      if (!this.panel) return;
+      
+      // パネルのz-indexを下げる
+      this.panel.style.zIndex = '9999';
+      
+      // プレビューが閉じられたら元に戻す（クリックまたはEscキー）
+      const restoreZIndex = () => {
+        if (this.panel) {
+          this.panel.style.zIndex = '10001';
+        }
+        document.removeEventListener('click', onClickOutside);
+        document.removeEventListener('keydown', onEscKey);
+      };
+      
+      const onClickOutside = (e) => {
+        // プレビューモーダル外のクリックで復元（少し遅延させる）
+        setTimeout(() => {
+          const previewModal = document.querySelector('[class*="preview"], [class*="Preview"], [class*="modal"], [class*="Modal"], .filePreviewLayer');
+          if (!previewModal || !document.body.contains(previewModal)) {
+            restoreZIndex();
+          }
+        }, 100);
+      };
+      
+      const onEscKey = (e) => {
+        if (e.key === 'Escape') {
+          restoreZIndex();
+        }
+      };
+      
+      // 少し遅延してからイベントリスナーを追加
+      setTimeout(() => {
+        document.addEventListener('click', onClickOutside);
+        document.addEventListener('keydown', onEscKey);
+      }, 500);
+      
+      // 安全のため、10秒後には必ず元に戻す
+      setTimeout(restoreZIndex, 10000);
     }
 
     /**
