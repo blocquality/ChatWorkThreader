@@ -875,7 +875,7 @@
       // ファイルプレビューボタン用HTML（ChatWorkのプレビュー機能を利用）
       const filePreviewHtml = (node.filePreviewInfo && node.filePreviewInfo.length > 0) 
         ? `<div class="cw-threader-file-previews">${node.filePreviewInfo.map(file => 
-            `<a class="cw-threader-preview-btn _filePreview" data-file-id="${this.escapeHtml(file.fileId)}" data-type="chatworkImagePreview" data-mime-type="${this.escapeHtml(file.mimeType)}"><span class="cw-threader-preview-icon">🖼</span>${this.escapeHtml(this.truncateFileName(file.fileName))}</a>`
+            `<a class="cw-threader-preview-btn" data-file-id="${this.escapeHtml(file.fileId)}" data-mid="${this.escapeHtml(node.mid)}"><span class="cw-threader-preview-icon">🖼</span>${this.escapeHtml(this.truncateFileName(file.fileName))}</a>`
           ).join('')}</div>` 
         : '';
       
@@ -906,6 +906,18 @@
         </div>
       `;
 
+      // プレビューボタンのクリックイベントを設定
+      const previewButtons = messageEl.querySelectorAll('.cw-threader-preview-btn');
+      previewButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const fileId = btn.getAttribute('data-file-id');
+          const mid = btn.getAttribute('data-mid');
+          this.triggerOriginalPreview(mid, fileId);
+        });
+      });
+
       // クリックでメッセージにスクロール（プレースホルダーの場合は無効）
       if (!node.isPlaceholder) {
         messageEl.addEventListener('click', (e) => {
@@ -913,7 +925,7 @@
           if (e.target.closest('.cw-threader-toggle-wrap')) {
             return;
           }
-          // プレビューボタンをクリックした場合はスクロールしない（ChatWorkの処理に任せる）
+          // プレビューボタンをクリックした場合はスクロールしない
           if (e.target.closest('.cw-threader-preview-btn')) {
             return;
           }
@@ -1058,6 +1070,32 @@
         return fileName.substring(0, 22) + '...';
       }
       return fileName;
+    }
+
+    /**
+     * 元のメッセージ内のプレビューボタンをクリックしてプレビューを表示
+     * @param {string} mid - メッセージID
+     * @param {string} fileId - ファイルID
+     */
+    triggerOriginalPreview(mid, fileId) {
+      // 元のメッセージ要素を探す
+      const messageEl = document.querySelector(`[data-mid="${mid}"]`);
+      if (!messageEl) {
+        console.warn('ChatWork Threader: メッセージが見つかりません', mid);
+        return;
+      }
+      
+      // 該当するファイルのプレビューボタンを探す
+      const originalPreviewBtn = messageEl.querySelector(`a._filePreview[data-file-id="${fileId}"], a[data-file-id="${fileId}"][data-type="chatworkImagePreview"]`);
+      if (originalPreviewBtn) {
+        // 元のボタンをクリック
+        originalPreviewBtn.click();
+        return;
+      }
+      
+      // ボタンが見つからない場合は、メッセージにスクロールしてユーザーに見つけてもらう
+      console.warn('ChatWork Threader: プレビューボタンが見つかりません、メッセージにスクロールします', fileId);
+      this.scrollToMessage(mid);
     }
 
     /**
