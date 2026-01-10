@@ -1341,6 +1341,7 @@
 
     /**
      * プレビュー表示中はパネルを一時的に非表示にする
+     * シンプルなアプローチ：最初のクリックまたはEscキーで復元
      */
     lowerPanelZIndex() {
       const toggleBtn = document.getElementById('cw-threader-toggle');
@@ -1351,27 +1352,21 @@
       }
       this._previewHideInProgress = true;
       
-      // パネルとトグルボタンを即座に非表示（opacity + visibility で確実に）
-      const hideElements = () => {
-        if (this.panel) {
-          this.panel.style.opacity = '0';
-          this.panel.style.visibility = 'hidden';
-        }
-        if (toggleBtn) {
-          toggleBtn.style.opacity = '0';
-          toggleBtn.style.visibility = 'hidden';
-        }
-      };
-      
-      // 即座に非表示
-      hideElements();
+      // パネルとトグルボタンを即座に非表示
+      if (this.panel) {
+        this.panel.style.opacity = '0';
+        this.panel.style.visibility = 'hidden';
+      }
+      if (toggleBtn) {
+        toggleBtn.style.opacity = '0';
+        toggleBtn.style.visibility = 'hidden';
+      }
       
       // 復元済みフラグ
       let restored = false;
       
-      // プレビューが閉じられたら元に戻す
+      // 復元処理
       const restoreVisibility = () => {
-        // 既に復元済みなら何もしない
         if (restored) return;
         restored = true;
         this._previewHideInProgress = false;
@@ -1385,69 +1380,31 @@
           toggleBtn.style.visibility = 'visible';
         }
         // イベントリスナーを削除
-        document.removeEventListener('click', onClickHandler);
-        document.removeEventListener('keydown', onEscKey);
-        if (observer) {
-          observer.disconnect();
-          observer = null;
-        }
+        document.removeEventListener('click', onClickHandler, true);
+        document.removeEventListener('keydown', onEscKey, true);
       };
       
-      // プレビューモーダルのセレクタ（より広範囲に対応）
-      const previewSelectors = 
-        '.filePreviewLayer, #_filePreviewOverlay, #_filePreview, ' +
-        '[class*="FilePreview"], [class*="filePreview"], ' +
-        '[class*="ImagePreview"], [class*="imagePreview"], ' +
-        '[class*="previewOverlay"], [class*="PreviewOverlay"], ' +
-        '[class*="urlPreview"], [class*="UrlPreview"], ' +
-        '[data-testid*="preview"], [data-testid*="Preview"], ' +
-        '[class*="modal"]:not(#cw-threader-panel), [class*="Modal"]:not(#cw-threader-panel), ' +
-        '[class*="overlay"]:not(#cw-threader-panel), [class*="Overlay"]:not(#cw-threader-panel)';
-      
-      const isPreviewOpen = () => {
-        const modal = document.querySelector(previewSelectors);
-        return modal && document.body.contains(modal);
-      };
-      
-      // プレビューが一度開いたかどうか
-      let previewWasOpened = false;
-      
+      // クリックで復元（キャプチャフェーズで検出）
       const onClickHandler = (e) => {
-        // 少し遅延してプレビューが閉じたかチェック
-        setTimeout(() => {
-          if (previewWasOpened && !isPreviewOpen()) {
-            restoreVisibility();
-          }
-        }, 200);
+        // プレビューボタン自体のクリックは無視（連打対策）
+        if (e.target.closest('.cw-threader-preview-btn, .cw-threader-external-link-btn')) {
+          return;
+        }
+        // 少し遅延して復元（プレビューが閉じるのを待つ）
+        setTimeout(restoreVisibility, 100);
       };
       
+      // Escキーで復元
       const onEscKey = (e) => {
         if (e.key === 'Escape') {
-          setTimeout(restoreVisibility, 200);
+          setTimeout(restoreVisibility, 100);
         }
       };
       
-      // MutationObserverでプレビューが閉じられたことを検出
-      let observer = new MutationObserver(() => {
-        // プレビューが開いたことを検出
-        if (!previewWasOpened && isPreviewOpen()) {
-          previewWasOpened = true;
-        }
-        // プレビューが開いた後に閉じたことを検出
-        if (previewWasOpened && !isPreviewOpen()) {
-          restoreVisibility();
-        }
-      });
-      
-      // 少し遅延してからイベントリスナーとObserverを開始
+      // 少し遅延してからイベントリスナーを開始（プレビューが開く時間を確保）
       setTimeout(() => {
-        // プレビューが既に開いているかチェック
-        if (isPreviewOpen()) {
-          previewWasOpened = true;
-        }
-        document.addEventListener('click', onClickHandler);
-        document.addEventListener('keydown', onEscKey);
-        observer.observe(document.body, { childList: true, subtree: true });
+        document.addEventListener('click', onClickHandler, true);
+        document.addEventListener('keydown', onEscKey, true);
       }, 500);
       
       // 安全のため、30秒後には必ず元に戻す
