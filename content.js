@@ -245,79 +245,39 @@
             }
           });
           
-          // 外部リンクを収集（Google Sheets, Docs, Drive, その他のURL）
+          // 外部リンクを収集（ChatWork外部のURLのみ）
           const linkElements = preEl.querySelectorAll('a[href]');
           linkElements.forEach(link => {
             const href = link.getAttribute('href') || '';
-            // ChatWork内部リンクや返信バッジ内のリンクは除外
-            if (!href || href.startsWith('#') || href.startsWith('javascript:') || 
-                link.closest('[data-cwtag^="[rp"]') || link.closest('._replyMessage')) {
+            // 除外条件
+            if (!href || 
+                href.startsWith('#') || 
+                href.startsWith('javascript:') || 
+                href.includes('chatwork.com') ||           // ChatWork内部リンク
+                href.includes('/gateway/') ||              // ChatWorkダウンロードURL
+                href.includes('download_file') ||          // ダウンロードURL
+                link.closest('[data-cwtag^="[rp"]') ||     // 返信バッジ内
+                link.closest('._replyMessage') ||          // 返信メッセージ内
+                link.closest('._filePreview') ||           // ファイルプレビュー内
+                link.hasAttribute('data-file-id')) {       // ファイルリンク
               return;
-            }
-            
-            // 外部リンクの種類を判定
-            let linkType = 'link';
-            let icon = '🔗';
-            
-            if (href.includes('docs.google.com/spreadsheets') || href.includes('sheets.google.com')) {
-              linkType = 'spreadsheet';
-              icon = '📊';
-            } else if (href.includes('docs.google.com/document')) {
-              linkType = 'document';
-              icon = '📄';
-            } else if (href.includes('docs.google.com/presentation') || href.includes('slides.google.com')) {
-              linkType = 'slides';
-              icon = '📽️';
-            } else if (href.includes('drive.google.com')) {
-              linkType = 'drive';
-              icon = '📁';
-            } else if (href.includes('github.com')) {
-              linkType = 'github';
-              icon = '🐙';
-            } else if (href.includes('notion.so') || href.includes('notion.site')) {
-              linkType = 'notion';
-              icon = '📝';
-            } else if (href.includes('figma.com')) {
-              linkType = 'figma';
-              icon = '🎨';
-            } else if (href.includes('miro.com')) {
-              linkType = 'miro';
-              icon = '🖼️';
-            } else if (href.includes('slack.com')) {
-              linkType = 'slack';
-              icon = '💬';
-            } else if (href.includes('trello.com')) {
-              linkType = 'trello';
-              icon = '📋';
-            } else if (href.includes('asana.com')) {
-              linkType = 'asana';
-              icon = '✅';
-            } else if (href.includes('jira.') || href.includes('atlassian.')) {
-              linkType = 'jira';
-              icon = '🎫';
-            } else if (href.includes('zoom.us') || href.includes('zoom.com')) {
-              linkType = 'zoom';
-              icon = '📹';
-            } else if (href.includes('meet.google.com')) {
-              linkType = 'meet';
-              icon = '📹';
             }
             
             // リンクのタイトルを取得
             let title = link.textContent?.trim() || '';
             // URLがそのまま表示されている場合は短縮表示
-            if (title === href || title.length > 40) {
+            if (title === href || title.length > 50) {
               try {
                 const url = new URL(href);
-                title = url.hostname + (url.pathname.length > 20 ? url.pathname.substring(0, 20) + '...' : url.pathname);
+                title = url.hostname + (url.pathname.length > 25 ? url.pathname.substring(0, 25) + '...' : url.pathname);
               } catch {
-                title = href.length > 40 ? href.substring(0, 40) + '...' : href;
+                title = href.length > 50 ? href.substring(0, 50) + '...' : href;
               }
             }
             
             // 重複チェック
             if (!externalLinks.some(l => l.url === href)) {
-              externalLinks.push({ url: href, title, type: linkType, icon });
+              externalLinks.push({ url: href, title });
             }
           });
           
@@ -991,10 +951,10 @@
           ).join('')}</div>` 
         : '';
       
-      // 外部リンクボタン用HTML
+      // 外部リンクボタン用HTML（ファイルプレビューと同じスタイル）
       const externalLinksHtml = (node.externalLinks && node.externalLinks.length > 0)
-        ? `<div class="cw-threader-external-links">${node.externalLinks.map(link =>
-            `<a class="cw-threader-external-link cw-threader-link-${this.escapeHtml(link.type)}" href="${this.escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer" title="${this.escapeHtml(link.url)}">${link.icon} ${this.escapeHtml(link.title)}</a>`
+        ? `<div class="cw-threader-external-links">${node.externalLinks.map((link, index) =>
+            `<a class="cw-threader-external-link-btn" data-link-index="${index}" data-url="${this.escapeHtml(link.url)}" title="${this.escapeHtml(link.url)}">🔗 ${this.escapeHtml(link.title)}</a>`
           ).join('')}</div>`
         : '';
       
@@ -1026,7 +986,7 @@
         </div>
       `;
 
-      // プレビューボタンのクリックイベントを設定
+      // ファイルプレビューボタンのクリックイベントを設定
       const previewButtons = messageEl.querySelectorAll('.cw-threader-preview-btn');
       previewButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -1038,6 +998,17 @@
         });
       });
 
+      // 外部リンクボタンのクリックイベントを設定
+      const externalLinkButtons = messageEl.querySelectorAll('.cw-threader-external-link-btn');
+      externalLinkButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const url = btn.getAttribute('data-url');
+          this.openExternalLink(url);
+        });
+      });
+
       // クリックでメッセージにスクロール（プレースホルダーの場合は無効）
       if (!node.isPlaceholder) {
         messageEl.addEventListener('click', (e) => {
@@ -1046,7 +1017,7 @@
             return;
           }
           // プレビューボタンをクリックした場合はスクロールしない
-          if (e.target.closest('.cw-threader-preview-btn')) {
+          if (e.target.closest('.cw-threader-preview-btn') || e.target.closest('.cw-threader-external-link-btn')) {
             return;
           }
           e.stopPropagation();
@@ -1238,6 +1209,17 @@
       // ボタンが見つからない場合は、メッセージにスクロールしてユーザーに見つけてもらう
       console.warn('ChatWork Threader: プレビューボタンが見つかりません、メッセージにスクロールします', fileId);
       this.scrollToMessage(mid);
+    }
+
+    /**
+     * 外部リンクを開く（パネルを非表示にしてから）
+     * @param {string} url - 開くURL
+     */
+    openExternalLink(url) {
+      // パネルを非表示にする
+      this.lowerPanelZIndex();
+      // 新しいタブでリンクを開く
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
 
     /**
