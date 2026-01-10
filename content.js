@@ -125,6 +125,20 @@
         // アバター画像を取得
         const avatarEl = el.querySelector('.userIconImage');
         let avatarUrl = avatarEl ? avatarEl.src : '';
+        
+        // メッセージ送信者のAIDを取得
+        let senderAid = null;
+        const aidEl = el.querySelector('[data-aid]');
+        if (aidEl) {
+          senderAid = aidEl.getAttribute('data-aid');
+        }
+        // アバター画像URLからも取得を試みる
+        if (!senderAid && avatarUrl) {
+          const aidMatch = avatarUrl.match(/avatar\/(\d+)/);
+          if (aidMatch) {
+            senderAid = aidMatch[1];
+          }
+        }
 
         // ユーザー名がない場合は前のメッセージの送信者を使用（ChatWorkの連続投稿表示）
         if (!userName && lastUserName) {
@@ -138,16 +152,115 @@
           lastAvatarUrl = avatarUrl;
         }
 
-        // メッセージ本文を取得（<pre>内の<span>から直接取得）
+        // メッセージ本文を取得（<pre>内の要素から抽出）
         const preEl = el.querySelector('pre');
         let messageText = '';
         let replyTargetUserName = null;
+        let quotedMessage = null;  // 引用メッセージ
+        let imageUrls = [];  // 画像URL
+        let toTargets = [];  // To先ユーザー
+        
         if (preEl) {
-          const spanEl = preEl.querySelector('span');
-          if (spanEl) {
-            let rawText = spanEl.textContent.trim();
+          // 引用を取得（[qt]タグ）
+          const quoteTags = preEl.querySelectorAll('[data-cwtag^="[qt"]');
+          quoteTags.forEach(quoteTag => {
+            // 引用内容を取得（様々なクラス名に対応）
+            const quoteContent = quoteTag.querySelector('.sc-klVQfs, .chatTimeLineQuoteLine, [class*="Quote"], pre');
+            if (quoteContent) {
+              const qText = quoteContent.textContent.trim();
+              if (qText) {
+                quotedMessage = quotedMessage ? quotedMessage + '\n' + qText : qText;
+              }
+            } else {
+              // 直接テキストを取得
+              const qText = quoteTag.textContent.trim();
+              if (qText) {
+                quotedMessage = quotedMessage ? quotedMessage + '\n' + qText : qText;
+              }
+            }
+          });
+          
+          // 画像URLを取得（プレビュー/ダウンロード可能な画像）
+          const imageElements = preEl.querySelectorAll('img[src*="appdata.chatwork.com"], img[src*="preview"], a[href*="preview"], img[src*="thumbnail"]');
+          imageElements.forEach(imgEl => {
+            const url = imgEl.tagName === 'IMG' ? imgEl.src : imgEl.href;
+            // ユーザーアバター画像は除外
+            if (url && !url.includes('/avatar/') && !imageUrls.includes(url)) {
+              imageUrls.push(url);
+            }
+          });
+          
+          // ファイルダウンロードリンクも確認
+          const fileLinks = preEl.querySelectorAll('a[data-cwtag*="dlink"], a[href*="download"]');
+          fileLinks.forEach(link => {
+            const href = link.href || link.getAttribute('data-href');
+            if (href && /\.(jpg|jpeg|png|gif|bmp|webp|svg)/i.test(href) && !imageUrls.includes(href)) {
+              imageUrls.push(href);
+            }
+          });
+          
+          // To宛先を取得
+          const toTags = preEl.querySelectorAll('[data-cwtag^="[to"]');
+          toTags.forEach(toTag => {
+            const toName = toTag.textContent?.trim() || '';
+            if (toName && !toTargets.includes(toName)) {
+              toTargets.push(toName);
+            }
+          });
+          
+          // ToAllも確認
+          const toAllTag = preEl.querySelector('[data-cwtag="[toall]"]');
+          if (toAllTag && !toTargets.includes('ALL')) {
+            toTargets.push('ALL');
+          }
+          
+          // メッセージ本文を取得（より堅牢な方法）
+          // まず、特殊タグ以外のテキストノードを収集
+          const collectTextNodes = (element, excludeSelectors) => {
+            const texts = [];
+            const walker = document.createTreeWalker(
+              element,
+              NodeFilter.SHOW_TEXT,
+              {
+                acceptNode: (node) => {
+                  const parent = node.parentElement;
+                  if (!parent) return NodeFilter.FILTER_REJECT;
+                  // 除外セレクタに一致する要素内のテキストは除外
+                  for (const selector of excludeSelectors) {
+                    if (parent.closest(selector)) {
+                      return NodeFilter.FILTER_REJECT;
+                    }
+                  }
+                  return NodeFilter.FILTER_ACCEPT;
+                }
+              }
+            );
+            let node;
+            while (node = walker.nextNode()) {
+              const text = node.textContent;
+              if (text && text.trim()) {
+                texts.push(text);
+              }
+            }
+            return texts;
+          };
+          
+          // 除外するセレクタ
+          const excludeSelectors = [
+            '[data-cwtag^="[rp"]',   // Reply バッジ
+            '[data-cwtag^="[qt"]',   // 引用
+            '[data-cwtag^="[to"]',   // To
+            '[data-cwtag="[toall]"]', // ToAll
+            '.chatTimeLineReply',    // 返信バッジ表示部分
+            '._replyMessage'         // 返信メッセージバッジ
+          ];
+          
+          const textParts = collectTextNodes(preEl, excludeSelectors);
+          
+          if (textParts.length > 0) {
+            let rawText = textParts.join('').trim();
             
-            // 「〇〇さん」の行を抽出してから除去
+            // 「〇〇さん」の行を抽出してから除去（返信先ユーザー名）
             const userNameMatch = rawText.match(/^(.+?)さん[\r\n\s]+/);
             if (userNameMatch) {
               replyTargetUserName = userNameMatch[1];
@@ -192,7 +305,11 @@
           parentUserName: replyTargetUserName, // 本文から取得したユーザー名を使用
           parentAid,
           avatarUrl,
-          element: el
+          element: el,
+          quotedMessage,   // 引用メッセージ
+          imageUrls,       // 画像URL配列
+          toTargets,       // To先ユーザー配列
+          senderAid        // 送信者のAID
         };
 
         this.messages.set(mid, messageData);
@@ -311,7 +428,11 @@
         parentAid: null,
         avatarUrl: '',
         element: null,
-        isPlaceholder: true
+        isPlaceholder: true,
+        quotedMessage: null,
+        imageUrls: [],
+        toTargets: [],
+        senderAid: null
       };
     }
 
@@ -616,12 +737,24 @@
      */
     isUserInvolvedInThread(node, userAid) {
       // このノードのメッセージ送信者が自分かチェック
+      if (node.senderAid === userAid) {
+        return true;
+      }
+      
+      // messageDataから補足情報を取得
       const messageData = this.threadBuilder.messages.get(node.mid);
-      if (messageData && messageData.element) {
-        // メッセージ要素からAIDを取得
-        const aid = messageData.element.getAttribute('data-aid');
-        if (aid === userAid) {
+      if (messageData) {
+        // senderAidを確認
+        if (messageData.senderAid === userAid) {
           return true;
+        }
+        
+        // element から追加でAIDを取得
+        if (messageData.element) {
+          const aidEl = messageData.element.querySelector('[data-aid]');
+          if (aidEl && aidEl.getAttribute('data-aid') === userAid) {
+            return true;
+          }
         }
       }
       
@@ -712,6 +845,24 @@
       if (node.isPlaceholder) {
         messageEl.classList.add('cw-threader-placeholder');
       }
+      
+      // To宛先表示用HTML
+      const toTargetsHtml = (node.toTargets && node.toTargets.length > 0) 
+        ? `<div class="cw-threader-to-targets">To: ${node.toTargets.map(t => this.escapeHtml(t)).join(', ')}</div>` 
+        : '';
+      
+      // 引用表示用HTML
+      const quotedHtml = node.quotedMessage 
+        ? `<div class="cw-threader-quote"><span class="cw-threader-quote-icon">❝</span>${this.escapeHtml(node.quotedMessage)}</div>` 
+        : '';
+      
+      // 画像URL表示用HTML
+      const imageUrlsHtml = (node.imageUrls && node.imageUrls.length > 0) 
+        ? `<div class="cw-threader-images">${node.imageUrls.map(url => 
+            `<div class="cw-threader-image-link"><span class="cw-threader-image-icon">🖼</span><a href="${this.escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${this.escapeHtml(url)}">${this.truncateUrl(url)}</a></div>`
+          ).join('')}</div>` 
+        : '';
+      
       messageEl.innerHTML = `
         <div class="cw-threader-avatar-wrap">
           ${node.avatarUrl 
@@ -732,7 +883,10 @@
               </div>
             ` : ''}
           </div>
+          ${toTargetsHtml}
+          ${quotedHtml}
           <div class="cw-threader-message-body">${this.formatMessageText(node.messageText)}</div>
+          ${imageUrlsHtml}
         </div>
       `;
 
@@ -844,6 +998,27 @@
       const escaped = this.escapeHtml(text);
       // 改行コード（\r\n, \r, \n）を<br>タグに変換
       return escaped.replace(/\r\n|\r|\n/g, '<br>');
+    }
+
+    /**
+     * URLを短縮表示する（ファイル名のみを表示）
+     */
+    truncateUrl(url) {
+      try {
+        const urlObj = new URL(url);
+        const pathname = urlObj.pathname;
+        // ファイル名を取得
+        const parts = pathname.split('/');
+        const filename = parts[parts.length - 1] || parts[parts.length - 2] || 'image';
+        // ファイル名が長すぎる場合は切り詰め
+        if (filename.length > 30) {
+          return filename.substring(0, 27) + '...';
+        }
+        return filename;
+      } catch (e) {
+        // URLパースに失敗した場合は末尾30文字
+        return url.length > 30 ? '...' + url.substring(url.length - 27) : url;
+      }
     }
 
     /**
