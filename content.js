@@ -1154,56 +1154,77 @@
     }
 
     /**
-     * プレビューモーダルのz-indexを上げてスレッドパネルより前面に表示
+     * プレビュー表示中はパネルを一時的に非表示にする
      */
     lowerPanelZIndex() {
-      // プレビューモーダルが表示されるのを待って、そのz-indexを上げる
-      const raisePreviewZIndex = () => {
-        // ChatWorkのプレビューモーダルを探す
-        const previewSelectors = [
-          '.filePreviewLayer',
-          '#_filePreviewOverlay',
-          '[class*="FilePreview"]',
-          '[class*="filePreview"]', 
-          '[class*="ImagePreview"]',
-          '[class*="imagePreview"]',
-          '[data-testid*="preview"]',
-          '[data-testid*="Preview"]',
-          '.previewOverlay',
-          '[class*="preview"][class*="overlay" i]',
-          '[class*="preview"][class*="modal" i]'
-        ];
-        
-        for (const selector of previewSelectors) {
-          const modals = document.querySelectorAll(selector);
-          modals.forEach(modal => {
-            // 既にz-indexを設定済みでなければ設定
-            if (!modal.classList.contains('cw-threader-raised')) {
-              modal.classList.add('cw-threader-raised');
-              modal.style.setProperty('z-index', '100000', 'important');
-            }
-          });
+      if (!this.panel) return;
+      
+      // パネルとトグルボタンを一時的に非表示
+      this.panel.style.visibility = 'hidden';
+      const toggleBtn = document.getElementById('cw-threader-toggle');
+      if (toggleBtn) {
+        toggleBtn.style.visibility = 'hidden';
+      }
+      
+      // プレビューが閉じられたら元に戻す
+      const restoreVisibility = () => {
+        if (this.panel) {
+          this.panel.style.visibility = 'visible';
+        }
+        if (toggleBtn) {
+          toggleBtn.style.visibility = 'visible';
+        }
+        document.removeEventListener('click', onClickHandler);
+        document.removeEventListener('keydown', onEscKey);
+        if (observer) {
+          observer.disconnect();
         }
       };
       
-      // すぐに1回実行
-      raisePreviewZIndex();
+      // プレビューモーダルのセレクタ
+      const previewSelectors = 
+        '.filePreviewLayer, #_filePreviewOverlay, #_filePreview, ' +
+        '[class*="FilePreview"], [class*="filePreview"], ' +
+        '[class*="ImagePreview"], [class*="imagePreview"], ' +
+        '[class*="previewOverlay"], [class*="PreviewOverlay"], ' +
+        '[data-testid*="preview"], [data-testid*="Preview"]';
       
-      // 少し遅延して再度実行（モーダルが遅れて表示される場合に対応）
-      setTimeout(raisePreviewZIndex, 100);
-      setTimeout(raisePreviewZIndex, 300);
+      const isPreviewOpen = () => {
+        const modal = document.querySelector(previewSelectors);
+        return modal && document.body.contains(modal);
+      };
       
-      // MutationObserverでモーダルの追加を監視
-      const observer = new MutationObserver((mutations) => {
-        raisePreviewZIndex();
+      const onClickHandler = (e) => {
+        // 少し遅延してプレビューが閉じたかチェック
+        setTimeout(() => {
+          if (!isPreviewOpen()) {
+            restoreVisibility();
+          }
+        }, 150);
+      };
+      
+      const onEscKey = (e) => {
+        if (e.key === 'Escape') {
+          setTimeout(restoreVisibility, 150);
+        }
+      };
+      
+      // MutationObserverでプレビューが閉じられたことを検出
+      let observer = new MutationObserver(() => {
+        if (!isPreviewOpen()) {
+          restoreVisibility();
+        }
       });
       
-      observer.observe(document.body, { childList: true, subtree: true });
-      
-      // 安全のため、10秒後にObserverを停止
+      // 少し遅延してからイベントリスナーとObserverを開始
       setTimeout(() => {
-        observer.disconnect();
-      }, 10000);
+        document.addEventListener('click', onClickHandler);
+        document.addEventListener('keydown', onEscKey);
+        observer.observe(document.body, { childList: true, subtree: true });
+      }, 300);
+      
+      // 安全のため、30秒後には必ず元に戻す
+      setTimeout(restoreVisibility, 30000);
     }
 
     /**
