@@ -20,6 +20,59 @@
   }
 
   /**
+   * 現在ログインしているユーザーのAID（アカウントID）を取得
+   * ChatWorkの様々な場所から取得を試みる
+   */
+  function getCurrentUserAid() {
+    // 方法1: グローバル変数から取得（ChatWorkが設定している場合）
+    if (typeof CW !== 'undefined' && CW.myid) {
+      return CW.myid.toString();
+    }
+    
+    // 方法2: ページ内のユーザープロフィール要素から取得
+    const myProfileLink = document.querySelector('[data-myid]');
+    if (myProfileLink) {
+      return myProfileLink.getAttribute('data-myid');
+    }
+    
+    // 方法3: _myStatusAreaから取得（アイコン画像のsrcにaidが含まれることがある）
+    const myStatusArea = document.getElementById('_myStatusArea');
+    if (myStatusArea) {
+      const avatarImg = myStatusArea.querySelector('img');
+      if (avatarImg && avatarImg.src) {
+        const aidMatch = avatarImg.src.match(/avatar\/(\d+)/);
+        if (aidMatch) {
+          return aidMatch[1];
+        }
+      }
+    }
+    
+    // 方法4: inputタグのmyIdから取得
+    const myIdInput = document.querySelector('input[name="myid"]');
+    if (myIdInput) {
+      return myIdInput.value;
+    }
+
+    // 方法5: scriptタグ内のACを検索
+    const scripts = document.querySelectorAll('script');
+    for (const script of scripts) {
+      if (script.textContent) {
+        const acMatch = script.textContent.match(/AC\s*=\s*{[^}]*myid\s*:\s*["'](\d+)["']/);
+        if (acMatch) {
+          return acMatch[1];
+        }
+        // もう1つのパターン
+        const myidMatch = script.textContent.match(/["']myid["']\s*:\s*["'](\d+)["']/);
+        if (myidMatch) {
+          return myidMatch[1];
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  /**
    * トグル状態をストレージに保存
    */
   function saveToggleState(roomId, mid, isOpen) {
@@ -327,6 +380,8 @@
       this.originalStyles = null;
       this.currentRoomId = null;
       this.toggleStates = {}; // roomId -> { threadMid: boolean }
+      this.showOnlyMyThreads = false; // 自分のスレッドのみ表示するフィルター
+      this.currentUserAid = null; // 現在のユーザーAID
     }
 
     /**
@@ -423,6 +478,15 @@
             <button id="cw-threader-close" title="閉じる">×</button>
           </div>
         </div>
+        <div class="cw-threader-filter-bar">
+          <div class="cw-threader-filter-toggle">
+            <span class="cw-threader-filter-label">自分のスレッドのみ</span>
+            <label class="cw-threader-toggle-switch cw-threader-filter-switch">
+              <input type="checkbox" id="cw-threader-my-filter">
+              <span class="cw-threader-toggle-slider"></span>
+            </label>
+          </div>
+        </div>
         <div class="cw-threader-content">
           <div class="cw-threader-threads"></div>
         </div>
@@ -441,6 +505,15 @@
       document.getElementById('cw-threader-refresh').addEventListener('click', () => {
         this.refresh();
       });
+
+      // フィルタートグルのイベントリスナー
+      const filterCheckbox = document.getElementById('cw-threader-my-filter');
+      if (filterCheckbox) {
+        filterCheckbox.addEventListener('change', () => {
+          this.showOnlyMyThreads = filterCheckbox.checked;
+          this.renderThreads();
+        });
+      }
     }
 
     /**
@@ -499,7 +572,7 @@
 
       // ルートメッセージのタイムスタンプで新しい順にソート
       // タイムスタンプがない場合はmid（メッセージID）でソート（midは時系列で割り当てられる）
-      const sortedThreads = Array.from(threads.values())
+      let sortedThreads = Array.from(threads.values())
         .sort((a, b) => {
           const aTime = parseInt(a.timestamp) || 0;
           const bTime = parseInt(b.timestamp) || 0;
@@ -515,6 +588,16 @@
           return bMid - aMid;
         });
 
+      // フィルタリング：自分のスレッドのみ表示する場合
+      if (this.showOnlyMyThreads && this.currentUserAid) {
+        sortedThreads = sortedThreads.filter(thread => this.isUserInvolvedInThread(thread, this.currentUserAid));
+      }
+
+      if (sortedThreads.length === 0) {
+        container.innerHTML = '<div class="cw-threader-empty">該当するスレッドがありません</div>';
+        return;
+      }
+
       sortedThreads.forEach(thread => {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = 'cw-threader-thread';
@@ -523,6 +606,40 @@
         messageWrapper.appendChild(threadEl);
         container.appendChild(messageWrapper);
       });
+    }
+
+    /**
+     * スレッド内に指定ユーザーが関わっているか判定
+     * @param {Object} node - スレッドノード
+     * @param {string} userAid - ユーザーAID
+     * @returns {boolean} ユーザーが関わっている場合true
+     */
+    isUserInvolvedInThread(node, userAid) {
+      // このノードのメッセージ送信者が自分かチェック
+      const messageData = this.threadBuilder.messages.get(node.mid);
+      if (messageData && messageData.element) {
+        // メッセージ要素からAIDを取得
+        const aid = messageData.element.getAttribute('data-aid');
+        if (aid === userAid) {
+          return true;
+        }
+      }
+      
+      // このノードの返信先（親）が自分かチェック
+      if (node.parentAid === userAid) {
+        return true;
+      }
+      
+      // 子ノードを再帰的にチェック
+      if (node.children && node.children.length > 0) {
+        for (const child of node.children) {
+          if (this.isUserInvolvedInThread(child, userAid)) {
+            return true;
+          }
+        }
+      }
+      
+      return false;
     }
 
     /**
@@ -767,6 +884,9 @@
       if (!this.panel) {
         this.createPanel();
       }
+      
+      // 現在のユーザーAIDを取得
+      this.currentUserAid = getCurrentUserAid();
       
       // ルームのトグル状態を読み込み
       await this.loadToggleStates();
