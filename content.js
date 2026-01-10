@@ -473,18 +473,18 @@
         <div class="cw-threader-resize-handle"></div>
         <div class="cw-threader-header">
           <h3>スレッド</h3>
-          <div class="cw-threader-controls">
-            <button id="cw-threader-refresh" title="更新">↻</button>
-            <button id="cw-threader-close" title="閉じる">×</button>
-          </div>
-        </div>
-        <div class="cw-threader-filter-bar">
-          <div class="cw-threader-filter-toggle">
-            <span class="cw-threader-filter-label">自分のスレッドのみ</span>
-            <label class="cw-threader-toggle-switch cw-threader-filter-switch">
-              <input type="checkbox" id="cw-threader-my-filter">
-              <span class="cw-threader-toggle-slider"></span>
-            </label>
+          <div class="cw-threader-header-right">
+            <div class="cw-threader-filter-toggle">
+              <span class="cw-threader-filter-label">自分のスレッドのみ</span>
+              <label class="cw-threader-toggle-switch cw-threader-filter-switch">
+                <input type="checkbox" id="cw-threader-my-filter">
+                <span class="cw-threader-toggle-slider"></span>
+              </label>
+            </div>
+            <div class="cw-threader-controls">
+              <button id="cw-threader-refresh" title="更新">↻</button>
+              <button id="cw-threader-close" title="閉じる">×</button>
+            </div>
           </div>
         </div>
         <div class="cw-threader-content">
@@ -511,7 +511,7 @@
       if (filterCheckbox) {
         filterCheckbox.addEventListener('change', () => {
           this.showOnlyMyThreads = filterCheckbox.checked;
-          this.renderThreads();
+          this.refresh();
         });
       }
     }
