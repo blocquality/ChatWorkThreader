@@ -445,6 +445,144 @@
   color: #0a7eb0;
 }
 
+/* 外部リンクボタン */
+.cw-threader-external-links {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.cw-threader-external-link {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  padding: 3px 8px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-threader-external-link:hover {
+  background: #e8e8e8;
+  border-color: #bbb;
+  text-decoration: none;
+}
+
+/* サービス別カラー */
+.cw-threader-link-spreadsheet {
+  background: #e8f5e9;
+  border-color: #4caf50;
+  color: #2e7d32;
+}
+.cw-threader-link-spreadsheet:hover {
+  background: #c8e6c9;
+}
+
+.cw-threader-link-document {
+  background: #e3f2fd;
+  border-color: #2196f3;
+  color: #1565c0;
+}
+.cw-threader-link-document:hover {
+  background: #bbdefb;
+}
+
+.cw-threader-link-slides {
+  background: #fff8e1;
+  border-color: #ffc107;
+  color: #f57f17;
+}
+.cw-threader-link-slides:hover {
+  background: #ffecb3;
+}
+
+.cw-threader-link-drive {
+  background: #fce4ec;
+  border-color: #e91e63;
+  color: #c2185b;
+}
+.cw-threader-link-drive:hover {
+  background: #f8bbd9;
+}
+
+.cw-threader-link-github {
+  background: #f3e5f5;
+  border-color: #9c27b0;
+  color: #7b1fa2;
+}
+.cw-threader-link-github:hover {
+  background: #e1bee7;
+}
+
+.cw-threader-link-notion {
+  background: #fafafa;
+  border-color: #424242;
+  color: #212121;
+}
+.cw-threader-link-notion:hover {
+  background: #eeeeee;
+}
+
+.cw-threader-link-figma {
+  background: #fff3e0;
+  border-color: #ff9800;
+  color: #e65100;
+}
+.cw-threader-link-figma:hover {
+  background: #ffe0b2;
+}
+
+.cw-threader-link-miro {
+  background: #fff9c4;
+  border-color: #ffeb3b;
+  color: #f57f17;
+}
+.cw-threader-link-miro:hover {
+  background: #fff59d;
+}
+
+.cw-threader-link-zoom,
+.cw-threader-link-meet {
+  background: #e0f2f1;
+  border-color: #009688;
+  color: #00796b;
+}
+.cw-threader-link-zoom:hover,
+.cw-threader-link-meet:hover {
+  background: #b2dfdb;
+}
+
+.cw-threader-link-jira,
+.cw-threader-link-trello,
+.cw-threader-link-asana {
+  background: #e8eaf6;
+  border-color: #3f51b5;
+  color: #303f9f;
+}
+.cw-threader-link-jira:hover,
+.cw-threader-link-trello:hover,
+.cw-threader-link-asana:hover {
+  background: #c5cae9;
+}
+
+.cw-threader-link-slack {
+  background: #f3e5f5;
+  border-color: #8e24aa;
+  color: #6a1b9a;
+}
+.cw-threader-link-slack:hover {
+  background: #e1bee7;
+}
+
 /* 画像URL表示（後方互換性のため残す） */
 .cw-threader-images {
   margin-top: 6px;

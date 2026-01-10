@@ -158,6 +158,7 @@
         let replyTargetUserName = null;
         let quotedMessage = null;  // 引用メッセージ
         let filePreviewInfo = [];  // ファイルプレビュー情報 { fileId, mimeType, fileName }
+        let externalLinks = [];    // 外部リンク情報 { url, title, type }
         let toTargets = [];  // To先ユーザー
         
         if (preEl) {
@@ -241,6 +242,82 @@
             if (fileId && mimeType.startsWith('image/') && !filePreviewInfo.some(f => f.fileId === fileId)) {
               const fileName = el.textContent?.trim() || `file_${fileId}`;
               filePreviewInfo.push({ fileId, mimeType, fileName, previewElement: el });
+            }
+          });
+          
+          // 外部リンクを収集（Google Sheets, Docs, Drive, その他のURL）
+          const linkElements = preEl.querySelectorAll('a[href]');
+          linkElements.forEach(link => {
+            const href = link.getAttribute('href') || '';
+            // ChatWork内部リンクや返信バッジ内のリンクは除外
+            if (!href || href.startsWith('#') || href.startsWith('javascript:') || 
+                link.closest('[data-cwtag^="[rp"]') || link.closest('._replyMessage')) {
+              return;
+            }
+            
+            // 外部リンクの種類を判定
+            let linkType = 'link';
+            let icon = '🔗';
+            
+            if (href.includes('docs.google.com/spreadsheets') || href.includes('sheets.google.com')) {
+              linkType = 'spreadsheet';
+              icon = '📊';
+            } else if (href.includes('docs.google.com/document')) {
+              linkType = 'document';
+              icon = '📄';
+            } else if (href.includes('docs.google.com/presentation') || href.includes('slides.google.com')) {
+              linkType = 'slides';
+              icon = '📽️';
+            } else if (href.includes('drive.google.com')) {
+              linkType = 'drive';
+              icon = '📁';
+            } else if (href.includes('github.com')) {
+              linkType = 'github';
+              icon = '🐙';
+            } else if (href.includes('notion.so') || href.includes('notion.site')) {
+              linkType = 'notion';
+              icon = '📝';
+            } else if (href.includes('figma.com')) {
+              linkType = 'figma';
+              icon = '🎨';
+            } else if (href.includes('miro.com')) {
+              linkType = 'miro';
+              icon = '🖼️';
+            } else if (href.includes('slack.com')) {
+              linkType = 'slack';
+              icon = '💬';
+            } else if (href.includes('trello.com')) {
+              linkType = 'trello';
+              icon = '📋';
+            } else if (href.includes('asana.com')) {
+              linkType = 'asana';
+              icon = '✅';
+            } else if (href.includes('jira.') || href.includes('atlassian.')) {
+              linkType = 'jira';
+              icon = '🎫';
+            } else if (href.includes('zoom.us') || href.includes('zoom.com')) {
+              linkType = 'zoom';
+              icon = '📹';
+            } else if (href.includes('meet.google.com')) {
+              linkType = 'meet';
+              icon = '📹';
+            }
+            
+            // リンクのタイトルを取得
+            let title = link.textContent?.trim() || '';
+            // URLがそのまま表示されている場合は短縮表示
+            if (title === href || title.length > 40) {
+              try {
+                const url = new URL(href);
+                title = url.hostname + (url.pathname.length > 20 ? url.pathname.substring(0, 20) + '...' : url.pathname);
+              } catch {
+                title = href.length > 40 ? href.substring(0, 40) + '...' : href;
+              }
+            }
+            
+            // 重複チェック
+            if (!externalLinks.some(l => l.url === href)) {
+              externalLinks.push({ url: href, title, type: linkType, icon });
             }
           });
           
@@ -356,6 +433,7 @@
           element: el,
           quotedMessage,   // 引用メッセージ
           filePreviewInfo, // ファイルプレビュー情報配列
+          externalLinks,   // 外部リンク情報配列
           toTargets,       // To先ユーザー配列
           senderAid        // 送信者のAID
         };
@@ -479,6 +557,7 @@
         isPlaceholder: true,
         quotedMessage: null,
         filePreviewInfo: [],
+        externalLinks: [],
         toTargets: [],
         senderAid: null
       };
@@ -912,6 +991,13 @@
           ).join('')}</div>` 
         : '';
       
+      // 外部リンクボタン用HTML
+      const externalLinksHtml = (node.externalLinks && node.externalLinks.length > 0)
+        ? `<div class="cw-threader-external-links">${node.externalLinks.map(link =>
+            `<a class="cw-threader-external-link cw-threader-link-${this.escapeHtml(link.type)}" href="${this.escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer" title="${this.escapeHtml(link.url)}">${link.icon} ${this.escapeHtml(link.title)}</a>`
+          ).join('')}</div>`
+        : '';
+      
       messageEl.innerHTML = `
         <div class="cw-threader-avatar-wrap">
           ${node.avatarUrl 
@@ -936,6 +1022,7 @@
           ${quotedHtml}
           <div class="cw-threader-message-body">${this.formatMessageText(node.messageText)}</div>
           ${filePreviewHtml}
+          ${externalLinksHtml}
         </div>
       `;
 
