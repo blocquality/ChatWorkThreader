@@ -103,6 +103,30 @@
   color: #1a1a1a;
 }
 
+/* フィルターバー */
+.cw-threader-filter-bar {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.cw-threader-filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cw-threader-filter-label {
+  font-size: 12px;
+  color: #606060;
+}
+
+.cw-threader-filter-switch {
+  /* トグルスイッチ共通スタイルを継承 */
+}
+
 .cw-threader-controls {
   display: flex;
   gap: 4px;
