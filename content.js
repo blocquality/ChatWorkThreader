@@ -875,7 +875,7 @@
       // ファイルプレビューボタン用HTML（ChatWorkのプレビュー機能を利用）
       const filePreviewHtml = (node.filePreviewInfo && node.filePreviewInfo.length > 0) 
         ? `<div class="cw-threader-file-previews">${node.filePreviewInfo.map(file => 
-            `<a class="cw-threader-preview-btn" data-file-id="${this.escapeHtml(file.fileId)}" data-mid="${this.escapeHtml(node.mid)}"><span class="cw-threader-preview-icon">🖼</span>${this.escapeHtml(this.truncateFileName(file.fileName))}</a>`
+            `<a class="cw-threader-preview-btn" data-file-id="${this.escapeHtml(file.fileId)}" data-mid="${this.escapeHtml(node.mid)}">プレビュー</a>`
           ).join('')}</div>` 
         : '';
       
@@ -1023,13 +1023,16 @@
     }
 
     /**
-     * メッセージテキストをフォーマット（HTMLエスケープ + 改行をbrタグに変換）
+     * メッセージテキストをフォーマット（HTMLエスケープ + URL自動リンク + 改行をbrタグに変換）
      */
     formatMessageText(text) {
       // まずHTMLエスケープ
       const escaped = this.escapeHtml(text);
+      // URLを自動リンク化
+      const urlPattern = /(https?:\/\/[^\s<>"']+)/g;
+      const withLinks = escaped.replace(urlPattern, '<a href="$1" class="cw-threader-link" target="_blank" rel="noopener noreferrer">$1</a>');
       // 改行コード（\r\n, \r, \n）を<br>タグに変換
-      return escaped.replace(/\r\n|\r|\n/g, '<br>');
+      return withLinks.replace(/\r\n|\r|\n/g, '<br>');
     }
 
     /**
