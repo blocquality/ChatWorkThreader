@@ -1157,21 +1157,31 @@
      * プレビュー表示中はパネルを一時的に非表示にする
      */
     lowerPanelZIndex() {
-      if (!this.panel) return;
-      
-      // パネルとトグルボタンを一時的に非表示
-      this.panel.style.visibility = 'hidden';
       const toggleBtn = document.getElementById('cw-threader-toggle');
-      if (toggleBtn) {
-        toggleBtn.style.visibility = 'hidden';
-      }
+      
+      // パネルとトグルボタンを即座に非表示（opacity + visibility で確実に）
+      const hideElements = () => {
+        if (this.panel) {
+          this.panel.style.opacity = '0';
+          this.panel.style.visibility = 'hidden';
+        }
+        if (toggleBtn) {
+          toggleBtn.style.opacity = '0';
+          toggleBtn.style.visibility = 'hidden';
+        }
+      };
+      
+      // 即座に非表示
+      hideElements();
       
       // プレビューが閉じられたら元に戻す
       const restoreVisibility = () => {
         if (this.panel) {
+          this.panel.style.opacity = '1';
           this.panel.style.visibility = 'visible';
         }
         if (toggleBtn) {
+          toggleBtn.style.opacity = '1';
           toggleBtn.style.visibility = 'visible';
         }
         document.removeEventListener('click', onClickHandler);
