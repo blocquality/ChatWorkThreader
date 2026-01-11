@@ -278,7 +278,8 @@
   transition: none !important;
 }
 
-.cw-threader-message:hover {
+/* ハイライトアニメーション中はホバー背景色を適用しない */
+.cw-threader-message:hover:not(.cw-threader-highlight-panel) {
   background: #f2f2f2;
   transition: none !important;
 }
@@ -788,15 +789,15 @@
 
 /* ハイライト効果 */
 .cw-threader-highlight {
-  animation: cw-threader-pulse 1.5s ease-out;
+  animation: cw-threader-pulse 1.5s ease-out forwards !important;
 }
 
 @keyframes cw-threader-pulse {
   0% {
-    background: rgba(25, 118, 210, 0.2);
+    background: rgba(25, 118, 210, 0.2) !important;
   }
   100% {
-    background: transparent;
+    background: transparent !important;
   }
 }
 
@@ -830,12 +831,15 @@
   background: #f8f9fa;
   color: #555;
   cursor: pointer;
+  /* チカチカ防止: transitionなしで即座に変化 */
+  transition: none;
 }
 
 .cw-threader-show-in-thread-wrapper:hover .cw-threader-show-in-thread-btn {
   background: #e3f2fd;
   border-color: #2196F3;
   color: #1976D2;
+  transition: none;
 }
 
 .cw-threader-show-in-thread-btn:active {
@@ -851,16 +855,22 @@
 
 /* スレッドパネル内のハイライト効果 */
 .cw-threader-highlight-panel {
-  animation: cw-threader-panel-highlight 2s ease-out;
+  animation: cw-threader-panel-highlight 2s ease-out forwards !important;
+  /* ホバー背景色を上書きしてアニメーション中のチカチカを防ぐ */
+}
+
+/* ハイライト中はホバー効果を無効化 */
+.cw-threader-highlight-panel:hover {
+  background: transparent !important;
 }
 
 @keyframes cw-threader-panel-highlight {
   0%, 30% {
-    background: rgba(33, 150, 243, 0.25);
+    background: rgba(33, 150, 243, 0.25) !important;
     box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.4);
   }
   100% {
-    background: transparent;
+    background: transparent !important;
     box-shadow: none;
   }
 }
