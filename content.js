@@ -129,65 +129,67 @@
 
     /**
      * メッセージが自分宛てかどうかを判定
-     * @param {Element} messageElement - メッセージ要素
+     * @param {Element} messageElement - メッセージ要素（_message クラスを持つ要素）
      * @param {string} mid - メッセージID（デバッグ用）
      * @returns {boolean}
      */
     isMessageToMe(messageElement, mid) {
-      // 方法1: 渡された要素から .timelineMessage を探す
+      // 方法1: _message 要素自体に mentioned クラスがあるかチェック
+      // ChatWorkの現在の構造: <div class="_message mentioned"> または <div class="_message bordered">
+      if (messageElement.classList.contains('mentioned')) {
+        console.log(`[ChatWorkThreader] 自分宛て検出 (mentionedクラス): MID=${mid}`);
+        return true;
+      }
+      
+      // 方法2: 親要素の .timelineMessage を探す（旧構造対応）
       let timelineMessage = messageElement.closest('.timelineMessage');
       
-      // 方法2: 見つからない場合、MIDから再取得を試みる
+      // 方法3: 見つからない場合、MIDから再取得を試みる
       if (!timelineMessage && mid) {
         const rootEl = this.findMessageRootByMid(mid);
         if (rootEl) {
+          // rootEl自体にmentionedクラスがあるかチェック
+          if (rootEl.classList.contains('mentioned')) {
+            console.log(`[ChatWorkThreader] 自分宛て検出 (findMessageRoot経由): MID=${mid}`);
+            return true;
+          }
           timelineMessage = rootEl.closest('.timelineMessage');
         }
       }
       
-      // 方法3: それでも見つからない場合、親要素を辿って探す
+      // 方法4: 親要素を辿って timelineMessage--mention クラスを探す（旧構造対応）
       if (!timelineMessage) {
         let parent = messageElement.parentElement;
         while (parent && parent !== document.body) {
+          // 親にmentionedクラスがあるかチェック
+          if (parent.classList && parent.classList.contains('mentioned')) {
+            console.log(`[ChatWorkThreader] 自分宛て検出 (親要素mentionedクラス): MID=${mid}`);
+            return true;
+          }
           if (parent.classList && parent.classList.contains('timelineMessage')) {
             timelineMessage = parent;
             break;
           }
-          // timelineMessage--mention クラスを直接探す
           if (parent.classList && parent.classList.contains('timelineMessage--mention')) {
-            timelineMessage = parent;
-            break;
+            console.log(`[ChatWorkThreader] 自分宛て検出 (timelineMessage--mention): MID=${mid}`);
+            return true;
           }
           parent = parent.parentElement;
         }
       }
       
-      if (!timelineMessage) {
-        // デバッグ: timelineMessageが見つからない場合
-        console.log(`[ChatWorkThreader DEBUG] MID=${mid}: .timelineMessage が見つかりません。要素:`, messageElement);
-        return false;
+      // timelineMessage が見つかった場合は旧ロジックでチェック
+      if (timelineMessage) {
+        const hasMention = timelineMessage.classList.contains('timelineMessage--mention');
+        const hasJump = timelineMessage.classList.contains('timelineMessage--jumpMessage');
+        
+        if (hasMention && !hasJump) {
+          console.log(`[ChatWorkThreader] 自分宛て検出 (timelineMessage): MID=${mid}`);
+          return true;
+        }
       }
       
-      // クラス一覧を確認
-      const hasMention = timelineMessage.classList.contains('timelineMessage--mention');
-      const hasJump = timelineMessage.classList.contains('timelineMessage--jumpMessage');
-      const allClasses = Array.from(timelineMessage.classList).join(', ');
-      
-      // 最初の数件だけ詳細ログを出力
-      if (this._debugCount === undefined) this._debugCount = 0;
-      if (this._debugCount < 5) {
-        console.log(`[ChatWorkThreader DEBUG] MID=${mid}: mention=${hasMention}, jump=${hasJump}, classes=[${allClasses}]`);
-        this._debugCount++;
-      }
-      
-      // 自分宛ての場合はログ出力
-      if (hasMention && !hasJump) {
-        console.log(`[ChatWorkThreader] 自分宛て検出: MID=${mid}`);
-      }
-      
-      // timelineMessage--mention クラスがあり、
-      // timelineMessage--jumpMessage クラスがない場合に自分宛て
-      return hasMention && !hasJump;
+      return false;
     }
 
     /**
