@@ -248,6 +248,14 @@
   border-bottom: 1px solid #e0e0e0;
 }
 
+/* パネル内の全要素でtransitionを無効化（ちらつき防止） */
+.cw-threader-thread,
+.cw-threader-thread *,
+.cw-threader-thread *::before,
+.cw-threader-thread *::after {
+  transition: none !important;
+}
+
 .cw-threader-thread:last-child {
   border-bottom: none;
 }
@@ -266,14 +274,16 @@
   position: relative;
   flex: 1;
   min-width: 0;
-  background: transparent;
+  background: transparent !important;
+  transition: none !important;
 }
 
 .cw-threader-message:hover {
-  background: #f2f2f2;
+  background: #f2f2f2 !important;
+  transition: none !important;
 }
 
-.cw-threader-message * {
+.cw-threader-message > * {
   pointer-events: none;
 }
 
