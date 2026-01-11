@@ -801,6 +801,9 @@
         <div class="cw-threader-header">
           <h3>スレッド</h3>
           <div class="cw-threader-header-right">
+            <select id="cw-threader-speaker-filter" class="cw-threader-speaker-select" title="発言者でフィルター">
+              <option value="">全員</option>
+            </select>
             <div class="cw-threader-filter-toggle">
               <span class="cw-threader-filter-label">自分のスレッドのみ</span>
               <label class="cw-threader-toggle-switch cw-threader-filter-switch">
@@ -813,11 +816,6 @@
               <button id="cw-threader-close" title="閉じる">×</button>
             </div>
           </div>
-        </div>
-        <div class="cw-threader-filter-bar">
-          <select id="cw-threader-speaker-filter" class="cw-threader-speaker-select">
-            <option value="">全員</option>
-          </select>
         </div>
         <div class="cw-threader-content">
           <div class="cw-threader-threads"></div>
