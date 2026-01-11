@@ -71,23 +71,48 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 8px;
+  width: 12px;
   height: 100%;
   cursor: ew-resize;
-  background: #e0e0e0;
+  background: #e8e8e8;
   transition: background 0.15s ease;
   z-index: 10;
-  /* 中央に細いラインを表示してドラッグ可能であることを示す */
-  border-left: 2px solid #bdbdbd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 三本線インジケーター */
+.cw-threader-resize-handle::before {
+  content: '';
+  width: 4px;
+  height: 24px;
+  background: repeating-linear-gradient(
+    to bottom,
+    #999 0px,
+    #999 2px,
+    transparent 2px,
+    transparent 6px
+  );
+  border-radius: 1px;
 }
 
 .cw-threader-resize-handle:hover {
-  background: rgba(25, 118, 210, 0.2);
-  border-left-color: #1976d2;
+  background: rgba(25, 118, 210, 0.15);
+}
+
+.cw-threader-resize-handle:hover::before {
+  background: repeating-linear-gradient(
+    to bottom,
+    #1976d2 0px,
+    #1976d2 2px,
+    transparent 2px,
+    transparent 6px
+  );
 }
 
 .cw-threader-resize-handle:active {
-  background: rgba(25, 118, 210, 0.5);
+  background: rgba(25, 118, 210, 0.3);
 }
 
 /* ヘッダー */
@@ -95,7 +120,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 12px 16px 12px 20px;
   background: #fff;
   border-bottom: 1px solid #e0e0e0;
 }
@@ -397,6 +422,16 @@
 .cw-threader-message.cw-threader-placeholder .cw-threader-message-body {
   font-style: italic;
   color: #909090;
+}
+
+/* 自分宛てメッセージ（メンション）のスタイル - ChatWorkの緑色に合わせる */
+.cw-threader-message.cw-threader-mention {
+  background: #e8f5e9;
+  border-left: 3px solid #4caf50;
+}
+
+.cw-threader-message.cw-threader-mention:hover {
+  background: #c8e6c9;
 }
 
 .cw-threader-message-body {

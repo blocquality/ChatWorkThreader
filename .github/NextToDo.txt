@@ -1,1 +1,16 @@
-スレッド一覧について、メッセージに引用が存在する場合、引用元の発言者の情報も表示できるようにしたい。
+＊スレッド一覧の横幅を広げる為のバーについて、右側の空白が狭すぎるので、少し設けて欲しい。また、横幅を広げる為のバーであることが分かりにくいので、|||のような三本戦を中心部分に置いてほしい。
+＊チャットワークの各メッセージを自分宛てかどうか判別できるようにしたい。下記の様なコードで判定できる可能性があるので、メッセージごとに自分宛てかどうか判定できるようにして、それをスレッド一覧に反映させてほしい。要は、自分宛てであれば、チャットワーク上の表示と同じように、緑色にしてほしい、ということ。
+
+function isToMeByClass(messageRoot) {
+  // messageRoot は .timelineMessage 要素を想定
+  return messageRoot.classList.contains('timelineMessage--mention')
+      && !messageRoot.classList.contains('timelineMessage--jumpMessage');
+}
+
+function isToMeFromNode(node) {
+  const root = node.closest('.timelineMessage');
+  if (!root) return false;
+
+  return root.classList.contains('timelineMessage--mention')
+      && !root.classList.contains('timelineMessage--jumpMessage');
+}

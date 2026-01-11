@@ -104,6 +104,22 @@
     }
 
     /**
+     * メッセージが自分宛てかどうかを判定
+     * @param {Element} messageElement - .timelineMessage要素
+     * @returns {boolean}
+     */
+    isMessageToMe(messageElement) {
+      // timelineMessage要素を取得（_message要素から親を辿る）
+      const timelineMessage = messageElement.closest('.timelineMessage');
+      if (!timelineMessage) return false;
+      
+      // timelineMessage--mention クラスがあり、
+      // timelineMessage--jumpMessage クラスがない場合に自分宛て
+      return timelineMessage.classList.contains('timelineMessage--mention')
+          && !timelineMessage.classList.contains('timelineMessage--jumpMessage');
+    }
+
+    /**
      * ページからメッセージを収集
      */
     collectMessages() {
@@ -117,6 +133,9 @@
         const rid = el.getAttribute('data-rid');
         
         if (!mid) return;
+
+        // 自分宛てかどうかを判定
+        const isToMe = this.isMessageToMe(el);
 
         // ユーザー名を取得（連続投稿の場合は前のユーザー名を使用）
         // 引用要素内のユーザー名は除外する
@@ -706,7 +725,8 @@
           externalLinks,   // 外部リンク情報配列
           quoteExternalLinks, // 引用内の外部リンク情報配列
           toTargets,       // To先ユーザー配列
-          senderAid        // 送信者のAID
+          senderAid,       // 送信者のAID
+          isToMe           // 自分宛てフラグ
         };
 
         this.messages.set(mid, messageData);
@@ -1341,6 +1361,10 @@
       messageEl.className = 'cw-threader-message';
       if (node.isPlaceholder) {
         messageEl.classList.add('cw-threader-placeholder');
+      }
+      // 自分宛てメッセージの場合、緑色背景クラスを追加
+      if (node.isToMe) {
+        messageEl.classList.add('cw-threader-mention');
       }
       
       // To宛先表示用HTML
