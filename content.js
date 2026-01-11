@@ -180,6 +180,7 @@
         let messageText = '';
         let replyTargetUserName = null;
         let quotedMessage = null;  // 引用メッセージ
+        let quoteAuthor = null;    // 引用元発言者情報 { name, avatarUrl, timestamp }
         let filePreviewInfo = [];  // ファイルプレビュー情報 { fileId, mimeType, fileName, fileSize }
         let externalLinks = [];    // 外部リンク情報 { url, title, type }
         let quoteExternalLinks = [];  // 引用内の外部リンク情報
@@ -189,6 +190,34 @@
           // 引用を取得（[qt]タグ、または .chatQuote クラス）
           const quoteTags = preEl.querySelectorAll('[data-cwtag^="[qt"], [data-cwopen="[qt]"], .chatQuote, .dev_quote');
           quoteTags.forEach(quoteTag => {
+            // 引用元発言者情報を取得
+            if (!quoteAuthor) {
+              // 発言者名を取得（.chatQuote__title 内の [data-cwtag^="[pname"] または ._nameAid）
+              const quoteTitle = quoteTag.querySelector('.chatQuote__title');
+              if (quoteTitle) {
+                // 発言者名
+                const pnameEl = quoteTitle.querySelector('[data-cwtag^="[pname"]');
+                const nameEl = pnameEl || quoteTitle.querySelector('[class*="_nameAid"]');
+                const authorName = nameEl ? nameEl.textContent.trim() : '';
+                
+                // アバター画像
+                const avatarEl = quoteTitle.querySelector('img[data-testid="user-icon"], img[class*="avatar"], .userIconImage');
+                const authorAvatarUrl = avatarEl ? avatarEl.src : '';
+                
+                // タイムスタンプ
+                const timestampEl = quoteTitle.querySelector('.quoteTimeStamp, .chatQuote__timeStamp, [data-cwtag^="[date"]');
+                const authorTimestamp = timestampEl ? timestampEl.textContent.trim() : '';
+                
+                if (authorName) {
+                  quoteAuthor = {
+                    name: authorName,
+                    avatarUrl: authorAvatarUrl,
+                    timestamp: authorTimestamp
+                  };
+                }
+              }
+            }
+            
             // 引用テキスト部分を取得（.quoteText クラスを優先）
             const quoteTextEl = quoteTag.querySelector('.quoteText');
             if (quoteTextEl) {
@@ -672,6 +701,7 @@
           avatarUrl,
           element: el,
           quotedMessage,   // 引用メッセージ
+          quoteAuthor,     // 引用元発言者情報 { name, avatarUrl, timestamp }
           filePreviewInfo, // ファイルプレビュー情報配列
           externalLinks,   // 外部リンク情報配列
           quoteExternalLinks, // 引用内の外部リンク情報配列
@@ -797,6 +827,7 @@
         element: null,
         isPlaceholder: true,
         quotedMessage: null,
+        quoteAuthor: null,
         filePreviewInfo: [],
         externalLinks: [],
         quoteExternalLinks: [],
@@ -1317,9 +1348,9 @@
         ? `<div class="cw-threader-to-targets">To: ${node.toTargets.map(t => this.escapeHtml(t)).join(', ')}</div>` 
         : '';
       
-      // 引用表示用HTML（引用内のプレビューボタンも表示）
+      // 引用表示用HTML（引用内のプレビューボタンも表示、発言者情報も表示）
       const quotedHtml = node.quotedMessage 
-        ? this.formatQuoteWithPreviews(node.quotedMessage, node.mid, node.quoteExternalLinks || [])
+        ? this.formatQuoteWithPreviews(node.quotedMessage, node.mid, node.quoteExternalLinks || [], node.quoteAuthor)
         : '';
       
       // メッセージ本文（URLの直後にプレビューボタンを挿入）
@@ -1487,13 +1518,14 @@
     }
 
     /**
-     * 引用テキストをフォーマット（プレビューボタン付き）
+     * 引用テキストをフォーマット（プレビューボタン付き、発言者情報表示）
      * @param {string} text - 引用テキスト
      * @param {string} mid - メッセージID
      * @param {Array} quoteExternalLinks - 引用内の外部リンク情報配列
+     * @param {Object} quoteAuthor - 引用元発言者情報 { name, avatarUrl, timestamp }
      * @returns {string} フォーマットされたHTML
      */
-    formatQuoteWithPreviews(text, mid, quoteExternalLinks = []) {
+    formatQuoteWithPreviews(text, mid, quoteExternalLinks = [], quoteAuthor = null) {
       // 「プレビュー」という文言を除去
       let cleanedText = text.replace(/プレビュー/g, '');
       // 連続した空白行を1つに
@@ -1537,6 +1569,21 @@
         }
       });
       
+      // 引用元発言者ヘッダーを構築
+      let authorHtml = '';
+      if (quoteAuthor && quoteAuthor.name) {
+        const avatarHtml = quoteAuthor.avatarUrl 
+          ? `<img src="${this.escapeHtml(quoteAuthor.avatarUrl)}" class="cw-threader-quote-avatar" alt="">` 
+          : '';
+        const timestampHtml = quoteAuthor.timestamp 
+          ? `<span class="cw-threader-quote-timestamp">${this.escapeHtml(quoteAuthor.timestamp)}</span>` 
+          : '';
+        authorHtml = `<div class="cw-threader-quote-header">
+          ${avatarHtml}
+          <span class="cw-threader-quote-author">${this.escapeHtml(quoteAuthor.name)}</span>
+          ${timestampHtml}
+        </div>`;
+      }
       // HTMLを構築
       let contentHtml = '';
       parts.forEach(part => {
@@ -1577,7 +1624,7 @@
         }
       });
       
-      return `<div class="cw-threader-quote"><span class="cw-threader-quote-icon">❝</span>${contentHtml}</div>`;
+      return `<div class="cw-threader-quote">${authorHtml}<div class="cw-threader-quote-body"><span class="cw-threader-quote-icon">❝</span>${contentHtml}</div></div>`;
     }
 
     /**

@@ -438,8 +438,43 @@
   margin-bottom: 6px;
   border-radius: 0 4px 4px 0;
   line-height: 1.4;
-  max-height: 120px;
+  max-height: 150px;
   overflow-y: auto;
+}
+
+/* 引用元発言者ヘッダー */
+.cw-threader-quote-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.cw-threader-quote-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cw-threader-quote-author {
+  font-weight: 500;
+  color: #505050;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.cw-threader-quote-timestamp {
+  font-size: 10px;
+  color: #909090;
+  margin-left: auto;
+}
+
+/* 引用本文 */
+.cw-threader-quote-body {
+  /* flexで配置 */
 }
 
 .cw-threader-quote-icon {
