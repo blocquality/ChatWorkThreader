@@ -424,14 +424,14 @@
   color: #909090;
 }
 
-/* 自分宛てメッセージ（メンション）のスタイル - ChatWorkの緑色に合わせる */
+/* 自分宛てメッセージ（メンション）のスタイル - ChatWorkと同じ色 */
 .cw-threader-message.cw-threader-mention {
-  background: #e8f5e9;
-  border-left: 3px solid #4caf50;
+  background: #e0f2f1;
+  border-left: 4px solid #4db6ac;
 }
 
 .cw-threader-message.cw-threader-mention:hover {
-  background: #c8e6c9;
+  background: #b2dfdb;
 }
 
 .cw-threader-message-body {
