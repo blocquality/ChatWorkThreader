@@ -802,10 +802,11 @@
 
 /* 「スレッドで表示」ボタン ラッパー */
 .cw-threader-show-in-thread-wrapper {
-  display: block;
-  margin: 4px 0;
-  position: relative;
-  z-index: 1;
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
 }
 
 /* 「スレッドで表示」ボタン */
@@ -813,11 +814,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #f8f9fa;
   color: #555;
   cursor: pointer;

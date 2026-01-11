@@ -2548,22 +2548,13 @@
         // スレッドに含まれているかチェック
         if (!this.isMessageInThread(mid)) return;
         
-        // ボタンを追加する位置を探す
-        // ChatWorkのメッセージ構造: メッセージ要素の左側パディングエリアに配置
-        // _message要素の最初の子要素（通常はアバター列を含む）を探す
-        const firstChild = el.firstElementChild;
+        // ボタンを追加する位置: _message要素の左側パディングに絶対位置で配置
+        // _message要素にposition:relativeを設定し、ボタンを左側に配置
+        el.style.position = 'relative';
         
-        if (firstChild) {
-          const button = this.createShowInThreadButton(mid);
-          // 最初の子要素の末尾に追加（アバターの下に配置される）
-          firstChild.appendChild(button);
-          this.addedButtons.add(mid);
-        } else {
-          // フォールバック: メッセージ要素自体の先頭に追加
-          const button = this.createShowInThreadButton(mid);
-          el.insertBefore(button, el.firstChild);
-          this.addedButtons.add(mid);
-        }
+        const button = this.createShowInThreadButton(mid);
+        el.appendChild(button);
+        this.addedButtons.add(mid);
       });
     }
 
