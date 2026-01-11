@@ -2650,6 +2650,9 @@
             if (entry.isIntersecting) {
               // 要素が画面内に見えたらアニメーション開始
               obs.disconnect(); // 監視を停止
+              // 前のアニメーションをリセット（クールダウンなしで再実行可能に）
+              targetEl.classList.remove('cw-threader-highlight-panel');
+              void targetEl.offsetWidth; // reflow を強制してアニメーションをリセット
               targetEl.classList.add('cw-threader-highlight-panel');
               setTimeout(() => {
                 targetEl.classList.remove('cw-threader-highlight-panel');
@@ -2658,7 +2661,7 @@
           });
         }, {
           root: document.querySelector('.cw-threader-content'),
-          threshold: 0.5 // 50%以上見えたら発火
+          threshold: 1.0 // 100%見えたら発火
         });
         
         observer.observe(targetEl);
