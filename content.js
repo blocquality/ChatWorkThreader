@@ -2391,7 +2391,7 @@
     createShowInThreadButton(mid) {
       const button = document.createElement('button');
       button.className = 'cw-threader-show-in-thread-btn';
-      button.innerHTML = `<span class="cw-threader-sit-icon">💬</span><span class="cw-threader-sit-text">スレッド</span>`;
+      button.innerHTML = `<svg class="cw-threader-sit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="13" y2="14"/></svg>`;
       button.title = 'スレッド一覧で表示';
       button.setAttribute('data-mid', mid);
       
