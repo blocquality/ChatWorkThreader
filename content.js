@@ -1028,6 +1028,7 @@
       this.showOnlyMyThreads = false; // 自分のスレッドのみ表示するフィルター
       this.currentUserAid = null; // 現在のユーザーAID
       this.selectedSpeaker = ''; // 選択中の発言者（空の場合は全員表示）
+      this.flatIndentMode = false; // フラット表示モード（全子要素を1階層で表示）
     }
 
     /**
@@ -1124,6 +1125,13 @@
               <option value="">全員</option>
             </select>
             <div class="cw-threader-filter-toggle">
+              <span class="cw-threader-filter-label">フラット</span>
+              <label class="cw-threader-toggle-switch cw-threader-filter-switch">
+                <input type="checkbox" id="cw-threader-flat-mode">
+                <span class="cw-threader-toggle-slider"></span>
+              </label>
+            </div>
+            <div class="cw-threader-filter-toggle">
               <span class="cw-threader-filter-label">自分のスレッドのみ</span>
               <label class="cw-threader-toggle-switch cw-threader-filter-switch">
                 <input type="checkbox" id="cw-threader-my-filter">
@@ -1154,6 +1162,15 @@
       document.getElementById('cw-threader-refresh').addEventListener('click', () => {
         this.refresh();
       });
+
+      // フラット表示モードのトグルのイベントリスナー
+      const flatModeCheckbox = document.getElementById('cw-threader-flat-mode');
+      if (flatModeCheckbox) {
+        flatModeCheckbox.addEventListener('change', () => {
+          this.flatIndentMode = flatModeCheckbox.checked;
+          this.renderThreads();
+        });
+      }
 
       // フィルタートグルのイベントリスナー
       const filterCheckbox = document.getElementById('cw-threader-my-filter');
@@ -1418,6 +1435,32 @@
     }
 
     /**
+     * 全ての子孫メッセージを収集（フラット表示用）
+     * タイムスタンプ順でソート
+     * @param {Object} node - メッセージノード
+     * @returns {Object[]} 子孫メッセージの配列
+     */
+    collectAllDescendants(node) {
+      const descendants = [];
+      const collectRecursive = (n) => {
+        if (n.children && n.children.length > 0) {
+          n.children.forEach(child => {
+            descendants.push(child);
+            collectRecursive(child);
+          });
+        }
+      };
+      collectRecursive(node);
+      // タイムスタンプでソート（古い順）
+      descendants.sort((a, b) => {
+        const aTime = parseInt(a.timestamp) || 0;
+        const bTime = parseInt(b.timestamp) || 0;
+        return aTime - bTime;
+      });
+      return descendants;
+    }
+
+    /**
      * スレッド要素を作成（Reddit/YouTube風）
      * @param {Object} node - メッセージノード
      * @param {number} depth - ネストの深さ
@@ -1446,21 +1489,28 @@
         const ancestorLinesContainer = document.createElement('div');
         ancestorLinesContainer.className = 'cw-threader-ancestor-lines';
         
-        // 祖先線を追加
-        for (let i = 0; i < ancestorCount; i++) {
-          const lineEl = document.createElement('div');
-          lineEl.className = 'cw-threader-ancestor-line';
-          if (ancestorHasMore[i]) {
-            lineEl.classList.add('has-more');
+        // フラットモードの場合は祖先線を表示しない（1階層分のみ）
+        if (!this.flatIndentMode) {
+          // 祖先線を追加（通常モード）
+          for (let i = 0; i < ancestorCount; i++) {
+            const lineEl = document.createElement('div');
+            lineEl.className = 'cw-threader-ancestor-line';
+            if (ancestorHasMore[i]) {
+              lineEl.classList.add('has-more');
+            }
+            ancestorLinesContainer.appendChild(lineEl);
           }
-          ancestorLinesContainer.appendChild(lineEl);
         }
         
         // L字接続線を祖先線コンテナ内に配置（親アバターの中心から伸ばすため）
         const connectLine = document.createElement('div');
         connectLine.className = 'cw-threader-connect-line';
         // 後続の兄弟がある場合は縦線を下まで伸ばす
-        if (ancestorHasMore[ancestorHasMore.length - 1]) {
+        // フラットモードの場合は常に最後の要素を使用
+        const hasMoreSiblings = this.flatIndentMode 
+          ? ancestorHasMore[ancestorHasMore.length - 1]
+          : ancestorHasMore[ancestorHasMore.length - 1];
+        if (hasMoreSiblings) {
           connectLine.classList.add('has-more');
         }
         ancestorLinesContainer.appendChild(connectLine);
@@ -1575,13 +1625,27 @@
         const childrenContainer = document.createElement('div');
         childrenContainer.className = 'cw-threader-children';
         
-        node.children.forEach((child, index) => {
-          const isLastChild = index === node.children.length - 1;
-          // 現在の子に後続の兄弟があるかどうかを祖先情報に追加
-          const newAncestorHasMore = [...ancestorHasMore, !isLastChild];
-          const childEl = this.createThreadElement(child, depth + 1, newAncestorHasMore);
-          childrenContainer.appendChild(childEl);
-        });
+        if (this.flatIndentMode && depth === 0) {
+          // フラットモードでルートの場合、全ての子孫を1階層として表示
+          const allDescendants = this.collectAllDescendants(node);
+          allDescendants.forEach((child, index) => {
+            const isLastChild = index === allDescendants.length - 1;
+            // フラットモードではすべて depth = 1 として扱う
+            const newAncestorHasMore = [!isLastChild];
+            const childEl = this.createThreadElement(child, 1, newAncestorHasMore);
+            childrenContainer.appendChild(childEl);
+          });
+        } else if (!this.flatIndentMode) {
+          // 通常モード
+          node.children.forEach((child, index) => {
+            const isLastChild = index === node.children.length - 1;
+            // 現在の子に後続の兄弟があるかどうかを祖先情報に追加
+            const newAncestorHasMore = [...ancestorHasMore, !isLastChild];
+            const childEl = this.createThreadElement(child, depth + 1, newAncestorHasMore);
+            childrenContainer.appendChild(childEl);
+          });
+        }
+        // フラットモードで depth > 0 の場合は子を追加しない（既にルートで展開済み）
         
         container.appendChild(childrenContainer);
 
