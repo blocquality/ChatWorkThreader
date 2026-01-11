@@ -445,6 +445,20 @@
   color: #0a7eb0;
 }
 
+/* インラインプレビューボタン（URLの直後に表示） */
+.cw-threader-inline-preview {
+  margin-left: 4px;
+  font-size: 11px;
+  padding: 1px 6px;
+  vertical-align: middle;
+}
+
+/* ファイルプレビュー項目（本文中に出現しなかったファイル用） */
+.cw-threader-file-preview-item {
+  display: block;
+  margin-top: 4px;
+}
+
 /* 外部リンクボタン（ファイルプレビューと同じスタイル） */
 .cw-threader-external-links {
   margin-top: 6px;

@@ -1037,22 +1037,13 @@
         ? `<div class="cw-threader-quote"><span class="cw-threader-quote-icon">❝</span>${this.escapeHtml(node.quotedMessage)}</div>` 
         : '';
       
-      // ファイルプレビューボタン用HTML（ChatWorkのプレビュー機能を利用）
-      // ファイル名とサイズを表示（「プレビュー」文言は使わない）
-      const filePreviewHtml = (node.filePreviewInfo && node.filePreviewInfo.length > 0) 
-        ? `<div class="cw-threader-file-previews">${node.filePreviewInfo.map(file => {
-            const displayName = this.escapeHtml(this.truncateFileName(file.fileName));
-            const sizeDisplay = file.fileSize ? ` (${this.escapeHtml(file.fileSize)})` : '';
-            return `<a class="cw-threader-preview-btn" data-file-id="${this.escapeHtml(file.fileId)}" data-mid="${this.escapeHtml(node.mid)}">📎 ${displayName}${sizeDisplay}</a>`;
-          }).join('')}</div>` 
-        : '';
-      
-      // 外部リンクボタン用HTML（ファイルプレビューと同じスタイル）
-      const externalLinksHtml = (node.externalLinks && node.externalLinks.length > 0)
-        ? `<div class="cw-threader-external-links">${node.externalLinks.map((link, index) =>
-            `<a class="cw-threader-external-link-btn" data-link-index="${index}" data-url="${this.escapeHtml(link.url)}" data-mid="${this.escapeHtml(node.mid)}">🔗 ${this.escapeHtml(link.title)}</a>`
-          ).join('')}</div>`
-        : '';
+      // メッセージ本文（URLの直後にプレビューボタンを挿入）
+      const messageBodyHtml = this.formatMessageTextWithPreviews(
+        node.messageText,
+        node.mid,
+        node.externalLinks || [],
+        node.filePreviewInfo || []
+      );
       
       messageEl.innerHTML = `
         <div class="cw-threader-avatar-wrap">
@@ -1076,9 +1067,7 @@
           </div>
           ${toTargetsHtml}
           ${quotedHtml}
-          <div class="cw-threader-message-body">${this.formatMessageText(node.messageText)}</div>
-          ${filePreviewHtml}
-          ${externalLinksHtml}
+          <div class="cw-threader-message-body">${messageBodyHtml}</div>
         </div>
       `;
 
@@ -1226,6 +1215,113 @@
       const withLinks = escaped.replace(urlPattern, '<a href="$1" class="cw-threader-link" target="_blank" rel="noopener noreferrer">$1</a>');
       // 改行コード（\r\n, \r, \n）を<br>タグに変換
       return withLinks.replace(/\r\n|\r|\n/g, '<br>');
+    }
+
+    /**
+     * メッセージテキストをフォーマットし、URLの直後にプレビューボタンを挿入
+     * @param {string} text - メッセージテキスト
+     * @param {string} mid - メッセージID
+     * @param {Array} externalLinks - 外部リンク情報配列
+     * @param {Array} filePreviewInfo - ファイルプレビュー情報配列
+     */
+    formatMessageTextWithPreviews(text, mid, externalLinks = [], filePreviewInfo = []) {
+      // 「プレビュー」という文言を除去（ボタンから挿入されたテキスト）
+      let cleanedText = text.replace(/プレビュー/g, '');
+      // 連続した空白行を1つに
+      cleanedText = cleanedText.replace(/(\r\n|\r|\n){3,}/g, '\n\n');
+      
+      // URLとそれ以外のテキストを分割しながら処理
+      const urlPattern = /(https?:\/\/[^\s<>"']+)/g;
+      const parts = [];
+      let lastIndex = 0;
+      let match;
+      
+      while ((match = urlPattern.exec(cleanedText)) !== null) {
+        // URLより前のテキスト
+        if (match.index > lastIndex) {
+          parts.push({
+            type: 'text',
+            content: cleanedText.substring(lastIndex, match.index)
+          });
+        }
+        // URL部分
+        parts.push({
+          type: 'url',
+          content: match[1]
+        });
+        lastIndex = urlPattern.lastIndex;
+      }
+      
+      // 最後のテキスト部分
+      if (lastIndex < cleanedText.length) {
+        parts.push({
+          type: 'text',
+          content: cleanedText.substring(lastIndex)
+        });
+      }
+      
+      // 外部リンクのURLマップを作成（URL -> リンク情報配列のインデックス）
+      const externalLinkMap = new Map();
+      externalLinks.forEach((link, index) => {
+        if (!externalLinkMap.has(link.url)) {
+          externalLinkMap.set(link.url, index);
+        }
+      });
+      
+      // ファイルプレビューのURLマップを作成（URLに含まれるfile_id -> ファイル情報）
+      // ChatWorkのファイルURLは gateway/download_file.php?file_id=xxx の形式
+      const fileUrlMap = new Map();
+      filePreviewInfo.forEach(file => {
+        fileUrlMap.set(file.fileId, file);
+      });
+      
+      // HTMLを構築
+      let html = '';
+      parts.forEach(part => {
+        if (part.type === 'text') {
+          // テキスト部分はエスケープして改行を<br>に変換
+          let escaped = this.escapeHtml(part.content);
+          html += escaped.replace(/\r\n|\r|\n/g, '<br>');
+        } else if (part.type === 'url') {
+          const url = part.content;
+          const escapedUrl = this.escapeHtml(url);
+          
+          // URLをリンクとして追加
+          html += `<a href="${escapedUrl}" class="cw-threader-link" target="_blank" rel="noopener noreferrer">${escapedUrl}</a>`;
+          
+          // URLの直後にプレビューボタンを追加
+          // 1. ファイルURLの場合（file_id=XXX を含む）
+          const fileIdMatch = url.match(/file_id=(\d+)/);
+          if (fileIdMatch) {
+            const fileId = fileIdMatch[1];
+            const fileInfo = fileUrlMap.get(fileId);
+            if (fileInfo) {
+              const displayName = this.escapeHtml(this.truncateFileName(fileInfo.fileName));
+              const sizeDisplay = fileInfo.fileSize ? ` (${this.escapeHtml(fileInfo.fileSize)})` : '';
+              html += `<a class="cw-threader-preview-btn cw-threader-inline-preview" data-file-id="${this.escapeHtml(fileId)}" data-mid="${this.escapeHtml(mid)}">プレビュー</a>`;
+              // このファイルは処理済みとしてマーク
+              fileUrlMap.delete(fileId);
+            }
+          }
+          
+          // 2. 外部リンクの場合
+          const linkIndex = externalLinkMap.get(url);
+          if (linkIndex !== undefined) {
+            html += `<a class="cw-threader-external-link-btn cw-threader-inline-preview" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}">プレビュー</a>`;
+            // このリンクは処理済みとしてマーク
+            externalLinkMap.delete(url);
+          }
+        }
+      });
+      
+      // ファイルプレビュー（URLとして本文中に出現しなかったもの）を末尾に追加
+      fileUrlMap.forEach((file, fileId) => {
+        const displayName = this.escapeHtml(this.truncateFileName(file.fileName));
+        const sizeDisplay = file.fileSize ? ` (${this.escapeHtml(file.fileSize)})` : '';
+        html += `<div class="cw-threader-file-preview-item"><a class="cw-threader-preview-btn" data-file-id="${this.escapeHtml(fileId)}" data-mid="${this.escapeHtml(mid)}">📎 ${displayName}${sizeDisplay}</a></div>`;
+      });
+      
+      return html;
     }
 
     /**
