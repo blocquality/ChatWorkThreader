@@ -803,7 +803,7 @@
 /* 「スレッドで表示」ボタン ラッパー */
 .cw-threader-show-in-thread-wrapper {
   position: absolute;
-  left: 22px; /* アイコンの中央に揃える */
+  left: 26px; /* アイコンの中央に揃える */
   z-index: 10;
 }
 
