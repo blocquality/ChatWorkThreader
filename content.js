@@ -1333,6 +1333,7 @@
 
     /**
      * スレッド内に指定ユーザーが関わっているか判定
+     * 返信元か返信先に自分がいるスレッドを検出する
      * @param {Object} node - スレッドノード
      * @param {string} userAid - ユーザーAID
      * @returns {boolean} ユーザーが関わっている場合true
@@ -1346,8 +1347,14 @@
       // messageDataから補足情報を取得
       const messageData = this.threadBuilder.messages.get(node.mid);
       if (messageData) {
-        // senderAidを確認
+        // senderAidを確認（自分が送信したメッセージ）
         if (messageData.senderAid === userAid) {
+          return true;
+        }
+        
+        // isToMeを確認（自分宛てのメッセージ）
+        // これにより「返信先」に自分がいるケースを検出
+        if (messageData.isToMe) {
           return true;
         }
         
