@@ -12,6 +12,18 @@
   }
 
   /**
+   * 拡張機能のコンテキストが有効かチェック
+   * 拡張機能がリロードされると無効になる
+   */
+  function isExtensionContextValid() {
+    try {
+      return chrome.runtime && !!chrome.runtime.id;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
    * 現在のルームIDをURLから取得
    */
   function getCurrentRoomId() {
@@ -77,8 +89,13 @@
    */
   function saveToggleState(roomId, mid, isOpen) {
     if (!roomId || !mid) return;
+    if (!isExtensionContextValid()) return;
     const key = `toggle_${roomId}_${mid}`;
-    chrome.storage.local.set({ [key]: isOpen });
+    try {
+      chrome.storage.local.set({ [key]: isOpen });
+    } catch (e) {
+      // 拡張機能のコンテキストが無効化された場合は無視
+    }
   }
 
   /**
@@ -86,9 +103,15 @@
    */
   async function getToggleState(roomId, mid) {
     if (!roomId || !mid) return true; // デフォルトは開いた状態
+    if (!isExtensionContextValid()) return true;
     const key = `toggle_${roomId}_${mid}`;
-    const result = await chrome.storage.local.get(key);
-    return result[key] !== undefined ? result[key] : true;
+    try {
+      const result = await chrome.storage.local.get(key);
+      return result[key] !== undefined ? result[key] : true;
+    } catch (e) {
+      // 拡張機能のコンテキストが無効化された場合はデフォルト値を返す
+      return true;
+    }
   }
 
   /**
@@ -1065,6 +1088,11 @@
       
       this.currentRoomId = roomId;
       
+      if (!isExtensionContextValid()) {
+        this.toggleStates = {};
+        return;
+      }
+      
       try {
         const result = await chrome.storage.local.get(this.getStorageKey());
         const allStates = result[this.getStorageKey()] || {};
@@ -1083,6 +1111,8 @@
       if (!roomId) return;
 
       this.toggleStates[threadMid] = isOpen;
+
+      if (!isExtensionContextValid()) return;
 
       try {
         const result = await chrome.storage.local.get(this.getStorageKey());
@@ -2424,8 +2454,19 @@
     const button = document.createElement('button');
     button.id = 'cw-threader-toggle';
     // 拡張機能のアイコンを使用
-    const iconUrl = chrome.runtime.getURL('icon128.png');
-    button.innerHTML = `<img src="${iconUrl}" class="cw-threader-icon" alt="スレッド"><span class="cw-threader-shortcut">Shift+S</span>`;
+    let iconUrl = '';
+    if (isExtensionContextValid()) {
+      try {
+        iconUrl = chrome.runtime.getURL('icon128.png');
+      } catch (e) {
+        // 拡張機能のコンテキストが無効な場合
+      }
+    }
+    if (iconUrl) {
+      button.innerHTML = `<img src="${iconUrl}" class="cw-threader-icon" alt="スレッド"><span class="cw-threader-shortcut">Shift+S</span>`;
+    } else {
+      button.innerHTML = `<span class="cw-threader-icon">💬</span><span class="cw-threader-shortcut">Shift+S</span>`;
+    }
     button.title = 'スレッド表示を切り替え (Shift+S)';
     
     button.addEventListener('click', () => {
