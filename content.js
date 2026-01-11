@@ -1204,10 +1204,93 @@
     }
 
     /**
-     * ストレージキーを生成
+     * ストレージキーを生成（トグル状態用）
      */
     getStorageKey() {
       return 'cw-threader-toggle-states';
+    }
+
+    /**
+     * ルーム設定用のストレージキーを生成
+     */
+    getRoomSettingsStorageKey() {
+      return 'cw-threader-room-settings';
+    }
+
+    /**
+     * ルーム設定を読み込み
+     * @returns {Object} 設定オブジェクト { selectedSpeaker, flatIndentMode, showOnlyMyThreads }
+     */
+    async loadRoomSettings() {
+      const roomId = this.getCurrentRoomId();
+      if (!roomId) return null;
+
+      if (!isExtensionContextValid()) return null;
+
+      try {
+        const result = await chrome.storage.local.get(this.getRoomSettingsStorageKey());
+        const allSettings = result[this.getRoomSettingsStorageKey()] || {};
+        return allSettings[roomId] || null;
+      } catch (e) {
+        console.error('ChatWork Threader: ルーム設定の読み込みに失敗', e);
+        return null;
+      }
+    }
+
+    /**
+     * ルーム設定を保存
+     */
+    async saveRoomSettings() {
+      const roomId = this.currentRoomId;
+      if (!roomId) return;
+
+      if (!isExtensionContextValid()) return;
+
+      const settings = {
+        selectedSpeaker: this.selectedSpeaker,
+        flatIndentMode: this.flatIndentMode,
+        showOnlyMyThreads: this.showOnlyMyThreads
+      };
+
+      try {
+        const result = await chrome.storage.local.get(this.getRoomSettingsStorageKey());
+        const allSettings = result[this.getRoomSettingsStorageKey()] || {};
+        allSettings[roomId] = settings;
+        await chrome.storage.local.set({ [this.getRoomSettingsStorageKey()]: allSettings });
+      } catch (e) {
+        console.error('ChatWork Threader: ルーム設定の保存に失敗', e);
+      }
+    }
+
+    /**
+     * ルーム設定を適用（UI要素にも反映）
+     * @param {Object} settings - 設定オブジェクト
+     */
+    applyRoomSettings(settings) {
+      if (!settings) return;
+
+      // 発言者プルダウン
+      if (settings.selectedSpeaker !== undefined) {
+        this.selectedSpeaker = settings.selectedSpeaker;
+      }
+
+      // フラット表示モード
+      if (settings.flatIndentMode !== undefined) {
+        this.flatIndentMode = settings.flatIndentMode;
+        const flatModeCheckbox = document.getElementById('cw-threader-flat-mode');
+        if (flatModeCheckbox) {
+          flatModeCheckbox.checked = this.flatIndentMode;
+        }
+      }
+
+      // 自分参加のみフィルター
+      if (settings.showOnlyMyThreads !== undefined) {
+        this.showOnlyMyThreads = settings.showOnlyMyThreads;
+        const filterCheckbox = document.getElementById('cw-threader-my-filter');
+        if (filterCheckbox) {
+          filterCheckbox.checked = this.showOnlyMyThreads;
+        }
+      }
     }
 
     /**
@@ -1329,6 +1412,7 @@
       if (flatModeCheckbox) {
         flatModeCheckbox.addEventListener('change', () => {
           this.flatIndentMode = flatModeCheckbox.checked;
+          this.saveRoomSettings(); // 設定を保存
           this.renderThreads();
         });
       }
@@ -1338,6 +1422,7 @@
       if (filterCheckbox) {
         filterCheckbox.addEventListener('change', () => {
           this.showOnlyMyThreads = filterCheckbox.checked;
+          this.saveRoomSettings(); // 設定を保存
           this.refresh();
         });
       }
@@ -1347,6 +1432,7 @@
       if (speakerSelect) {
         speakerSelect.addEventListener('change', () => {
           this.selectedSpeaker = speakerSelect.value;
+          this.saveRoomSettings(); // 設定を保存
           this.renderThreads();
         });
       }
@@ -1432,13 +1518,18 @@
       const currentValue = this.selectedSpeaker;
       const speakers = this.getAllSpeakers();
 
+      // 保存された発言者がリストに存在しない場合はリセット
+      if (currentValue && !speakers.includes(currentValue)) {
+        this.selectedSpeaker = '';
+      }
+
       // オプションを再構築
       speakerSelect.innerHTML = '<option value="">全員</option>';
       speakers.forEach(speaker => {
         const option = document.createElement('option');
         option.value = speaker;
         option.textContent = speaker;
-        if (speaker === currentValue) {
+        if (speaker === this.selectedSpeaker) {
           option.selected = true;
         }
         speakerSelect.appendChild(option);
@@ -2420,6 +2511,10 @@
       // ルームのトグル状態を読み込み
       await this.loadToggleStates();
       
+      // ルーム設定を読み込んで適用
+      const roomSettings = await this.loadRoomSettings();
+      this.applyRoomSettings(roomSettings);
+      
       // 先にメッセージを収集してスレッドを構築（幅計算のため）
       this.threadBuilder.messages.clear();
       this.threadBuilder.threads.clear();
@@ -2481,6 +2576,9 @@
       const newRoomId = this.getCurrentRoomId();
       if (newRoomId !== this.currentRoomId) {
         await this.loadToggleStates();
+        // ルーム設定も読み込んで適用
+        const roomSettings = await this.loadRoomSettings();
+        this.applyRoomSettings(roomSettings);
       }
 
       this.threadBuilder.messages.clear();
