@@ -2644,12 +2644,25 @@
           }
         }
         
-        // スクロールして揺れるアニメーションで強調
+        // 要素が画面内に表示されてから揺れるアニメーションを開始
+        const observer = new IntersectionObserver((entries, obs) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              // 要素が画面内に見えたらアニメーション開始
+              obs.disconnect(); // 監視を停止
+              targetEl.classList.add('cw-threader-highlight-panel');
+              setTimeout(() => {
+                targetEl.classList.remove('cw-threader-highlight-panel');
+              }, 1500); // 0.5秒 x 3回 = 1.5秒
+            }
+          });
+        }, {
+          root: document.querySelector('.cw-threader-content'),
+          threshold: 0.5 // 50%以上見えたら発火
+        });
+        
+        observer.observe(targetEl);
         targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        targetEl.classList.add('cw-threader-highlight-panel');
-        setTimeout(() => {
-          targetEl.classList.remove('cw-threader-highlight-panel');
-        }, 1500); // 0.5秒 x 3回 = 1.5秒
       }
     }
 
