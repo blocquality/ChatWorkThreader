@@ -778,22 +778,30 @@
   }
 }
 
+/* 「スレッドで表示」ボタン ラッパー */
+.cw-threader-show-in-thread-wrapper {
+  display: block;
+  margin: 4px 0;
+  position: relative;
+  z-index: 1;
+}
+
 /* 「スレッドで表示」ボタン */
 .cw-threader-show-in-thread-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
-  margin: 4px 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   border: 1px solid #ddd;
   border-radius: 8px;
   background: #f8f9fa;
   color: #555;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.cw-threader-show-in-thread-btn:hover {
+.cw-threader-show-in-thread-wrapper:hover .cw-threader-show-in-thread-btn {
   background: #e3f2fd;
   border-color: #2196F3;
   color: #1976D2;
@@ -807,6 +815,7 @@
   width: 20px;
   height: 20px;
   pointer-events: none;
+  flex-shrink: 0;
 }
 
 /* スレッドパネル内のハイライト効果 */
