@@ -119,18 +119,41 @@
         if (!mid) return;
 
         // ユーザー名を取得（連続投稿の場合は前のユーザー名を使用）
+        // 引用要素内のユーザー名は除外する
         const userNameEl = el.querySelector('[data-testid="timeline_user-name"]');
-        let userName = userNameEl ? userNameEl.textContent.trim() : '';
+        let userName = '';
+        if (userNameEl) {
+          // 引用要素内にないか確認
+          const isInQuote = userNameEl.closest('.chatQuote, .dev_quote, [data-cwopen="[qt]"], [data-cwtag^="[qt"]');
+          if (!isInQuote) {
+            userName = userNameEl.textContent.trim();
+          }
+        }
         
-        // アバター画像を取得
-        const avatarEl = el.querySelector('.userIconImage');
-        let avatarUrl = avatarEl ? avatarEl.src : '';
+        // アバター画像を取得（引用要素内のアバターは除外）
+        let avatarUrl = '';
+        const avatarEls = el.querySelectorAll('.userIconImage');
+        for (const avatarEl of avatarEls) {
+          // 引用要素内にないか確認
+          const isInQuote = avatarEl.closest('.chatQuote, .dev_quote, [data-cwopen="[qt]"], [data-cwtag^="[qt"]');
+          if (!isInQuote) {
+            avatarUrl = avatarEl.src;
+            break;
+          }
+        }
         
-        // メッセージ送信者のAIDを取得
+        // メッセージ送信者のAIDを取得（引用要素内のAIDは除外）
         let senderAid = null;
-        const aidEl = el.querySelector('[data-aid]');
-        if (aidEl) {
-          senderAid = aidEl.getAttribute('data-aid');
+        const aidEls = el.querySelectorAll('[data-aid]');
+        for (const aidEl of aidEls) {
+          // 引用要素内・返信バッジ内・To宛先内にないか確認
+          const isInQuote = aidEl.closest('.chatQuote, .dev_quote, [data-cwopen="[qt]"], [data-cwtag^="[qt"]');
+          const isInReply = aidEl.closest('[data-cwtag^="[rp"]');
+          const isInTo = aidEl.closest('[data-cwtag^="[to"]');
+          if (!isInQuote && !isInReply && !isInTo) {
+            senderAid = aidEl.getAttribute('data-aid');
+            break;
+          }
         }
         // アバター画像URLからも取得を試みる
         if (!senderAid && avatarUrl) {
@@ -180,6 +203,10 @@
                     if (!parent) return NodeFilter.FILTER_REJECT;
                     // プレビューボタン内のテキストは除外
                     if (parent.closest('._previewLink, [data-type*="preview"]')) {
+                      return NodeFilter.FILTER_REJECT;
+                    }
+                    // タイムスタンプは除外
+                    if (parent.closest('.quoteTimeStamp, .chatQuote__timeStamp, [data-cwtag^="[date"]')) {
                       return NodeFilter.FILTER_REJECT;
                     }
                     return NodeFilter.FILTER_ACCEPT;
@@ -248,15 +275,64 @@
               });
             } else {
               // 引用内容を取得（様々なクラス名に対応）
-              const quoteContent = quoteTag.querySelector('.sc-klVQfs, .chatTimeLineQuoteLine, [class*="Quote"], pre');
+              // まず .quoteText 以外の引用テキスト要素を探す
+              const quoteContent = quoteTag.querySelector('.sc-klVQfs, .chatTimeLineQuoteLine');
               if (quoteContent) {
-                const qText = quoteContent.textContent.trim();
+                // タイトル部分（発言者名・タイムスタンプ）を除外してテキストを取得
+                const textNodes = [];
+                const walker = document.createTreeWalker(
+                  quoteContent,
+                  NodeFilter.SHOW_TEXT,
+                  {
+                    acceptNode: (node) => {
+                      const parent = node.parentElement;
+                      if (!parent) return NodeFilter.FILTER_REJECT;
+                      // タイトル・タイムスタンプ・プレビューボタンは除外
+                      if (parent.closest('.chatQuote__title, .quoteTimeStamp, ._previewLink, [data-type*="preview"]')) {
+                        return NodeFilter.FILTER_REJECT;
+                      }
+                      return NodeFilter.FILTER_ACCEPT;
+                    }
+                  }
+                );
+                let textNode;
+                while (textNode = walker.nextNode()) {
+                  const text = textNode.textContent;
+                  if (text && text.trim()) {
+                    textNodes.push(text);
+                  }
+                }
+                const qText = textNodes.join('').trim();
                 if (qText) {
                   quotedMessage = quotedMessage ? quotedMessage + '\n' + qText : qText;
                 }
-              } else {
-                // 直接テキストを取得
-                const qText = quoteTag.textContent.trim();
+              }
+              // quoteContent が見つからない場合は、引用全体からテキストを抽出（タイトル除外）
+              if (!quotedMessage) {
+                const textNodes = [];
+                const walker = document.createTreeWalker(
+                  quoteTag,
+                  NodeFilter.SHOW_TEXT,
+                  {
+                    acceptNode: (node) => {
+                      const parent = node.parentElement;
+                      if (!parent) return NodeFilter.FILTER_REJECT;
+                      // タイトル・タイムスタンプ・プレビューボタン・アイコン部分は除外
+                      if (parent.closest('.chatQuote__title, .chatQuote__quoteLeftArea, .quoteTimeStamp, ._previewLink, [data-type*="preview"], [data-cwtag^="[pname"]')) {
+                        return NodeFilter.FILTER_REJECT;
+                      }
+                      return NodeFilter.FILTER_ACCEPT;
+                    }
+                  }
+                );
+                let textNode;
+                while (textNode = walker.nextNode()) {
+                  const text = textNode.textContent;
+                  if (text && text.trim()) {
+                    textNodes.push(text);
+                  }
+                }
+                const qText = textNodes.join('').trim();
                 if (qText) {
                   quotedMessage = quotedMessage ? quotedMessage + '\n' + qText : qText;
                 }
@@ -528,7 +604,10 @@
           // 除外するセレクタ
           const excludeSelectors = [
             '[data-cwtag^="[rp"]',   // Reply バッジ
-            '[data-cwtag^="[qt"]',   // 引用
+            '[data-cwtag^="[qt"]',   // 引用（data-cwtag形式）
+            '[data-cwopen="[qt]"]',  // 引用（data-cwopen形式）
+            '.chatQuote',            // 引用コンテナ
+            '.dev_quote',            // 引用コンテナ（別形式）
             '[data-cwtag^="[to"]',   // To
             '[data-cwtag="[toall]"]', // ToAll
             '.chatTimeLineReply',    // 返信バッジ表示部分

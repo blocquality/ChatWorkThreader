@@ -1,0 +1,63 @@
+引用が絡んだメッセージのスレッド化について、発言者を引用のところを引っ張ってしまっている。
+引用のところの発言者も、スレッド一覧にメッセージを表示する上では必要なので、取得すること自体は問題ではない。
+問題は、引用の発言者と、メッセージの発言者を混同している点である。
+
+ーーーーー
+
+＜実際のチャットワークのメッセージ＞
+<div class="sc-flYmRt hsnZcb"><div class="sc-jRUPCi eUQrCd _speaker"><button type="button" class="sc-ikkxIA gfgOUK"><div data-aid="10305663" data-source="timeline_message_avatar_profile" data-testid="user-icon" class="sc-fPXMVe jniNcR"><img class="sc-gFqAkR rGzLa userIconImage" src="https://appdata.chatwork.com/avatar/zMEjL9Qdq3.rsz.png" alt="人事部:齋藤"></div></button></div><div class="sc-gkRewV iixZdy"><div class="sc-tNXst jOmygg"><button type="button" class="sc-ikkxIA gfgOUK"><p data-testid="timeline_user-name" class="sc-iPahhU kKkYiW">人事部:齋藤</p></button><p class="sc-fjhLSj DWbGQ">株式会社インバウンドホールディングス</p></div><pre class="sc-fbFiXs iZLgoQ"><div contenteditable="false" data-cwopen="[qt]" data-cwclose="[/qt]" class="dev_quote chatQuote"><div class="chatQuote__quoteLeftArea"><svg viewBox="0 0 10 10" class="chatQuote__quoteIcon"><use fill-rule="evenodd" xlink:href="#icon_quote"></use></svg></div><div class="chatQuote__title"><span class="sc-hCPjZK jDhFnw"><span class="sc-uVWWZ inMYTl"><span class="sc-hknOHE jlhNyV"><button class="sc-ikkxIA gfgOUK _profileUserIcon" type="button" data-listener="true"><img alt="" src="https://appdata.chatwork.com/avatar/Yq9exO4NqW.rsz.jpg" data-aid="10733708" data-source="cw_notation_picon_profile" class="sc-bbSZdi jAuVqX _avatarHoverTip _avatarAid10733708" data-testid="user-icon"></button></span><span data-cwtag="[pname:10733708]"><span class="_nameAid10733708">笠原大生 / KasaharaTaisei</span></span></span></span><div class="quoteTimeStamp chatQuote__timeStamp"><span data-cwtag="[date:1765636084]">2025年12月13日 23:28</span></div></div><div class="quoteText"><span>ChatWorkとGoogleFormからの情報を一望できるスプシの試用版が完成しましたので、ご報告致します。
+お手すきの際にご確認いただけますと幸いに存じます。
+
+恐縮ですがChatWorkのAPIの仕様上、直近100件までしか遡れないらしく、今月ですと12/10頃のデータからしか取得ができませんでした。
+ですが、今後30分おきに取得蓄積していく予定ですので、12/10以降のデータは全て継続して取得できる予定でございます。
+</span><span data-cwtag="https://docs.google.com/spreadsheets/d/1GUtcgLJxRyhFC02Rvt0vYlup42jOEe-IuN4CnmZ1U84/edit?gid=1694719574#gid=1694719574&amp;range=2535:2535" class="sc-iGgWBj dVSjCO"><a href="https://docs.google.com/spreadsheets/d/1GUtcgLJxRyhFC02Rvt0vYlup42jOEe-IuN4CnmZ1U84/edit?gid=1694719574#gid=1694719574&amp;range=2535:2535" title="https://docs.google.com/spreadsheets/d/1GUtcgLJxRyhFC02Rvt0vYlup42jOEe-IuN4CnmZ1U84/edit?gid=1694719574#gid=1694719574&amp;range=2535:2535" target="_blank" rel="noreferrer" class="sc-fqkvVR gQycbC">https://docs.google.com/spreadsheets/d/1GUtcgLJxRyhFC02Rvt0vYlup42jOEe-IuN4CnmZ1U84/edit?gid=1694719574#gid=1694719574&amp;range=2535:2535</a><a class="sc-gEvEer gGGewJ _previewLink _noQuote" data-url="https://docs.google.com/spreadsheets/d/1GUtcgLJxRyhFC02Rvt0vYlup42jOEe-IuN4CnmZ1U84/edit?gid=1694719574#gid=1694719574&amp;range=2535:2535" data-type="googledocs" data-content-id="-">プレビュー</a></span></div></div><span>--------------------------------------------
+</span><div data-cwtag="[To:10733708]" contenteditable="false" class="sc-cfxfcM kcaniA"><div class="sc-cmaqmh bdbTpO chatTimeLineTo"><svg viewBox="0 0 10 10" width="14" height="14" class="sc-kAkpmW gxwswo"><use fill-rule="evenodd" xlink:href="#icon_chatTimeLineTo"></use></svg></div><button data-aid="10733708" class="sc-ikkxIA gfgOUK _profileUserIcon" type="button" data-listener="true"><img alt="" src="https://appdata.chatwork.com/avatar/Yq9exO4NqW.rsz.jpg" data-aid="10733708" data-source="cw_notation_badge_avatar_profile" class="sc-fBWQRz ivagsT _avatarHoverTip _avatarAid10733708" data-testid="user-icon"></button></div><span>笠原大生 / KasaharaTaiseiさん
+早朝のご連絡となり、恐れ入ります。
+
+先日作成いただきました「ChatWorkとGoogleフォームの情報を一望できるスプレッドシート（試用版）」を、早速使用させていただきました。
+実際に業務で使用してみて、大変便利でとても助かっております。ありがとうございます！！！
+
+12月分の工数確認を行ったところ、以下２点について気になる点がございましたため、共有させていただきます。
+
+① 一部の方について、ChatWorkの情報が取得できていない
+（下川茜さん／寺田愛さん／林真希さん／日野由紀子さん）
+
+② フロント勤務の方で、日付をまたいで勤務をし、退勤後に申請の場合に、情報が正しく取得できていない箇所がある
+(Ex.12月15日(月)の23:00～12月16日(火)の8:00まで勤務をして、出勤簿申請が12月16日(火)に申請。12月16日(火)の23:00～12月17日(水)の8:00まで勤務 → 勤怠情報照合で情報が混ざってしまっている。)
+
+上記につきまして、システム上の調整や改善が可能か、ご確認いただくことは可能でしょうか。
+
+なお、12月分の工数確認自体はほぼ完了しておりますので、
+1月稼働分の確認までにご検討いただければ問題ございません。
+
+お手隙の際で構いませんので、ご確認のほどよろしくお願いいたします。</span></pre><div></div><div class="sc-krITIZ jMbkMK"><div class="sc-iSmSVH jfGVJB _showDescription" aria-label="このリアクションを取り消す" data-tooltip="このリアクションを取り消す" data-reactiontype="roger" data-testid="timeline_message_reaction_result-reaction"><div class="sc-ecTevR dMlbgC"><div class="sc-zlUcK gzUmaI"><div class="sc-coYmiO hdUqUf"><img src="https://assets.chatwork.com/images/emoticon2x/emo_roger.gif" title="" alt="roger" data-chromatic="ignore" class="sc-ewBhFl gYCIfX"></div></div><div><p class="sc-gZnPbQ dUSMRN">1</p></div></div></div><div class="sc-bYHUQc fyHHme"><button class="sc-ihgnxF fBvaX _showDescription" aria-label="リアクションを確認する" data-tooltip="リアクションを確認する" type="button"><span class="sc-kAyceB bhXawe iconContainer"><svg viewBox="0 0 10 10" width="16" height="16" class="sc-imWYAI gjfnAx" aria-hidden="true"><use fill-rule="evenodd" href="#icon_memberDetail_ol"></use></svg></span></button></div></div></div><div class="sc-kGJcXs cxhSRA _timeStamp" data-tm="1767039237" data-bookmarked="false">2025年12月30日 5:13</div></div>
+
+ーーーーー
+
+＜スレッド一覧のメッセージ＞
+<div class="cw-threader-message">
+        <div class="cw-threader-avatar-wrap">
+          <img src="https://appdata.chatwork.com/avatar/Yq9exO4NqW.rsz.jpg" class="cw-threader-avatar" alt="">
+        </div>
+        <div class="cw-threader-msg-content">
+          <div class="cw-threader-message-header">
+            <span class="cw-threader-username">笠原大生 / KasaharaTaisei</span>
+            <span class="cw-threader-time">· 2025/12/30 05:13</span>
+            
+              <div class="cw-threader-toggle-wrap">
+                <span class="cw-threader-reply-label">2 Reply</span>
+                <label class="cw-threader-toggle-switch">
+                  <input type="checkbox" checked="">
+                  <span class="cw-threader-toggle-slider"></span>
+                </label>
+              </div>
+            
+          </div>
+          
+          <div class="cw-threader-quote"><span class="cw-threader-quote-icon">❝</span>ChatWorkとGoogleFormからの情報を一望できるスプシの試用版が完成しましたので、ご報告致します。<br>お手すきの際にご確認いただけますと幸いに存じます。<br><br>恐縮ですがChatWorkのAPIの仕様上、直近100件までしか遡れないらしく、今月ですと12/10頃のデータからしか取得ができませんでした。<br>ですが、今後30分おきに取得蓄積していく予定ですので、12/10以降のデータは全て継続して取得できる予定でございます。<br><a href="https://docs.google.com/spreadsheets/d/1GUtcgLJxRyhFC02Rvt0vYlup42jOEe-IuN4CnmZ1U84/edit?gid=1694719574#gid=1694719574&amp;range=2535:2535" class="cw-threader-link" target="_blank" rel="noopener noreferrer">https://docs.google.com/spreadsheets/d/1GUtcgLJxRyhFC02Rvt0vYlup42jOEe-IuN4CnmZ1U84/edit?gid=1694719574#gid=1694719574&amp;range=2535:2535</a><br>2025年12月13日 23:28</div>
+          <div class="cw-threader-message-body">ChatWorkとGoogleFormからの情報を一望できるスプシの試用版が完成しましたので、ご報告致します。<br>お手すきの際にご確認いただけますと幸いに存じます。<br><br>恐縮ですがChatWorkのAPIの仕様上、直近100件までしか遡れないらしく、今月ですと12/10頃のデータからしか取得ができませんでした。<br>ですが、今後30分おきに取得蓄積していく予定ですので、12/10以降のデータは全て継続して取得できる予定でございます。<br><a href="https://docs.google.com/spreadsheets/d/1GUtcgLJxRyhFC02Rvt0vYlup42jOEe-IuN4CnmZ1U84/edit?gid=1694719574#gid=1694719574&amp;range=2535:2535--------------------------------------------" class="cw-threader-link" target="_blank" rel="noopener noreferrer">https://docs.google.com/spreadsheets/d/1GUtcgLJxRyhFC02Rvt0vYlup42jOEe-IuN4CnmZ1U84/edit?gid=1694719574#gid=1694719574&amp;range=2535:2535--------------------------------------------</a><br>笠原大生 / KasaharaTaiseiさん<br>早朝のご連絡となり、恐れ入ります。<br><br>先日作成いただきました「ChatWorkとGoogleフォームの情報を一望できるスプレッドシート（試用版）」を、早速使用させていただきました。<br>実際に業務で使用してみて、大変便利でとても助かっております。ありがとうございます！！！<br><br>12月分の工数確認を行ったところ、以下２点について気になる点がございましたため、共有させていただきます。<br><br>① 一部の方について、ChatWorkの情報が取得できていない<br>（下川茜さん／寺田愛さん／林真希さん／日野由紀子さん）<br><br>② フロント勤務の方で、日付をまたいで勤務をし、退勤後に申請の場合に、情報が正しく取得できていない箇所がある<br>(Ex.12月15日(月)の23:00～12月16日(火)の8:00まで勤務をして、出勤簿申請が12月16日(火)に申請。12月16日(火)の23:00～12月17日(水)の8:00まで勤務 → 勤怠情報照合で情報が混ざってしまっている。)<br><br>上記につきまして、システム上の調整や改善が可能か、ご確認いただくことは可能でしょうか。<br><br>なお、12月分の工数確認自体はほぼ完了しておりますので、<br>1月稼働分の確認までにご検討いただければ問題ございません。<br><br>お手隙の際で構いませんので、ご確認のほどよろしくお願いいたします。<div class="cw-threader-external-link-item">
+            <a href="https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1GUtcgLJxRyhFC02Rvt0vYlup42jOEe-IuN4CnmZ1U84%2Fedit%3Fgid%3D1694719574%23gid%3D1694719574%26range%3D2535%3A2535" class="cw-threader-link" target="_blank" rel="noopener noreferrer">🔗 https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2...</a>
+            <a class="cw-threader-external-link-btn cw-threader-inline-preview" data-link-index="0" data-url="https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1GUtcgLJxRyhFC02Rvt0vYlup42jOEe-IuN4CnmZ1U84%2Fedit%3Fgid%3D1694719574%23gid%3D1694719574%26range%3D2535%3A2535" data-mid="2057581414748258304">プレビュー</a>
+          </div></div>
+        </div>
+      </div>
