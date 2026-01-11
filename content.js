@@ -2644,23 +2644,46 @@
           }
         }
         
-        // 要素が画面内に表示されてから揺れるアニメーションを開始
+        // スクロールコンテナを取得
+        const scrollContainer = document.querySelector('.cw-threader-content');
+        
+        // 揺れアニメーションを開始する関数
+        const startShakeAnimation = () => {
+          // 前のアニメーションを完全にリセット
+          targetEl.classList.remove('cw-threader-highlight-panel');
+          targetEl.style.animation = 'none';
+          void targetEl.offsetWidth; // reflow を強制
+          targetEl.style.animation = '';
+          targetEl.classList.add('cw-threader-highlight-panel');
+          setTimeout(() => {
+            targetEl.classList.remove('cw-threader-highlight-panel');
+          }, 1500); // 0.5秒 x 3回 = 1.5秒
+        };
+        
+        // スクロール停止を検知してからアニメーションを開始
+        let scrollTimeout = null;
+        const onScrollEnd = () => {
+          if (scrollTimeout) clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(() => {
+            // スクロールが100ms止まったら停止と判断
+            scrollContainer.removeEventListener('scroll', onScrollEnd);
+            startShakeAnimation();
+          }, 100);
+        };
+        
+        // 要素が画面内に表示されたかチェック
         const observer = new IntersectionObserver((entries, obs) => {
           entries.forEach(entry => {
             if (entry.isIntersecting) {
-              // 要素が画面内に見えたらアニメーション開始
-              obs.disconnect(); // 監視を停止
-              // 前のアニメーションをリセット（クールダウンなしで再実行可能に）
-              targetEl.classList.remove('cw-threader-highlight-panel');
-              void targetEl.offsetWidth; // reflow を強制してアニメーションをリセット
-              targetEl.classList.add('cw-threader-highlight-panel');
-              setTimeout(() => {
-                targetEl.classList.remove('cw-threader-highlight-panel');
-              }, 1500); // 0.5秒 x 3回 = 1.5秒
+              obs.disconnect();
+              // スクロール停止を監視開始
+              scrollContainer.addEventListener('scroll', onScrollEnd);
+              // すでにスクロールが止まっている場合のためにも発火
+              onScrollEnd();
             }
           });
         }, {
-          root: document.querySelector('.cw-threader-content'),
+          root: scrollContainer,
           threshold: 1.0 // 100%見えたら発火
         });
         
