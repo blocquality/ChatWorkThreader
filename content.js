@@ -708,6 +708,7 @@
       this.toggleStates = {}; // roomId -> { threadMid: boolean }
       this.showOnlyMyThreads = false; // 自分のスレッドのみ表示するフィルター
       this.currentUserAid = null; // 現在のユーザーAID
+      this.selectedSpeaker = ''; // 選択中の発言者（空の場合は全員表示）
     }
 
     /**
@@ -813,6 +814,11 @@
             </div>
           </div>
         </div>
+        <div class="cw-threader-filter-bar">
+          <select id="cw-threader-speaker-filter" class="cw-threader-speaker-select">
+            <option value="">全員</option>
+          </select>
+        </div>
         <div class="cw-threader-content">
           <div class="cw-threader-threads"></div>
         </div>
@@ -838,6 +844,15 @@
         filterCheckbox.addEventListener('change', () => {
           this.showOnlyMyThreads = filterCheckbox.checked;
           this.refresh();
+        });
+      }
+
+      // 発言者フィルターのイベントリスナー
+      const speakerSelect = document.getElementById('cw-threader-speaker-filter');
+      if (speakerSelect) {
+        speakerSelect.addEventListener('change', () => {
+          this.selectedSpeaker = speakerSelect.value;
+          this.renderThreads();
         });
       }
     }
@@ -881,6 +896,80 @@
     }
 
     /**
+     * スレッド内の全発言者を収集
+     * @param {Object} node - スレッドノード
+     * @param {Set} speakers - 発言者セット
+     */
+    collectSpeakersInThread(node, speakers) {
+      if (node.userName) {
+        speakers.add(node.userName);
+      }
+      if (node.children && node.children.length > 0) {
+        for (const child of node.children) {
+          this.collectSpeakersInThread(child, speakers);
+        }
+      }
+    }
+
+    /**
+     * 全スレッドから発言者リストを取得
+     * @returns {string[]} 発言者名の配列（ソート済み）
+     */
+    getAllSpeakers() {
+      const speakers = new Set();
+      const threads = this.threadBuilder.threads;
+      
+      threads.forEach(thread => {
+        this.collectSpeakersInThread(thread, speakers);
+      });
+      
+      return Array.from(speakers).sort((a, b) => a.localeCompare(b, 'ja'));
+    }
+
+    /**
+     * 発言者プルダウンを更新
+     */
+    updateSpeakerDropdown() {
+      const speakerSelect = document.getElementById('cw-threader-speaker-filter');
+      if (!speakerSelect) return;
+
+      const currentValue = this.selectedSpeaker;
+      const speakers = this.getAllSpeakers();
+
+      // オプションを再構築
+      speakerSelect.innerHTML = '<option value="">全員</option>';
+      speakers.forEach(speaker => {
+        const option = document.createElement('option');
+        option.value = speaker;
+        option.textContent = speaker;
+        if (speaker === currentValue) {
+          option.selected = true;
+        }
+        speakerSelect.appendChild(option);
+      });
+    }
+
+    /**
+     * スレッド内に指定の発言者がいるかチェック
+     * @param {Object} node - スレッドノード
+     * @param {string} speaker - 発言者名
+     * @returns {boolean}
+     */
+    isSpeakerInThread(node, speaker) {
+      if (node.userName === speaker) {
+        return true;
+      }
+      if (node.children && node.children.length > 0) {
+        for (const child of node.children) {
+          if (this.isSpeakerInThread(child, speaker)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    /**
      * メッセージを表示（YouTube/Redditコメント欄風）
      * 返信関係のあるスレッドのみ表示
      */
@@ -892,9 +981,13 @@
       const threads = this.threadBuilder.threads;
 
       if (threads.size === 0) {
+        this.updateSpeakerDropdown();
         container.innerHTML = '<div class="cw-threader-empty">スレッドが見つかりませんでした</div>';
         return;
       }
+
+      // 発言者プルダウンを更新
+      this.updateSpeakerDropdown();
 
       // ルートメッセージのタイムスタンプで新しい順にソート
       // タイムスタンプがない場合はmid（メッセージID）でソート（midは時系列で割り当てられる）
@@ -917,6 +1010,11 @@
       // フィルタリング：自分のスレッドのみ表示する場合
       if (this.showOnlyMyThreads && this.currentUserAid) {
         sortedThreads = sortedThreads.filter(thread => this.isUserInvolvedInThread(thread, this.currentUserAid));
+      }
+
+      // フィルタリング：発言者フィルター
+      if (this.selectedSpeaker) {
+        sortedThreads = sortedThreads.filter(thread => this.isSpeakerInThread(thread, this.selectedSpeaker));
       }
 
       if (sortedThreads.length === 0) {
