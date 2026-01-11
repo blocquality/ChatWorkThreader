@@ -120,7 +120,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px 12px 28px; /* 左側をリサイズハンドル(16px)+余白(12px)分確保 */
+  padding: 12px 16px 12px 32px; /* 左側をリサイズハンドル(16px)+余白(16px)分確保 */
   background: #fff;
   border-bottom: 1px solid #e0e0e0;
 }
@@ -218,7 +218,7 @@
 .cw-threader-content {
   flex: 1;
   overflow-y: scroll;
-  padding: 8px 0 8px 12px; /* 左側をリサイズハンドル(16px)の内側に少し余白確保 */
+  padding: 8px 0 8px 16px; /* 左側をリサイズハンドル(16px)の内側に余白確保 */
   background: #fff;
   /* スクロールバーを非表示にしつつスクロール可能に */
   scrollbar-width: none; /* Firefox */
