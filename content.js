@@ -1306,14 +1306,14 @@
           return bMid - aMid;
         });
 
-      // フィルタリング：自分のスレッドのみ表示する場合
-      if (this.showOnlyMyThreads && this.currentUserAid) {
-        sortedThreads = sortedThreads.filter(thread => this.isUserInvolvedInThread(thread, this.currentUserAid));
-      }
-
-      // フィルタリング：発言者フィルター
+      // フィルタリング：まず発言者フィルターで絞り込む
       if (this.selectedSpeaker) {
         sortedThreads = sortedThreads.filter(thread => this.isSpeakerInThread(thread, this.selectedSpeaker));
+      }
+
+      // フィルタリング：次に自分のスレッドのみ表示する場合、さらに絞り込む
+      if (this.showOnlyMyThreads && this.currentUserAid) {
+        sortedThreads = sortedThreads.filter(thread => this.isUserInvolvedInThread(thread, this.currentUserAid));
       }
 
       if (sortedThreads.length === 0) {
