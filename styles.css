@@ -274,12 +274,12 @@
   position: relative;
   flex: 1;
   min-width: 0;
-  background: transparent !important;
+  background: transparent;
   transition: none !important;
 }
 
 .cw-threader-message:hover {
-  background: #f2f2f2 !important;
+  background: #f2f2f2;
   transition: none !important;
 }
 
@@ -448,12 +448,12 @@
 
 /* 自分宛てメッセージ（メンション）のスタイル - ChatWorkと同じ色 */
 .cw-threader-message.cw-threader-mention {
-  background: #E4F6F3;
+  background: #E4F6F3 !important;
   border-right: 4px solid #57CAB3;
 }
 
 .cw-threader-message.cw-threader-mention:hover {
-  background: #d0ebe6;
+  background: #d0ebe6 !important;
 }
 
 .cw-threader-message-body {
