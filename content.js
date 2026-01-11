@@ -2608,7 +2608,7 @@
         targetEl.classList.add('cw-threader-highlight-panel');
         setTimeout(() => {
           targetEl.classList.remove('cw-threader-highlight-panel');
-        }, 2000);
+        }, 5000);
       }
     }
 
