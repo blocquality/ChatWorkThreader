@@ -263,14 +263,26 @@
   display: flex;
   padding: 8px 12px 8px 0;
   cursor: pointer;
-  transition: background 0.15s ease;
   position: relative;
   flex: 1;
   min-width: 0;
+  background: transparent;
 }
 
 .cw-threader-message:hover {
   background: #f2f2f2;
+}
+
+.cw-threader-message * {
+  pointer-events: none;
+}
+
+.cw-threader-message .cw-threader-toggle-wrap,
+.cw-threader-message .cw-threader-toggle-wrap *,
+.cw-threader-message .cw-threader-preview-btn,
+.cw-threader-message .cw-threader-external-link-btn,
+.cw-threader-message .cw-threader-link {
+  pointer-events: auto;
 }
 
 /* 祖先の縦線コンテナ */
