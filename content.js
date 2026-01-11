@@ -2662,16 +2662,19 @@
 
     /**
      * 全てのメッセージに「スレッドで表示」ボタンを追加
+     * @param {boolean} forceRebuild - スレッド情報を強制的に再構築するか（デフォルト: false）
      */
-    addButtonsToMessages() {
-      // まずスレッド情報を収集
-      this.threadUI.threadBuilder.messages.clear();
-      this.threadUI.threadBuilder.threads.clear();
-      this.threadUI.threadBuilder.replyMap.clear();
-      this.threadUI.threadBuilder.childrenMap.clear();
-      this.threadUI.threadBuilder.allMessages = [];
-      this.threadUI.threadBuilder.collectMessages();
-      this.threadUI.threadBuilder.buildThreads();
+    addButtonsToMessages(forceRebuild = false) {
+      // スレッド情報が空の場合、または強制再構築が指定された場合のみ再収集
+      if (forceRebuild || this.threadUI.threadBuilder.threads.size === 0) {
+        this.threadUI.threadBuilder.messages.clear();
+        this.threadUI.threadBuilder.threads.clear();
+        this.threadUI.threadBuilder.replyMap.clear();
+        this.threadUI.threadBuilder.childrenMap.clear();
+        this.threadUI.threadBuilder.allMessages = [];
+        this.threadUI.threadBuilder.collectMessages();
+        this.threadUI.threadBuilder.buildThreads();
+      }
       
       // 全メッセージ要素をチェック
       const messageElements = document.querySelectorAll('[data-mid]._message');
@@ -2714,8 +2717,8 @@
     refresh() {
       // 既存のボタンを削除
       this.cleanup();
-      // 再度追加
-      this.addButtonsToMessages();
+      // 再度追加（スレッド情報を強制再構築）
+      this.addButtonsToMessages(true);
     }
   }
 
@@ -2765,16 +2768,27 @@
     };
 
     let debounceTimer = null;
+    let isProcessing = false; // 処理中フラグ
     const observer = new MutationObserver((mutations) => {
+      // 処理中の場合はスキップ（自分自身の変更によるトリガーを防ぐ）
+      if (isProcessing) return;
+      
       // data-mid を持つ要素が追加/削除されたかチェック
+      // ただし、拡張機能が追加したボタン等は除外
       let hasMessageChange = false;
       
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
           for (const node of mutation.addedNodes) {
-            if (node.nodeType === 1 && (node.hasAttribute?.('data-mid') || node.querySelector?.('[data-mid]'))) {
-              hasMessageChange = true;
-              break;
+            if (node.nodeType === 1) {
+              // 拡張機能が追加した要素は除外
+              if (node.classList?.contains('cw-threader-show-in-thread-wrapper')) continue;
+              if (node.id === 'cw-threader-panel') continue;
+              
+              if (node.hasAttribute?.('data-mid') || node.querySelector?.('[data-mid]')) {
+                hasMessageChange = true;
+                break;
+              }
             }
           }
           if (hasMessageChange) break;
@@ -2787,14 +2801,22 @@
         debounceTimer = setTimeout(() => {
           // console.log('ChatWork Threader: メッセージ変更を検知、更新中...');
           
-          // 「スレッドで表示」ボタンを更新
-          if (showInThreadButtonManager) {
-            showInThreadButtonManager.refresh();
-          }
-          
-          // パネルが開いている場合は更新
-          if (threadUI.isVisible) {
-            threadUI.refresh();
+          isProcessing = true;
+          try {
+            // 「スレッドで表示」ボタンを更新
+            if (showInThreadButtonManager) {
+              showInThreadButtonManager.refresh();
+            }
+            
+            // パネルが開いている場合は更新
+            if (threadUI.isVisible) {
+              threadUI.refresh();
+            }
+          } finally {
+            // 次のフレームで処理中フラグを解除
+            requestAnimationFrame(() => {
+              isProcessing = false;
+            });
           }
         }, 500);
       }
