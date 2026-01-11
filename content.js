@@ -1048,7 +1048,7 @@
       this.originalStyles = null;
       this.currentRoomId = null;
       this.toggleStates = {}; // roomId -> { threadMid: boolean }
-      this.showOnlyMyThreads = false; // 自分のスレッドのみ表示するフィルター
+      this.showOnlyMyThreads = false; // 自分が参加（返信元/返信先）しているスレッドのみ表示するフィルター
       this.currentUserAid = null; // 現在のユーザーAID
       this.selectedSpeaker = ''; // 選択中の発言者（空の場合は全員表示）
       this.flatIndentMode = false; // フラット表示モード（全子要素を1階層で表示）
@@ -1162,7 +1162,7 @@
               </label>
             </div>
             <div class="cw-threader-filter-toggle">
-              <span class="cw-threader-filter-label">自分のスレッドのみ</span>
+              <span class="cw-threader-filter-label" title="自分が返信した、または自分宛ての返信があるスレッドのみ表示">自分参加のみ</span>
               <label class="cw-threader-toggle-switch cw-threader-filter-switch">
                 <input type="checkbox" id="cw-threader-my-filter">
                 <span class="cw-threader-toggle-slider"></span>
@@ -1377,7 +1377,7 @@
         sortedThreads = sortedThreads.filter(thread => this.isSpeakerInThread(thread, this.selectedSpeaker));
       }
 
-      // フィルタリング：次に自分のスレッドのみ表示する場合、さらに絞り込む
+      // フィルタリング：次に自分参加スレッドのみ表示する場合、さらに絞り込む
       if (this.showOnlyMyThreads && this.currentUserAid) {
         sortedThreads = sortedThreads.filter(thread => this.isUserInvolvedInThread(thread, this.currentUserAid));
       }
@@ -1399,43 +1399,65 @@
 
     /**
      * スレッド内に指定ユーザーが関わっているか判定
-     * 返信元か返信先に自分がいるスレッドを検出する
+     * 「返信元」または「返信先」に自分がいるスレッドを検出する
+     * 
+     * 「返信元」= 自分が送信したメッセージに誰かが返信している
+     * 「返信先」= 自分が誰かのメッセージに返信している、または自分宛て(TO)のメッセージがある
+     * 
      * @param {Object} node - スレッドノード
      * @param {string} userAid - ユーザーAID
      * @returns {boolean} ユーザーが関わっている場合true
      */
     isUserInvolvedInThread(node, userAid) {
-      // このノードのメッセージ送信者が自分かチェック
-      if (node.senderAid === userAid) {
+      // messageDataから情報を取得
+      const messageData = this.threadBuilder.messages.get(node.mid);
+      const senderAid = node.senderAid || (messageData && messageData.senderAid);
+      
+      // ケース1: 自分がメッセージ送信者（返信元の候補）
+      // 自分が送信したメッセージで、かつ子（返信）がある場合 = 自分が「返信元」
+      if (senderAid === userAid) {
+        // 子がある場合は「返信元」として検出
+        if (node.children && node.children.length > 0) {
+          return true;
+        }
+        // 子がなくても、親（返信先）がある場合は「返信先」として検出
+        // （自分が誰かに返信したメッセージ）
+        if (node.parentMid || (messageData && messageData.parentMid)) {
+          return true;
+        }
+      }
+      
+      // ケース2: このメッセージが自分宛て (isToMe)
+      // 自分宛てのメッセージがある = 自分が「返信先」
+      if (messageData && messageData.isToMe) {
         return true;
       }
       
-      // messageDataから補足情報を取得
-      const messageData = this.threadBuilder.messages.get(node.mid);
-      if (messageData) {
-        // senderAidを確認（自分が送信したメッセージ）
-        if (messageData.senderAid === userAid) {
-          return true;
-        }
-        
-        // isToMeを確認（自分宛てのメッセージ）
-        // これにより「返信先」に自分がいるケースを検出
-        if (messageData.isToMe) {
-          return true;
-        }
-        
-        // element から追加でAIDを取得
-        if (messageData.element) {
-          const aidEl = messageData.element.querySelector('[data-aid]');
-          if (aidEl && aidEl.getAttribute('data-aid') === userAid) {
-            return true;
+      // ケース3: このメッセージの返信先（parentAid）が自分
+      // 誰かが自分のメッセージに返信している = 自分が「返信元」
+      const parentAid = node.parentAid || (messageData && messageData.parentAid);
+      if (parentAid === userAid) {
+        return true;
+      }
+      
+      // ケース4: element から追加でAIDを取得して確認
+      if (messageData && messageData.element) {
+        // 送信者のAIDを確認
+        const aidEls = messageData.element.querySelectorAll('[data-aid]');
+        for (const aidEl of aidEls) {
+          // 引用・返信バッジ・To宛先内は除外
+          const isInQuote = aidEl.closest('.chatQuote, .dev_quote, [data-cwopen="[qt]"], [data-cwtag^="[qt"]');
+          const isInReply = aidEl.closest('[data-cwtag^="[rp"]');
+          const isInTo = aidEl.closest('[data-cwtag^="[to"]');
+          if (!isInQuote && !isInReply && !isInTo) {
+            if (aidEl.getAttribute('data-aid') === userAid) {
+              // 自分が送信者で、子または親がある場合
+              if ((node.children && node.children.length > 0) || node.parentMid || (messageData && messageData.parentMid)) {
+                return true;
+              }
+            }
           }
         }
-      }
-      
-      // このノードの返信先（親）が自分かチェック
-      if (node.parentAid === userAid) {
-        return true;
       }
       
       // 子ノードを再帰的にチェック
