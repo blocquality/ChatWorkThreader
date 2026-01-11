@@ -1448,54 +1448,64 @@
       }
       
       // URLに対応するプレビューボタンを探す
-      // パターン1: URLを含むリンクの近くにあるプレビューボタン
-      const links = messageEl.querySelectorAll('a[href]');
       let previewBtn = null;
       
-      for (const link of links) {
-        if (link.getAttribute('href') === url) {
-          // このリンクの親要素からプレビューボタンを探す
-          const container = link.closest('[class*="url"], [class*="link"], [class*="Link"]') || link.parentElement?.parentElement || link.parentElement;
-          if (container) {
-            // 「プレビュー」テキストを含むボタンを探す
-            const buttons = container.querySelectorAll('a, button, [role="button"]');
-            for (const btn of buttons) {
-              const text = btn.textContent?.trim() || '';
-              if (text === 'プレビュー' || text.includes('プレビュー') || 
-                  btn.classList.contains('_previewLink') ||
-                  btn.hasAttribute('data-preview-url')) {
-                previewBtn = btn;
-                break;
-              }
-            }
+      // パターン1: data-cwtag属性でURLを含むspan要素を探し、その中の_previewLinkを取得
+      // ChatWorkのHTML構造: <span data-cwtag="URL"><a href="URL">URL</a><a class="_previewLink" data-url="URL">プレビュー</a></span>
+      const urlContainers = messageEl.querySelectorAll('[data-cwtag]');
+      for (const container of urlContainers) {
+        const cwtag = container.getAttribute('data-cwtag') || '';
+        // data-cwtagがURLと一致するか確認
+        if (cwtag === url || cwtag.includes(url) || url.includes(cwtag)) {
+          // この中の_previewLinkを探す
+          const previewLink = container.querySelector('a._previewLink[data-url]');
+          if (previewLink) {
+            previewBtn = previewLink;
+            break;
           }
-          if (previewBtn) break;
         }
       }
       
-      // パターン2: data-preview-url属性で探す
+      // パターン2: data-url属性でURLが一致する_previewLinkを探す
       if (!previewBtn) {
-        const previewLinks = messageEl.querySelectorAll('a[data-preview-url], button[data-preview-url]');
+        const previewLinks = messageEl.querySelectorAll('a._previewLink[data-url]');
         for (const link of previewLinks) {
-          const previewUrl = link.getAttribute('data-preview-url') || '';
-          if (previewUrl.includes(url) || url.includes(previewUrl)) {
+          const dataUrl = link.getAttribute('data-url') || '';
+          if (dataUrl === url) {
             previewBtn = link;
             break;
           }
         }
       }
       
-      // パターン3: 「プレビュー」テキストを持つ要素を順番で探す
+      // パターン3: URLを含むリンクの近くにあるプレビューボタン
       if (!previewBtn) {
-        const allPreviewBtns = messageEl.querySelectorAll('a, button');
-        const previewBtns = Array.from(allPreviewBtns).filter(btn => {
-          const text = btn.textContent?.trim() || '';
-          return (text === 'プレビュー' || text.includes('プレビュー')) && 
-                 !btn.hasAttribute('data-file-id') &&
-                 !btn.closest('._filePreview');
+        const links = messageEl.querySelectorAll('a[href]');
+        for (const link of links) {
+          if (link.getAttribute('href') === url) {
+            // このリンクの親要素からプレビューボタンを探す
+            const container = link.closest('[data-cwtag]') || link.parentElement;
+            if (container) {
+              const btn = container.querySelector('a._previewLink[data-url]');
+              if (btn) {
+                previewBtn = btn;
+                break;
+              }
+            }
+          }
+        }
+      }
+      
+      // パターン4: 「プレビュー」テキストを持つ外部リンクプレビューボタンを順番で探す
+      if (!previewBtn) {
+        const allPreviewBtns = messageEl.querySelectorAll('a._previewLink[data-url]');
+        const filteredBtns = Array.from(allPreviewBtns).filter(btn => {
+          const dataUrl = btn.getAttribute('data-url') || '';
+          // ファイルプレビューは除外
+          return !dataUrl.includes('file_id=') && !btn.hasAttribute('data-file-id');
         });
-        if (previewBtns.length > linkIndex) {
-          previewBtn = previewBtns[linkIndex];
+        if (filteredBtns.length > linkIndex) {
+          previewBtn = filteredBtns[linkIndex];
         }
       }
       
