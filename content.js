@@ -293,12 +293,12 @@
           });
           
           // 外部リンクのプレビューボタンを収集
-          // ChatWorkでは外部リンクの近くに「プレビュー」ボタンがある
-          const externalPreviewButtons = preEl.querySelectorAll('a[data-preview-url], button[data-preview-url], [class*="preview"]');
+          // ChatWorkでは外部リンクの近くに「プレビュー」ボタンがある（_previewLinkクラス）
+          const externalPreviewButtons = preEl.querySelectorAll('a._previewLink[data-url], a[data-preview-url], button[data-preview-url]');
           externalPreviewButtons.forEach(btn => {
-            const previewUrl = btn.getAttribute('data-preview-url') || btn.getAttribute('data-url') || '';
-            // ChatWork内部のファイルプレビューは除外（file_idがあるもの）
-            if (btn.hasAttribute('data-file-id') || btn.closest('._filePreview')) {
+            const previewUrl = btn.getAttribute('data-url') || btn.getAttribute('data-preview-url') || '';
+            // ChatWork内部のファイルプレビューは除外（file_idがあるもの、またはURLにfile_idを含むもの）
+            if (btn.hasAttribute('data-file-id') || btn.closest('._filePreview') || previewUrl.includes('file_id=')) {
               return;
             }
             // 返信バッジ内は除外
@@ -306,26 +306,30 @@
               return;
             }
             
-            // リンクのタイトルを取得（近くのリンクテキストから）
-            let title = '';
-            const parentContainer = btn.closest('[class*="url"], [class*="link"], [class*="Link"]') || btn.parentElement;
-            if (parentContainer) {
-              const linkEl = parentContainer.querySelector('a[href]');
-              if (linkEl) {
-                const href = linkEl.getAttribute('href') || '';
-                title = linkEl.textContent?.trim() || '';
-                if (title === href || title.length > 50) {
-                  try {
-                    const url = new URL(href);
-                    title = url.hostname + (url.pathname.length > 25 ? url.pathname.substring(0, 25) + '...' : url.pathname);
-                  } catch {
-                    title = href.length > 50 ? href.substring(0, 50) + '...' : href;
+            // data-type が googledocs などの外部サービスの場合
+            const dataType = btn.getAttribute('data-type') || '';
+            if (dataType && dataType !== 'chatworkImagePreview' && dataType !== 'chatworkFilePreview') {
+              // プレビューURLを使用
+              const url = previewUrl;
+              if (url && !externalLinks.some(l => l.url === url)) {
+                // タイトルを取得（近くのリンクから）
+                let title = '';
+                const parentContainer = btn.closest('[data-cwtag^="http"], [class*="url"], [class*="link"]') || btn.parentElement;
+                if (parentContainer) {
+                  const linkEl = parentContainer.querySelector('a[href]:not(._previewLink)');
+                  if (linkEl) {
+                    title = linkEl.textContent?.trim() || '';
                   }
                 }
-                // 重複チェック
-                if (!externalLinks.some(l => l.url === href)) {
-                  externalLinks.push({ url: href, title, previewElement: btn });
+                if (!title || title.length > 50) {
+                  try {
+                    const urlObj = new URL(url);
+                    title = urlObj.hostname + (urlObj.pathname.length > 25 ? urlObj.pathname.substring(0, 25) + '...' : urlObj.pathname);
+                  } catch {
+                    title = url.length > 50 ? url.substring(0, 50) + '...' : url;
+                  }
                 }
+                externalLinks.push({ url, title, previewElement: btn, hasPreviewButton: true });
               }
             }
           });
@@ -344,6 +348,8 @@
                 link.closest('[data-cwtag^="[rp"]') ||     // 返信バッジ内
                 link.closest('._replyMessage') ||          // 返信メッセージ内
                 link.closest('._filePreview') ||           // ファイルプレビュー内
+                link.closest('[data-cwopen*="download"]') || // ダウンロードリンク内
+                link.classList.contains('_previewLink') || // プレビューボタン自体
                 link.hasAttribute('data-file-id')) {       // ファイルリンク
               return;
             }
@@ -353,11 +359,12 @@
               return;
             }
             
-            // 近くにプレビューボタンがあるか探す
-            const parentContainer = link.closest('[class*="url"], [class*="link"], [class*="Link"]') || link.parentElement;
-            let previewElement = null;
+            // 近くにプレビューボタンがあるか探す（_previewLinkクラス）
+            const parentContainer = link.closest('[data-cwtag^="http"], [class*="url"], [class*="link"]') || link.parentElement;
+            let hasPreviewButton = false;
             if (parentContainer) {
-              previewElement = parentContainer.querySelector('a[data-preview-url], button[data-preview-url], [class*="preview"]:not(._filePreview)');
+              const previewBtn = parentContainer.querySelector('a._previewLink[data-url]');
+              hasPreviewButton = !!previewBtn;
             }
             
             // リンクのタイトルを取得
@@ -372,7 +379,7 @@
               }
             }
             
-            externalLinks.push({ url: href, title, previewElement });
+            externalLinks.push({ url: href, title, hasPreviewButton });
           });
           
           // To宛先を取得
@@ -431,7 +438,10 @@
             '._replyMessage',        // 返信メッセージバッジ
             '._filePreview',         // プレビューボタン
             '._filePreviewButton',   // プレビューボタン
-            '[data-type="chatworkImagePreview"]' // 画像プレビューボタン
+            '[data-type="chatworkImagePreview"]', // 画像プレビューボタン
+            '._previewLink',         // 外部リンクプレビューボタン
+            '[data-cwopen*="download"]', // ダウンロードリンク（ファイル名・サイズ）
+            '.chatInfo [data-cwtag^="[preview"]' // 画像プレビュー領域
           ];
           
           const textParts = collectTextNodes(preEl, excludeSelectors);
@@ -1296,18 +1306,19 @@
             const fileId = fileIdMatch[1];
             const fileInfo = fileUrlMap.get(fileId);
             if (fileInfo) {
-              const displayName = this.escapeHtml(this.truncateFileName(fileInfo.fileName));
-              const sizeDisplay = fileInfo.fileSize ? ` (${this.escapeHtml(fileInfo.fileSize)})` : '';
               html += `<a class="cw-threader-preview-btn cw-threader-inline-preview" data-file-id="${this.escapeHtml(fileId)}" data-mid="${this.escapeHtml(mid)}">プレビュー</a>`;
               // このファイルは処理済みとしてマーク
               fileUrlMap.delete(fileId);
             }
           }
           
-          // 2. 外部リンクの場合
+          // 2. 外部リンクの場合（プレビューボタンがある場合のみ）
           const linkIndex = externalLinkMap.get(url);
           if (linkIndex !== undefined) {
-            html += `<a class="cw-threader-external-link-btn cw-threader-inline-preview" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}">プレビュー</a>`;
+            const linkInfo = externalLinks[linkIndex];
+            if (linkInfo && linkInfo.hasPreviewButton) {
+              html += `<a class="cw-threader-external-link-btn cw-threader-inline-preview" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}">プレビュー</a>`;
+            }
             // このリンクは処理済みとしてマーク
             externalLinkMap.delete(url);
           }
@@ -1325,10 +1336,10 @@
         </div>`;
       });
       
-      // 外部リンク（URLとして本文中に出現しなかったもの）を末尾に追加
+      // 外部リンク（URLとして本文中に出現しなかったもの、かつプレビューボタンがあるもののみ）を末尾に追加
       externalLinkMap.forEach((linkIndex, url) => {
         const link = externalLinks[linkIndex];
-        if (link) {
+        if (link && link.hasPreviewButton) {
           const escapedUrl = this.escapeHtml(url);
           const title = this.escapeHtml(link.title || url);
           html += `<div class="cw-threader-external-link-item">
