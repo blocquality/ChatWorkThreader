@@ -1683,21 +1683,19 @@
         if (isRootWithReplies) {
           const toggleCheckbox = messageEl.querySelector('.cw-threader-toggle-switch input');
           if (toggleCheckbox) {
-            const roomId = getCurrentRoomId();
             const mid = node.mid;
 
-            // 保存された状態を復元
-            getToggleState(roomId, mid).then(isOpen => {
-              toggleCheckbox.checked = isOpen;
-              childrenContainer.style.display = isOpen ? '' : 'none';
-            });
+            // 保存された状態を同期的に復元（事前にloadToggleStatesで読み込み済み）
+            const isOpen = this.getToggleState(mid);
+            toggleCheckbox.checked = isOpen;
+            childrenContainer.style.display = isOpen ? '' : 'none';
 
             toggleCheckbox.addEventListener('change', (e) => {
               e.stopPropagation();
               const isOpen = toggleCheckbox.checked;
               childrenContainer.style.display = isOpen ? '' : 'none';
               // 状態をストレージに保存
-              saveToggleState(roomId, mid, isOpen);
+              this.saveToggleState(mid, isOpen);
             });
           }
         }
