@@ -2391,7 +2391,7 @@
     createShowInThreadButton(mid) {
       const button = document.createElement('button');
       button.className = 'cw-threader-show-in-thread-btn';
-      button.innerHTML = `<span class="cw-threader-sit-icon">💬</span><span class="cw-threader-sit-text">スレッドで表示</span>`;
+      button.innerHTML = `<span class="cw-threader-sit-icon">💬</span><span class="cw-threader-sit-text">スレッド</span>`;
       button.title = 'スレッド一覧で表示';
       button.setAttribute('data-mid', mid);
       
@@ -2544,24 +2544,29 @@
         if (!this.isMessageInThread(mid)) return;
         
         // ボタンを追加する位置を探す
-        // ChatWorkのメッセージ構造: アクションメニュー（リアクション、返信など）の近くに追加
-        const actionArea = el.querySelector('._reaction, [data-testid*="reaction"], [class*="messageAction"]');
+        // ChatWorkのメッセージ構造: ユーザーアイコンの真下に配置
+        // ユーザーアイコンを含む要素を探す
+        const avatarEl = el.querySelector('.userIconImage, [data-testid="user-icon"], img[class*="avatar"]');
         
-        if (actionArea) {
-          // アクションエリアの親に追加
-          const parentEl = actionArea.parentElement;
-          if (parentEl) {
+        if (avatarEl) {
+          // アバターの親コンテナを探す（通常はアバターを囲むdivやspan）
+          let avatarContainer = avatarEl.closest('[class*="avatar"], [class*="Avatar"], [class*="icon"], [class*="Icon"]');
+          if (!avatarContainer) {
+            avatarContainer = avatarEl.parentElement;
+          }
+          
+          if (avatarContainer) {
             const button = this.createShowInThreadButton(mid);
-            // アクションエリアの前に挿入
-            parentEl.insertBefore(button, actionArea);
+            // アバターコンテナの後ろに挿入
+            avatarContainer.parentElement.insertBefore(button, avatarContainer.nextSibling);
             this.addedButtons.add(mid);
           }
         } else {
-          // フォールバック: メッセージ本文の後ろに追加
+          // フォールバック: メッセージの先頭に追加
           const preEl = el.querySelector('pre');
           if (preEl) {
             const button = this.createShowInThreadButton(mid);
-            preEl.parentElement.appendChild(button);
+            preEl.parentElement.insertBefore(button, preEl);
             this.addedButtons.add(mid);
           }
         }

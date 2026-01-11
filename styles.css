@@ -780,20 +780,24 @@
 
 /* 「スレッドで表示」ボタン */
 .cw-threader-show-in-thread-btn {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  margin: 4px 8px 4px 0;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 6px;
+  margin: 4px 0;
   border: 1px solid #ddd;
-  border-radius: 14px;
+  border-radius: 8px;
   background: #f8f9fa;
   color: #333;
-  font-size: 11px;
+  font-size: 9px;
   cursor: pointer;
   transition: all 0.2s ease;
-  vertical-align: middle;
   white-space: nowrap;
+  line-height: 1.2;
+  min-width: 48px;
+  max-width: 60px;
 }
 
 .cw-threader-show-in-thread-btn:hover {
@@ -809,11 +813,14 @@
 }
 
 .cw-threader-sit-icon {
-  font-size: 12px;
+  font-size: 14px;
+  line-height: 1;
 }
 
 .cw-threader-sit-text {
   font-weight: 500;
+  text-align: center;
+  word-break: keep-all;
 }
 
 /* スレッドパネル内のハイライト効果 */
