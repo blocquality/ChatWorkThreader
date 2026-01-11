@@ -426,12 +426,12 @@
 
 /* 自分宛てメッセージ（メンション）のスタイル - ChatWorkと同じ色 */
 .cw-threader-message.cw-threader-mention {
-  background: #e0f2f1;
-  border-left: 4px solid #4db6ac;
+  background: #E4F6F3;
+  border-right: 4px solid #57CAB3;
 }
 
 .cw-threader-message.cw-threader-mention:hover {
-  background: #b2dfdb;
+  background: #d0ebe6;
 }
 
 .cw-threader-message-body {
