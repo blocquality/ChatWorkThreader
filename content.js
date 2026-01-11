@@ -1557,7 +1557,7 @@
       }
       // 自分宛てメッセージの場合、緑色背景クラスを追加
       if (node.isToMe) {
-        console.log(`[ChatWorkThreader] スレッド表示: 自分宛てメッセージにクラス追加 MID=${node.mid}`);
+        // console.log(`[ChatWorkThreader] スレッド表示: 自分宛てメッセージにクラス追加 MID=${node.mid}`);
         messageEl.classList.add('cw-threader-mention');
       }
       
@@ -2787,7 +2787,7 @@
         // デバウンス：短時間に大量の更新が来た場合に備える
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-          console.log('ChatWork Threader: メッセージ変更を検知、更新中...');
+          // console.log('ChatWork Threader: メッセージ変更を検知、更新中...');
           
           // 「スレッドで表示」ボタンを更新
           if (showInThreadButtonManager) {
@@ -2813,7 +2813,7 @@
     const urlObserver = new MutationObserver(() => {
       if (window.location.href !== lastUrl) {
         lastUrl = window.location.href;
-        console.log('ChatWork Threader: ルーム変更を検知');
+        // console.log('ChatWork Threader: ルーム変更を検知');
         
         // ボタンをクリーンアップして再追加
         if (showInThreadButtonManager) {
@@ -2826,7 +2826,7 @@
     });
     urlObserver.observe(document.body, { childList: true, subtree: true });
 
-    console.log('ChatWork Threader: メッセージ監視を開始');
+    // console.log('ChatWork Threader: メッセージ監視を開始');
   }
 
   /**
@@ -2858,7 +2858,7 @@
           showInThreadButtonManager.addButtonsToMessages();
         }, 1000);
         
-        console.log('ChatWork Threader initialized');
+        // console.log('ChatWork Threader initialized');
       }
     }, 1000);
 
