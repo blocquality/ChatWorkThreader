@@ -803,10 +803,18 @@
 /* 「スレッドで表示」ボタン ラッパー */
 .cw-threader-show-in-thread-wrapper {
   position: absolute;
-  left: 4px;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 8px;
   z-index: 10;
+}
+
+/* アバターがある場合: アバターの真下に配置 */
+.cw-threader-show-in-thread-wrapper.cw-threader-sit-below-avatar {
+  top: 52px; /* アバター（40px）+ 余白（12px） */
+}
+
+/* アバターがない場合: アバターの位置に配置 */
+.cw-threader-show-in-thread-wrapper.cw-threader-sit-at-avatar {
+  top: 8px;
 }
 
 /* 「スレッドで表示」ボタン */

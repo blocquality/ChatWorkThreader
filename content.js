@@ -2388,10 +2388,16 @@
      * @param {string} mid - メッセージID
      * @returns {HTMLElement}
      */
-    createShowInThreadButton(mid) {
+    createShowInThreadButton(mid, hasAvatar = true) {
       // ラッパーdivでボタンを包む（ホバー安定化）
       const wrapper = document.createElement('div');
       wrapper.className = 'cw-threader-show-in-thread-wrapper';
+      // アバターの有無に応じてクラスを追加
+      if (hasAvatar) {
+        wrapper.classList.add('cw-threader-sit-below-avatar');
+      } else {
+        wrapper.classList.add('cw-threader-sit-at-avatar');
+      }
       
       const button = document.createElement('button');
       button.className = 'cw-threader-show-in-thread-btn';
@@ -2549,10 +2555,13 @@
         if (!this.isMessageInThread(mid)) return;
         
         // ボタンを追加する位置: _message要素の左側パディングに絶対位置で配置
-        // _message要素にposition:relativeを設定し、ボタンを左側に配置
         el.style.position = 'relative';
         
-        const button = this.createShowInThreadButton(mid);
+        // ユーザーアイコンの有無をチェック（引用内のアイコンは除外）
+        const avatarEl = el.querySelector('.userIconImage:not(.chatQuote *):not(.dev_quote *), [data-testid="user-icon"]:not(.chatQuote *):not(.dev_quote *)');
+        const hasAvatar = !!avatarEl;
+        
+        const button = this.createShowInThreadButton(mid, hasAvatar);
         el.appendChild(button);
         this.addedButtons.add(mid);
       });
