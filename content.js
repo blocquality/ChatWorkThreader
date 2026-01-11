@@ -2549,31 +2549,20 @@
         if (!this.isMessageInThread(mid)) return;
         
         // ボタンを追加する位置を探す
-        // ChatWorkのメッセージ構造: ユーザーアイコンの真下に配置
-        // ユーザーアイコンを含む要素を探す
-        const avatarEl = el.querySelector('.userIconImage, [data-testid="user-icon"], img[class*="avatar"]');
+        // ChatWorkのメッセージ構造: メッセージ要素の左側パディングエリアに配置
+        // _message要素の最初の子要素（通常はアバター列を含む）を探す
+        const firstChild = el.firstElementChild;
         
-        if (avatarEl) {
-          // アバターの親コンテナを探す（通常はアバターを囲むdivやspan）
-          let avatarContainer = avatarEl.closest('[class*="avatar"], [class*="Avatar"], [class*="icon"], [class*="Icon"]');
-          if (!avatarContainer) {
-            avatarContainer = avatarEl.parentElement;
-          }
-          
-          if (avatarContainer) {
-            const button = this.createShowInThreadButton(mid);
-            // アバターコンテナの後ろに挿入
-            avatarContainer.parentElement.insertBefore(button, avatarContainer.nextSibling);
-            this.addedButtons.add(mid);
-          }
+        if (firstChild) {
+          const button = this.createShowInThreadButton(mid);
+          // 最初の子要素の末尾に追加（アバターの下に配置される）
+          firstChild.appendChild(button);
+          this.addedButtons.add(mid);
         } else {
-          // フォールバック: メッセージの先頭に追加
-          const preEl = el.querySelector('pre');
-          if (preEl) {
-            const button = this.createShowInThreadButton(mid);
-            preEl.parentElement.insertBefore(button, preEl);
-            this.addedButtons.add(mid);
-          }
+          // フォールバック: メッセージ要素自体の先頭に追加
+          const button = this.createShowInThreadButton(mid);
+          el.insertBefore(button, el.firstChild);
+          this.addedButtons.add(mid);
         }
       });
     }
