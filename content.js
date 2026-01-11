@@ -2644,9 +2644,6 @@
           }
         }
         
-        // スクロールコンテナを取得
-        const scrollContainer = document.querySelector('.cw-threader-content');
-        
         // 揺れアニメーションを開始する関数
         const startShakeAnimation = () => {
           // 前のアニメーションを完全にリセット
@@ -2660,35 +2657,31 @@
           }, 1500); // 0.5秒 x 3回 = 1.5秒
         };
         
-        // スクロール停止を検知してからアニメーションを開始
-        let scrollTimeout = null;
-        const onScrollEnd = () => {
-          if (scrollTimeout) clearTimeout(scrollTimeout);
-          scrollTimeout = setTimeout(() => {
-            // スクロールが100ms止まったら停止と判断
-            scrollContainer.removeEventListener('scroll', onScrollEnd);
-            startShakeAnimation();
-          }, 100);
+        // スクロールして、完了後にアニメーション
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // scrollIntoViewの完了を検知（scrollendイベント + フォールバック）
+        const scrollContainer = document.querySelector('.cw-threader-content');
+        let animationStarted = false;
+        
+        const triggerAnimation = () => {
+          if (animationStarted) return;
+          animationStarted = true;
+          startShakeAnimation();
         };
         
-        // 要素が画面内に表示されたかチェック
-        const observer = new IntersectionObserver((entries, obs) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              obs.disconnect();
-              // スクロール停止を監視開始
-              scrollContainer.addEventListener('scroll', onScrollEnd);
-              // すでにスクロールが止まっている場合のためにも発火
-              onScrollEnd();
-            }
-          });
-        }, {
-          root: scrollContainer,
-          threshold: 1.0 // 100%見えたら発火
-        });
+        // 方法1: scrollendイベント（モダンブラウザ対応）
+        const onScrollEnd = () => {
+          scrollContainer.removeEventListener('scrollend', onScrollEnd);
+          triggerAnimation();
+        };
+        scrollContainer.addEventListener('scrollend', onScrollEnd);
         
-        observer.observe(targetEl);
-        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // 方法2: フォールバック - 500ms後に強制実行（スクロールが不要な場合やscrollend非対応時）
+        setTimeout(() => {
+          scrollContainer.removeEventListener('scrollend', onScrollEnd);
+          triggerAnimation();
+        }, 500);
       }
     }
 
