@@ -38,49 +38,129 @@
   function getCurrentUserAid() {
     // 方法1: グローバル変数から取得（ChatWorkが設定している場合）
     if (typeof CW !== 'undefined' && CW.myid) {
+      console.log('[ChatWorkThreader] AID取得: CW.myid =', CW.myid);
       return CW.myid.toString();
     }
     
-    // 方法2: ページ内のユーザープロフィール要素から取得
-    const myProfileLink = document.querySelector('[data-myid]');
-    if (myProfileLink) {
-      return myProfileLink.getAttribute('data-myid');
+    // 方法2: RM.ac オブジェクトから取得（新しいChatWork構造）
+    if (typeof RM !== 'undefined' && RM.ac && RM.ac.aid) {
+      console.log('[ChatWorkThreader] AID取得: RM.ac.aid =', RM.ac.aid);
+      return RM.ac.aid.toString();
     }
     
-    // 方法3: _myStatusAreaから取得（アイコン画像のsrcにaidが含まれることがある）
+    // 方法3: ACグローバルオブジェクトから取得
+    if (typeof AC !== 'undefined' && AC.myid) {
+      console.log('[ChatWorkThreader] AID取得: AC.myid =', AC.myid);
+      return AC.myid.toString();
+    }
+    
+    // 方法4: ページ内のユーザープロフィール要素から取得
+    const myProfileLink = document.querySelector('[data-myid]');
+    if (myProfileLink) {
+      const aid = myProfileLink.getAttribute('data-myid');
+      console.log('[ChatWorkThreader] AID取得: data-myid =', aid);
+      return aid;
+    }
+    
+    // 方法5: _myStatusAreaから取得（アイコン画像のsrcにaidが含まれることがある）
     const myStatusArea = document.getElementById('_myStatusArea');
     if (myStatusArea) {
       const avatarImg = myStatusArea.querySelector('img');
       if (avatarImg && avatarImg.src) {
         const aidMatch = avatarImg.src.match(/avatar\/(\d+)/);
         if (aidMatch) {
+          console.log('[ChatWorkThreader] AID取得: _myStatusArea avatar =', aidMatch[1]);
           return aidMatch[1];
         }
       }
     }
     
-    // 方法4: inputタグのmyIdから取得
+    // 方法6: サイドバーのマイ情報エリアから取得
+    const sidebarMyInfo = document.querySelector('#_sidebarMainMyInfo [data-aid], #_sidebarMainMyInfo img[src*="avatar"]');
+    if (sidebarMyInfo) {
+      const aid = sidebarMyInfo.getAttribute('data-aid');
+      if (aid) {
+        console.log('[ChatWorkThreader] AID取得: sidebarMyInfo data-aid =', aid);
+        return aid;
+      }
+      const src = sidebarMyInfo.getAttribute('src');
+      if (src) {
+        const aidMatch = src.match(/avatar\/(\d+)/);
+        if (aidMatch) {
+          console.log('[ChatWorkThreader] AID取得: sidebarMyInfo avatar =', aidMatch[1]);
+          return aidMatch[1];
+        }
+      }
+    }
+    
+    // 方法7: inputタグのmyIdから取得
     const myIdInput = document.querySelector('input[name="myid"]');
     if (myIdInput) {
+      console.log('[ChatWorkThreader] AID取得: input myid =', myIdInput.value);
       return myIdInput.value;
     }
+    
+    // 方法8: ヘッダーのアバター画像から取得
+    const headerAvatar = document.querySelector('header img[src*="avatar"], #_header img[src*="avatar"]');
+    if (headerAvatar && headerAvatar.src) {
+      const aidMatch = headerAvatar.src.match(/avatar\/(\d+)/);
+      if (aidMatch) {
+        console.log('[ChatWorkThreader] AID取得: header avatar =', aidMatch[1]);
+        return aidMatch[1];
+      }
+    }
+    
+    // 方法9: 任意のアバター画像（自分のプロフィール関連）から取得
+    const profileAvatars = document.querySelectorAll('[class*="myProfile"] img[src*="avatar"], [class*="MyProfile"] img[src*="avatar"], [id*="myProfile"] img[src*="avatar"]');
+    for (const avatar of profileAvatars) {
+      if (avatar.src) {
+        const aidMatch = avatar.src.match(/avatar\/(\d+)/);
+        if (aidMatch) {
+          console.log('[ChatWorkThreader] AID取得: profile avatar =', aidMatch[1]);
+          return aidMatch[1];
+        }
+      }
+    }
 
-    // 方法5: scriptタグ内のACを検索
+    // 方法10: scriptタグ内のACを検索
     const scripts = document.querySelectorAll('script');
     for (const script of scripts) {
       if (script.textContent) {
         const acMatch = script.textContent.match(/AC\s*=\s*{[^}]*myid\s*:\s*["'](\d+)["']/);
         if (acMatch) {
+          console.log('[ChatWorkThreader] AID取得: script AC.myid =', acMatch[1]);
           return acMatch[1];
         }
         // もう1つのパターン
         const myidMatch = script.textContent.match(/["']myid["']\s*:\s*["'](\d+)["']/);
         if (myidMatch) {
+          console.log('[ChatWorkThreader] AID取得: script myid =', myidMatch[1]);
           return myidMatch[1];
+        }
+        // aid パターン
+        const aidMatch = script.textContent.match(/["']aid["']\s*:\s*["']?(\d+)["']?/);
+        if (aidMatch) {
+          console.log('[ChatWorkThreader] AID取得: script aid =', aidMatch[1]);
+          return aidMatch[1];
         }
       }
     }
     
+    // 方法11: localStorageから取得を試みる
+    try {
+      const cwData = localStorage.getItem('cwData');
+      if (cwData) {
+        const parsed = JSON.parse(cwData);
+        if (parsed && parsed.myid) {
+          console.log('[ChatWorkThreader] AID取得: localStorage =', parsed.myid);
+          return parsed.myid.toString();
+        }
+      }
+    } catch (e) {
+      // JSON解析エラーは無視
+    }
+    
+    console.log('[ChatWorkThreader] 警告: AIDを取得できませんでした');
     return null;
   }
 
@@ -1378,8 +1458,9 @@
       }
 
       // フィルタリング：次に自分参加スレッドのみ表示する場合、さらに絞り込む
-      if (this.showOnlyMyThreads && this.currentUserAid) {
-        sortedThreads = sortedThreads.filter(thread => this.isUserInvolvedInThread(thread, this.currentUserAid));
+      // isToMe フラグ（緑色表示と同じロジック）を使って判定
+      if (this.showOnlyMyThreads) {
+        sortedThreads = sortedThreads.filter(thread => this.isUserInvolvedInThread(thread));
       }
 
       if (sortedThreads.length === 0) {
@@ -1398,72 +1479,33 @@
     }
 
     /**
-     * スレッド内に指定ユーザーが関わっているか判定
+     * スレッド内に自分が関わっているか判定
      * 「返信元」または「返信先」に自分がいるスレッドを検出する
      * 
-     * 「返信元」= 自分が送信したメッセージに誰かが返信している
-     * 「返信先」= 自分が誰かのメッセージに返信している、または自分宛て(TO)のメッセージがある
+     * isToMe フラグ（緑色表示と同じロジック）を活用して判定
      * 
      * @param {Object} node - スレッドノード
-     * @param {string} userAid - ユーザーAID
-     * @returns {boolean} ユーザーが関わっている場合true
+     * @returns {boolean} 自分が関わっている場合true
      */
-    isUserInvolvedInThread(node, userAid) {
+    isUserInvolvedInThread(node) {
       // messageDataから情報を取得
       const messageData = this.threadBuilder.messages.get(node.mid);
-      const senderAid = node.senderAid || (messageData && messageData.senderAid);
       
-      // ケース1: 自分がメッセージ送信者（返信元の候補）
-      // 自分が送信したメッセージで、かつ子（返信）がある場合 = 自分が「返信元」
-      if (senderAid === userAid) {
-        // 子がある場合は「返信元」として検出
-        if (node.children && node.children.length > 0) {
-          return true;
-        }
-        // 子がなくても、親（返信先）がある場合は「返信先」として検出
-        // （自分が誰かに返信したメッセージ）
-        if (node.parentMid || (messageData && messageData.parentMid)) {
-          return true;
-        }
-      }
-      
-      // ケース2: このメッセージが自分宛て (isToMe)
-      // 自分宛てのメッセージがある = 自分が「返信先」
+      // このメッセージが自分宛て (isToMe) なら参加している
+      // これは緑色表示と同じロジック
       if (messageData && messageData.isToMe) {
         return true;
       }
       
-      // ケース3: このメッセージの返信先（parentAid）が自分
-      // 誰かが自分のメッセージに返信している = 自分が「返信元」
-      const parentAid = node.parentAid || (messageData && messageData.parentAid);
-      if (parentAid === userAid) {
+      // ノード自体の isToMe フラグもチェック
+      if (node.isToMe) {
         return true;
-      }
-      
-      // ケース4: element から追加でAIDを取得して確認
-      if (messageData && messageData.element) {
-        // 送信者のAIDを確認
-        const aidEls = messageData.element.querySelectorAll('[data-aid]');
-        for (const aidEl of aidEls) {
-          // 引用・返信バッジ・To宛先内は除外
-          const isInQuote = aidEl.closest('.chatQuote, .dev_quote, [data-cwopen="[qt]"], [data-cwtag^="[qt"]');
-          const isInReply = aidEl.closest('[data-cwtag^="[rp"]');
-          const isInTo = aidEl.closest('[data-cwtag^="[to"]');
-          if (!isInQuote && !isInReply && !isInTo) {
-            if (aidEl.getAttribute('data-aid') === userAid) {
-              // 自分が送信者で、子または親がある場合
-              if ((node.children && node.children.length > 0) || node.parentMid || (messageData && messageData.parentMid)) {
-                return true;
-              }
-            }
-          }
-        }
       }
       
       // 子ノードを再帰的にチェック
       if (node.children && node.children.length > 0) {
         for (const child of node.children) {
-          if (this.isUserInvolvedInThread(child, userAid)) {
+          if (this.isUserInvolvedInThread(child)) {
             return true;
           }
         }
