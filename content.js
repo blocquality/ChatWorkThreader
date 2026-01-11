@@ -2651,11 +2651,11 @@
           targetEl.style.animation = 'none';
           targetEl.offsetWidth; // reflow を強制
           // インラインスタイルで直接アニメーションを適用（確実に動作させる）
-          targetEl.style.animation = 'cw-threader-shake 0.5s ease-in-out 3';
+          targetEl.style.animation = 'cw-threader-shake 0.15s ease-in-out 2';
           // アニメーション終了後にスタイルを削除
           setTimeout(() => {
             targetEl.style.animation = '';
-          }, 1500);
+          }, 500);
         }, 600);
       }
     }
