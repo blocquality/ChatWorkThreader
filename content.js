@@ -104,22 +104,71 @@
     }
 
     /**
+     * MIDからメッセージのルート要素を取得
+     * @param {string} mid - メッセージID
+     * @returns {Element|null}
+     */
+    findMessageRootByMid(mid) {
+      const midStr = String(mid);
+      const esc = CSS.escape(midStr);
+
+      // いまのChatWorkはこれが一番当たりやすい
+      let el = document.querySelector(`div._message[data-mid="${esc}"]`);
+      if (el) return el;
+
+      // id が "_messageId{mid}" の形で生えてることもある
+      el = document.getElementById(`_messageId${midStr}`);
+      if (el) return el.closest('div._message') ?? el;
+
+      // 最後の保険（data-mid をどこかが持ってれば拾う）
+      el = document.querySelector(`[data-mid="${esc}"]`);
+      if (el) return el.closest('div._message') ?? el;
+
+      return null;
+    }
+
+    /**
      * メッセージが自分宛てかどうかを判定
-     * @param {Element} messageElement - .timelineMessage要素
+     * @param {Element} messageElement - メッセージ要素
+     * @param {string} mid - メッセージID（デバッグ用）
      * @returns {boolean}
      */
-    isMessageToMe(messageElement) {
-      // timelineMessage要素を取得（_message要素から親を辿る）
-      const timelineMessage = messageElement.closest('.timelineMessage');
+    isMessageToMe(messageElement, mid) {
+      // 方法1: 渡された要素から .timelineMessage を探す
+      let timelineMessage = messageElement.closest('.timelineMessage');
+      
+      // 方法2: 見つからない場合、MIDから再取得を試みる
+      if (!timelineMessage && mid) {
+        const rootEl = this.findMessageRootByMid(mid);
+        if (rootEl) {
+          timelineMessage = rootEl.closest('.timelineMessage');
+        }
+      }
+      
+      // 方法3: それでも見つからない場合、親要素を辿って探す
+      if (!timelineMessage) {
+        let parent = messageElement.parentElement;
+        while (parent && parent !== document.body) {
+          if (parent.classList && parent.classList.contains('timelineMessage')) {
+            timelineMessage = parent;
+            break;
+          }
+          // timelineMessage--mention クラスを直接探す
+          if (parent.classList && parent.classList.contains('timelineMessage--mention')) {
+            timelineMessage = parent;
+            break;
+          }
+          parent = parent.parentElement;
+        }
+      }
+      
       if (!timelineMessage) {
         // デバッグ: timelineMessageが見つからない場合
-        const mid = messageElement.getAttribute('data-mid');
-        console.log(`[ChatWorkThreader DEBUG] MID=${mid}: .timelineMessage が見つかりません`);
+        console.log(`[ChatWorkThreader DEBUG] MID=${mid}: .timelineMessage が見つかりません。要素:`, messageElement);
         return false;
       }
       
-      // デバッグ: クラス一覧を確認
-      const mid = messageElement.getAttribute('data-mid');
+      // クラス一覧を確認
       const hasMention = timelineMessage.classList.contains('timelineMessage--mention');
       const hasJump = timelineMessage.classList.contains('timelineMessage--jumpMessage');
       const allClasses = Array.from(timelineMessage.classList).join(', ');
@@ -129,6 +178,11 @@
       if (this._debugCount < 5) {
         console.log(`[ChatWorkThreader DEBUG] MID=${mid}: mention=${hasMention}, jump=${hasJump}, classes=[${allClasses}]`);
         this._debugCount++;
+      }
+      
+      // 自分宛ての場合はログ出力
+      if (hasMention && !hasJump) {
+        console.log(`[ChatWorkThreader] 自分宛て検出: MID=${mid}`);
       }
       
       // timelineMessage--mention クラスがあり、
@@ -154,8 +208,8 @@
         
         if (!mid) return;
 
-        // 自分宛てかどうかを判定
-        const isToMe = this.isMessageToMe(el);
+        // 自分宛てかどうかを判定（midも渡す）
+        const isToMe = this.isMessageToMe(el, mid);
         
         // デバッグ: 自分宛てと判定されたMIDを収集
         if (isToMe) {
