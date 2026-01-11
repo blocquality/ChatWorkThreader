@@ -157,7 +157,7 @@
         let messageText = '';
         let replyTargetUserName = null;
         let quotedMessage = null;  // 引用メッセージ
-        let filePreviewInfo = [];  // ファイルプレビュー情報 { fileId, mimeType, fileName }
+        let filePreviewInfo = [];  // ファイルプレビュー情報 { fileId, mimeType, fileName, fileSize }
         let externalLinks = [];    // 外部リンク情報 { url, title, type }
         let toTargets = [];  // To先ユーザー
         
@@ -187,13 +187,29 @@
           previewButtons.forEach(btn => {
             const fileId = btn.getAttribute('data-file-id');
             const mimeType = btn.getAttribute('data-mime-type') || 'image/png';
-            // ファイル名を取得（近くのテキストやダウンロードリンクから）
+            // ファイル名とファイルサイズを取得（近くのテキストやダウンロードリンクから）
             const parentEl = btn.closest('[class*="file"], [class*="File"]') || btn.parentElement;
             let fileName = '';
+            let fileSize = btn.getAttribute('data-file-size') || '';
             if (parentEl) {
               const downloadLink = parentEl.querySelector('a[download], a[href*="download"]');
               if (downloadLink) {
                 fileName = downloadLink.textContent?.trim() || downloadLink.getAttribute('download') || '';
+              }
+              // ファイルサイズを探す（近くのテキストから）
+              if (!fileSize) {
+                const sizeEl = parentEl.querySelector('[class*="size"], [class*="Size"]');
+                if (sizeEl) {
+                  fileSize = sizeEl.textContent?.trim() || '';
+                }
+                // 親要素のテキストからサイズっぽい情報を抽出（例: "33.98 KB"）
+                if (!fileSize) {
+                  const parentText = parentEl.textContent || '';
+                  const sizeMatch = parentText.match(/(\d+(?:\.\d+)?\s*(?:KB|MB|GB|B))/i);
+                  if (sizeMatch) {
+                    fileSize = sizeMatch[1];
+                  }
+                }
               }
             }
             if (!fileName) {
@@ -201,7 +217,7 @@
             }
             
             if (fileId && !filePreviewInfo.some(f => f.fileId === fileId)) {
-              filePreviewInfo.push({ fileId, mimeType, fileName, previewElement: btn });
+              filePreviewInfo.push({ fileId, mimeType, fileName, fileSize, previewElement: btn });
             }
           });
           
@@ -213,14 +229,27 @@
             const fileIdMatch = dataUrl.match(/file_id=(\d+)/);
             const fileId = fileIdMatch ? fileIdMatch[1] : null;
             const mimeType = btn.getAttribute('data-mime-type') || 'application/octet-stream';
-            // ファイル名を取得（data-content-id または近くのダウンロードリンクから）
+            // ファイル名とファイルサイズを取得（data-content-id または近くのダウンロードリンクから）
             let fileName = btn.getAttribute('data-content-id') || '';
-            if (!fileName) {
-              const parentEl = btn.closest('[data-cwopen*="download"]') || btn.parentElement;
-              if (parentEl) {
-                const downloadLink = parentEl.querySelector('a[href*="download_file"]');
-                if (downloadLink) {
-                  fileName = downloadLink.textContent?.trim() || '';
+            let fileSize = btn.getAttribute('data-file-size') || '';
+            const parentEl = btn.closest('[data-cwopen*="download"]') || btn.parentElement;
+            if (!fileName && parentEl) {
+              const downloadLink = parentEl.querySelector('a[href*="download_file"]');
+              if (downloadLink) {
+                fileName = downloadLink.textContent?.trim() || '';
+              }
+            }
+            // ファイルサイズを探す
+            if (!fileSize && parentEl) {
+              const sizeEl = parentEl.querySelector('[class*="size"], [class*="Size"]');
+              if (sizeEl) {
+                fileSize = sizeEl.textContent?.trim() || '';
+              }
+              if (!fileSize) {
+                const parentText = parentEl.textContent || '';
+                const sizeMatch = parentText.match(/(\d+(?:\.\d+)?\s*(?:KB|MB|GB|B))/i);
+                if (sizeMatch) {
+                  fileSize = sizeMatch[1];
                 }
               }
             }
@@ -229,7 +258,7 @@
             }
             
             if (fileId && !filePreviewInfo.some(f => f.fileId === fileId)) {
-              filePreviewInfo.push({ fileId, mimeType, fileName, previewElement: btn });
+              filePreviewInfo.push({ fileId, mimeType, fileName, fileSize, previewElement: btn });
             }
           });
           
@@ -241,7 +270,25 @@
             // 画像ファイルのみ対象
             if (fileId && mimeType.startsWith('image/') && !filePreviewInfo.some(f => f.fileId === fileId)) {
               const fileName = el.textContent?.trim() || `file_${fileId}`;
-              filePreviewInfo.push({ fileId, mimeType, fileName, previewElement: el });
+              let fileSize = el.getAttribute('data-file-size') || '';
+              // 親要素からファイルサイズを探す
+              if (!fileSize) {
+                const parentEl = el.closest('[class*="file"], [class*="File"]') || el.parentElement;
+                if (parentEl) {
+                  const sizeEl = parentEl.querySelector('[class*="size"], [class*="Size"]');
+                  if (sizeEl) {
+                    fileSize = sizeEl.textContent?.trim() || '';
+                  }
+                  if (!fileSize) {
+                    const parentText = parentEl.textContent || '';
+                    const sizeMatch = parentText.match(/(\d+(?:\.\d+)?\s*(?:KB|MB|GB|B))/i);
+                    if (sizeMatch) {
+                      fileSize = sizeMatch[1];
+                    }
+                  }
+                }
+              }
+              filePreviewInfo.push({ fileId, mimeType, fileName, fileSize, previewElement: el });
             }
           });
           
@@ -991,11 +1038,13 @@
         : '';
       
       // ファイルプレビューボタン用HTML（ChatWorkのプレビュー機能を利用）
-      // ファイル名を表示（「プレビュー」文言は使わない）
+      // ファイル名とサイズを表示（「プレビュー」文言は使わない）
       const filePreviewHtml = (node.filePreviewInfo && node.filePreviewInfo.length > 0) 
-        ? `<div class="cw-threader-file-previews">${node.filePreviewInfo.map(file => 
-            `<a class="cw-threader-preview-btn" data-file-id="${this.escapeHtml(file.fileId)}" data-mid="${this.escapeHtml(node.mid)}">📎 ${this.escapeHtml(this.truncateFileName(file.fileName))}</a>`
-          ).join('')}</div>` 
+        ? `<div class="cw-threader-file-previews">${node.filePreviewInfo.map(file => {
+            const displayName = this.escapeHtml(this.truncateFileName(file.fileName));
+            const sizeDisplay = file.fileSize ? ` (${this.escapeHtml(file.fileSize)})` : '';
+            return `<a class="cw-threader-preview-btn" data-file-id="${this.escapeHtml(file.fileId)}" data-mid="${this.escapeHtml(node.mid)}">📎 ${displayName}${sizeDisplay}</a>`;
+          }).join('')}</div>` 
         : '';
       
       // 外部リンクボタン用HTML（ファイルプレビューと同じスタイル）
