@@ -187,22 +187,35 @@
           previewButtons.forEach(btn => {
             const fileId = btn.getAttribute('data-file-id');
             const mimeType = btn.getAttribute('data-mime-type') || 'image/png';
-            // ファイル名とファイルサイズを取得（近くのテキストやダウンロードリンクから）
-            const parentEl = btn.closest('[class*="file"], [class*="File"]') || btn.parentElement;
+            // ファイル名とファイルサイズを取得（近くのダウンロードリンクから）
+            // ChatWorkのHTML構造: <div data-cwopen="[download:FILEID]"><a href="...">ファイル名 (サイズ)</a> <a data-file-id>プレビュー</a></div>
+            let parentEl = btn.closest('[data-cwopen*="download"]') || btn.closest('[class*="file"], [class*="File"]') || btn.parentElement;
             let fileName = '';
             let fileSize = btn.getAttribute('data-file-size') || '';
+            
             if (parentEl) {
-              const downloadLink = parentEl.querySelector('a[download], a[href*="download"]');
+              // ダウンロードリンクを探す
+              const downloadLink = parentEl.querySelector('a[href*="download_file"], a[href*="download"], a[download]');
               if (downloadLink) {
-                fileName = downloadLink.textContent?.trim() || downloadLink.getAttribute('download') || '';
+                const linkText = downloadLink.textContent?.trim() || '';
+                // "ファイル名 (サイズ)" 形式からファイル名とサイズを分離
+                const fileNameSizeMatch = linkText.match(/^(.+?)\s*\((\d+(?:\.\d+)?\s*(?:KB|MB|GB|B))\)$/i);
+                if (fileNameSizeMatch) {
+                  fileName = fileNameSizeMatch[1].trim();
+                  if (!fileSize) {
+                    fileSize = fileNameSizeMatch[2].trim();
+                  }
+                } else {
+                  fileName = linkText || downloadLink.getAttribute('download') || '';
+                }
               }
-              // ファイルサイズを探す（近くのテキストから）
+              
+              // ファイルサイズがまだ取得できていない場合、親要素のテキストから探す
               if (!fileSize) {
                 const sizeEl = parentEl.querySelector('[class*="size"], [class*="Size"]');
                 if (sizeEl) {
                   fileSize = sizeEl.textContent?.trim() || '';
                 }
-                // 親要素のテキストからサイズっぽい情報を抽出（例: "33.98 KB"）
                 if (!fileSize) {
                   const parentText = parentEl.textContent || '';
                   const sizeMatch = parentText.match(/(\d+(?:\.\d+)?\s*(?:KB|MB|GB|B))/i);
@@ -212,6 +225,7 @@
                 }
               }
             }
+            
             if (!fileName) {
               fileName = `file_${fileId}`;
             }
