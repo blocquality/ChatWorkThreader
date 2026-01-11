@@ -141,10 +141,20 @@
         return true;
       }
       
-      // 方法2: 親要素の .timelineMessage を探す（旧構造対応）
+      // 方法2: クラス名に "mention" を含むかチェック（styled-components対応）
+      const classList = Array.from(messageElement.classList);
+      const hasMentionClass = classList.some(cls => 
+        cls.toLowerCase().includes('mention') && !cls.toLowerCase().includes('reply')
+      );
+      if (hasMentionClass) {
+        console.log(`[ChatWorkThreader] 自分宛て検出 (mentionを含むクラス): MID=${mid}, classes=${classList.join(',')}`);
+        return true;
+      }
+      
+      // 方法3: 親要素の .timelineMessage を探す（旧構造対応）
       let timelineMessage = messageElement.closest('.timelineMessage');
       
-      // 方法3: 見つからない場合、MIDから再取得を試みる
+      // 方法4: 見つからない場合、MIDから再取得を試みる
       if (!timelineMessage && mid) {
         const rootEl = this.findMessageRootByMid(mid);
         if (rootEl) {
@@ -153,11 +163,20 @@
             console.log(`[ChatWorkThreader] 自分宛て検出 (findMessageRoot経由): MID=${mid}`);
             return true;
           }
+          // rootElのクラス名にmentionを含むかチェック
+          const rootClassList = Array.from(rootEl.classList);
+          const rootHasMention = rootClassList.some(cls => 
+            cls.toLowerCase().includes('mention') && !cls.toLowerCase().includes('reply')
+          );
+          if (rootHasMention) {
+            console.log(`[ChatWorkThreader] 自分宛て検出 (findMessageRoot mentionクラス): MID=${mid}`);
+            return true;
+          }
           timelineMessage = rootEl.closest('.timelineMessage');
         }
       }
       
-      // 方法4: 親要素を辿って timelineMessage--mention クラスを探す（旧構造対応）
+      // 方法5: 親要素を辿って timelineMessage--mention クラスを探す（旧構造対応）
       if (!timelineMessage) {
         let parent = messageElement.parentElement;
         while (parent && parent !== document.body) {
@@ -1458,6 +1477,7 @@
       }
       // 自分宛てメッセージの場合、緑色背景クラスを追加
       if (node.isToMe) {
+        console.log(`[ChatWorkThreader] スレッド表示: 自分宛てメッセージにクラス追加 MID=${node.mid}`);
         messageEl.classList.add('cw-threader-mention');
       }
       
