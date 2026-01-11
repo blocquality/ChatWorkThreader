@@ -111,12 +111,29 @@
     isMessageToMe(messageElement) {
       // timelineMessage要素を取得（_message要素から親を辿る）
       const timelineMessage = messageElement.closest('.timelineMessage');
-      if (!timelineMessage) return false;
+      if (!timelineMessage) {
+        // デバッグ: timelineMessageが見つからない場合
+        const mid = messageElement.getAttribute('data-mid');
+        console.log(`[ChatWorkThreader DEBUG] MID=${mid}: .timelineMessage が見つかりません`);
+        return false;
+      }
+      
+      // デバッグ: クラス一覧を確認
+      const mid = messageElement.getAttribute('data-mid');
+      const hasMention = timelineMessage.classList.contains('timelineMessage--mention');
+      const hasJump = timelineMessage.classList.contains('timelineMessage--jumpMessage');
+      const allClasses = Array.from(timelineMessage.classList).join(', ');
+      
+      // 最初の数件だけ詳細ログを出力
+      if (this._debugCount === undefined) this._debugCount = 0;
+      if (this._debugCount < 5) {
+        console.log(`[ChatWorkThreader DEBUG] MID=${mid}: mention=${hasMention}, jump=${hasJump}, classes=[${allClasses}]`);
+        this._debugCount++;
+      }
       
       // timelineMessage--mention クラスがあり、
       // timelineMessage--jumpMessage クラスがない場合に自分宛て
-      return timelineMessage.classList.contains('timelineMessage--mention')
-          && !timelineMessage.classList.contains('timelineMessage--jumpMessage');
+      return hasMention && !hasJump;
     }
 
     /**
@@ -128,6 +145,9 @@
       let lastUserName = '';
       let lastAvatarUrl = '';
       
+      // デバッグ: 自分宛てメッセージのMIDを収集
+      const toMeMids = [];
+      
       messageElements.forEach(el => {
         const mid = el.getAttribute('data-mid');
         const rid = el.getAttribute('data-rid');
@@ -136,6 +156,11 @@
 
         // 自分宛てかどうかを判定
         const isToMe = this.isMessageToMe(el);
+        
+        // デバッグ: 自分宛てと判定されたMIDを収集
+        if (isToMe) {
+          toMeMids.push(mid);
+        }
 
         // ユーザー名を取得（連続投稿の場合は前のユーザー名を使用）
         // 引用要素内のユーザー名は除外する
@@ -741,6 +766,10 @@
           this.childrenMap.get(parentMid).push(mid);
         }
       });
+      
+      // デバッグ: 自分宛てメッセージを出力
+      console.log('[ChatWorkThreader] 自分宛てメッセージ (isToMe=true) の MID一覧:', toMeMids);
+      console.log('[ChatWorkThreader] 自分宛てメッセージ数:', toMeMids.length, '/', messageElements.length, '件');
     }
 
     /**
