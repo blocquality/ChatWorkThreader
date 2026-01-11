@@ -876,7 +876,8 @@
       document.addEventListener('mousemove', (e) => {
         if (!isResizing) return;
         const diff = startX - e.clientX;
-        const newWidth = Math.min(Math.max(startWidth + diff, 280), 800);
+        const maxWidth = window.innerWidth * 0.9; // 画面幅の90%まで
+        const newWidth = Math.min(Math.max(startWidth + diff, 280), maxWidth);
         this.panel.style.width = newWidth + 'px';
         // リサイズ中もChatWorkメインコンテンツの幅を調整
         if (this.isVisible) {
@@ -1731,8 +1732,9 @@
       const baseWidth = 380;
       const widthPerDepth = 44;
       const calculatedWidth = baseWidth + (maxDepth * widthPerDepth);
-      // 最小280px、最大800px
-      return Math.min(Math.max(calculatedWidth, 280), 800);
+      // 最小280px、最大は画面幅の90%
+      const maxWidth = window.innerWidth * 0.9;
+      return Math.min(Math.max(calculatedWidth, 280), maxWidth);
     }
 
     /**
