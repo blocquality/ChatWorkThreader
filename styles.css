@@ -855,24 +855,15 @@
 
 /* スレッドパネル内のハイライト効果（揺れるアニメーション） */
 .cw-threader-highlight-panel {
-  animation: cw-threader-shake 0.5s ease-in-out 3 !important;
+  animation: cw-threader-shake 0.2s ease-in-out 1 !important;
 }
 
 @keyframes cw-threader-shake {
   0%, 100% {
     transform: translateX(0);
   }
-  20% {
-    transform: translateX(-8px);
-  }
-  40% {
-    transform: translateX(8px);
-  }
-  60% {
+  50% {
     transform: translateX(-6px);
-  }
-  80% {
-    transform: translateX(6px);
   }
 }
 
