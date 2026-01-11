@@ -160,7 +160,7 @@
       // 方法1: _message 要素自体に mentioned クラスがあるかチェック
       // ChatWorkの現在の構造: <div class="_message mentioned"> または <div class="_message bordered">
       if (messageElement.classList.contains('mentioned')) {
-        console.log(`[ChatWorkThreader] 自分宛て検出 (mentionedクラス): MID=${mid}`);
+        // console.log(`[ChatWorkThreader] 自分宛て検出 (mentionedクラス): MID=${mid}`);
         return true;
       }
       
@@ -170,7 +170,7 @@
         cls.toLowerCase().includes('mention') && !cls.toLowerCase().includes('reply')
       );
       if (hasMentionClass) {
-        console.log(`[ChatWorkThreader] 自分宛て検出 (mentionを含むクラス): MID=${mid}, classes=${classList.join(',')}`);
+        // console.log(`[ChatWorkThreader] 自分宛て検出 (mentionを含むクラス): MID=${mid}, classes=${classList.join(',')}`);
         return true;
       }
       
@@ -183,7 +183,7 @@
         if (rootEl) {
           // rootEl自体にmentionedクラスがあるかチェック
           if (rootEl.classList.contains('mentioned')) {
-            console.log(`[ChatWorkThreader] 自分宛て検出 (findMessageRoot経由): MID=${mid}`);
+            // console.log(`[ChatWorkThreader] 自分宛て検出 (findMessageRoot経由): MID=${mid}`);
             return true;
           }
           // rootElのクラス名にmentionを含むかチェック
@@ -192,7 +192,7 @@
             cls.toLowerCase().includes('mention') && !cls.toLowerCase().includes('reply')
           );
           if (rootHasMention) {
-            console.log(`[ChatWorkThreader] 自分宛て検出 (findMessageRoot mentionクラス): MID=${mid}`);
+            // console.log(`[ChatWorkThreader] 自分宛て検出 (findMessageRoot mentionクラス): MID=${mid}`);
             return true;
           }
           timelineMessage = rootEl.closest('.timelineMessage');
@@ -205,7 +205,7 @@
         while (parent && parent !== document.body) {
           // 親にmentionedクラスがあるかチェック
           if (parent.classList && parent.classList.contains('mentioned')) {
-            console.log(`[ChatWorkThreader] 自分宛て検出 (親要素mentionedクラス): MID=${mid}`);
+            // console.log(`[ChatWorkThreader] 自分宛て検出 (親要素mentionedクラス): MID=${mid}`);
             return true;
           }
           if (parent.classList && parent.classList.contains('timelineMessage')) {
@@ -213,7 +213,7 @@
             break;
           }
           if (parent.classList && parent.classList.contains('timelineMessage--mention')) {
-            console.log(`[ChatWorkThreader] 自分宛て検出 (timelineMessage--mention): MID=${mid}`);
+            // console.log(`[ChatWorkThreader] 自分宛て検出 (timelineMessage--mention): MID=${mid}`);
             return true;
           }
           parent = parent.parentElement;
@@ -226,7 +226,7 @@
         const hasJump = timelineMessage.classList.contains('timelineMessage--jumpMessage');
         
         if (hasMention && !hasJump) {
-          console.log(`[ChatWorkThreader] 自分宛て検出 (timelineMessage): MID=${mid}`);
+          // console.log(`[ChatWorkThreader] 自分宛て検出 (timelineMessage): MID=${mid}`);
           return true;
         }
       }
@@ -866,8 +866,8 @@
       });
       
       // デバッグ: 自分宛てメッセージを出力
-      console.log('[ChatWorkThreader] 自分宛てメッセージ (isToMe=true) の MID一覧:', toMeMids);
-      console.log('[ChatWorkThreader] 自分宛てメッセージ数:', toMeMids.length, '/', messageElements.length, '件');
+      // console.log('[ChatWorkThreader] 自分宛てメッセージ (isToMe=true) の MID一覧:', toMeMids);
+      // console.log('[ChatWorkThreader] 自分宛てメッセージ数:', toMeMids.length, '/', messageElements.length, '件');
     }
 
     /**
@@ -2644,26 +2644,20 @@
           }
         }
         
-        // 揺れアニメーションを開始する関数
-        const startShakeAnimation = () => {
-          // 前のアニメーションを完全にリセット
-          targetEl.classList.remove('cw-threader-highlight-panel');
-          targetEl.style.animation = 'none';
-          void targetEl.offsetWidth; // reflow を強制
-          targetEl.style.animation = '';
-          targetEl.classList.add('cw-threader-highlight-panel');
-          setTimeout(() => {
-            targetEl.classList.remove('cw-threader-highlight-panel');
-          }, 1500); // 0.5秒 x 3回 = 1.5秒
-        };
-        
         // スクロールしてからアニメーション
         targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
         // スクロール完了を待ってからアニメーション開始
-        // smooth scrollは約300-500ms程度かかるので、600ms後に実行
         setTimeout(() => {
-          startShakeAnimation();
+          // 前のアニメーションを完全にリセット
+          targetEl.style.animation = 'none';
+          targetEl.offsetWidth; // reflow を強制
+          // インラインスタイルで直接アニメーションを適用（確実に動作させる）
+          targetEl.style.animation = 'cw-threader-shake 0.5s ease-in-out 3';
+          // アニメーション終了後にスタイルを削除
+          setTimeout(() => {
+            targetEl.style.animation = '';
+          }, 1500);
         }, 600);
       }
     }
