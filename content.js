@@ -315,6 +315,53 @@
     }
 
     /**
+     * メッセージが自分から送信されたかどうかを判定
+     * 自分が送信したメッセージには編集・削除ボタンがある
+     * @param {Element} messageElement - メッセージ要素（_message クラスを持つ要素）
+     * @param {string} mid - メッセージID（デバッグ用）
+     * @returns {boolean}
+     */
+    isMessageFromMe(messageElement, mid) {
+      // 方法1: 編集ボタンがあるかチェック（自分のメッセージのみ編集可能）
+      const editButton = messageElement.querySelector('[data-testid="message-edit-button"], [class*="editButton"], ._messageEditButton, [aria-label*="編集"], [aria-label*="edit"]');
+      if (editButton) {
+        return true;
+      }
+      
+      // 方法2: 削除ボタンがあるかチェック（自分のメッセージのみ削除可能）
+      const deleteButton = messageElement.querySelector('[data-testid="message-delete-button"], [class*="deleteButton"], ._messageDeleteButton, [aria-label*="削除"], [aria-label*="delete"]');
+      if (deleteButton) {
+        return true;
+      }
+      
+      // 方法3: メッセージメニュー内に編集・削除オプションがあるかチェック
+      const menuWithEdit = messageElement.querySelector('[data-cwui-lt-dn-menu-item="edit"], [data-action="edit"]');
+      if (menuWithEdit) {
+        return true;
+      }
+      
+      // 方法4: 親要素を辿ってmyMessage系のクラスを探す
+      let parent = messageElement;
+      while (parent && parent !== document.body) {
+        if (parent.classList) {
+          const classList = Array.from(parent.classList);
+          const hasMyMessageClass = classList.some(cls => 
+            cls.toLowerCase().includes('mymessage') || 
+            cls.toLowerCase().includes('my-message') ||
+            cls.toLowerCase().includes('own-message') ||
+            cls.toLowerCase().includes('self-message')
+          );
+          if (hasMyMessageClass) {
+            return true;
+          }
+        }
+        parent = parent.parentElement;
+      }
+      
+      return false;
+    }
+
+    /**
      * ページからメッセージを収集
      */
     collectMessages() {
@@ -334,6 +381,9 @@
 
         // 自分宛てかどうかを判定（midも渡す）
         const isToMe = this.isMessageToMe(el, mid);
+        
+        // 自分が送信したメッセージかどうかを判定
+        const isFromMe = this.isMessageFromMe(el, mid);
         
         // デバッグ: 自分宛てと判定されたMIDを収集
         if (isToMe) {
@@ -929,7 +979,8 @@
           quoteExternalLinks, // 引用内の外部リンク情報配列
           toTargets,       // To先ユーザー配列
           senderAid,       // 送信者のAID
-          isToMe           // 自分宛てフラグ
+          isToMe,          // 自分宛てフラグ
+          isFromMe         // 自分が送信したメッセージフラグ
         };
 
         this.messages.set(mid, messageData);
@@ -1482,7 +1533,8 @@
      * スレッド内に自分が関わっているか判定
      * 「返信元」または「返信先」に自分がいるスレッドを検出する
      * 
-     * isToMe フラグ（緑色表示と同じロジック）を活用して判定
+     * - isToMe: 自分宛てのメッセージ（緑色表示と同じロジック）= 自分が「返信先」
+     * - isFromMe: 自分が送信したメッセージ = 自分が「返信元」または「返信者」
      * 
      * @param {Object} node - スレッドノード
      * @returns {boolean} 自分が関わっている場合true
@@ -1492,13 +1544,24 @@
       const messageData = this.threadBuilder.messages.get(node.mid);
       
       // このメッセージが自分宛て (isToMe) なら参加している
-      // これは緑色表示と同じロジック
+      // これは緑色表示と同じロジック = 自分が「返信先」
       if (messageData && messageData.isToMe) {
         return true;
       }
       
       // ノード自体の isToMe フラグもチェック
       if (node.isToMe) {
+        return true;
+      }
+      
+      // 自分が送信したメッセージ (isFromMe) なら参加している
+      // = 自分が「返信元」または「返信者」
+      if (messageData && messageData.isFromMe) {
+        return true;
+      }
+      
+      // ノード自体の isFromMe フラグもチェック
+      if (node.isFromMe) {
         return true;
       }
       
