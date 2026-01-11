@@ -71,7 +71,7 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 12px;
+  width: 16px;
   height: 100%;
   cursor: ew-resize;
   background: #e8e8e8;
@@ -82,17 +82,17 @@
   justify-content: center;
 }
 
-/* 三本線インジケーター */
+/* 三本線インジケーター（|||）- 横方向に並べた縦線 */
 .cw-threader-resize-handle::before {
   content: '';
-  width: 4px;
+  width: 8px;
   height: 24px;
   background: repeating-linear-gradient(
-    to bottom,
+    to right,
     #999 0px,
     #999 2px,
     transparent 2px,
-    transparent 6px
+    transparent 4px
   );
   border-radius: 1px;
 }
@@ -103,11 +103,11 @@
 
 .cw-threader-resize-handle:hover::before {
   background: repeating-linear-gradient(
-    to bottom,
+    to right,
     #1976d2 0px,
     #1976d2 2px,
     transparent 2px,
-    transparent 6px
+    transparent 4px
   );
 }
 
