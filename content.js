@@ -159,24 +159,107 @@
         let quotedMessage = null;  // 引用メッセージ
         let filePreviewInfo = [];  // ファイルプレビュー情報 { fileId, mimeType, fileName, fileSize }
         let externalLinks = [];    // 外部リンク情報 { url, title, type }
+        let quoteExternalLinks = [];  // 引用内の外部リンク情報
         let toTargets = [];  // To先ユーザー
         
         if (preEl) {
-          // 引用を取得（[qt]タグ）
-          const quoteTags = preEl.querySelectorAll('[data-cwtag^="[qt"]');
+          // 引用を取得（[qt]タグ、または .chatQuote クラス）
+          const quoteTags = preEl.querySelectorAll('[data-cwtag^="[qt"], [data-cwopen="[qt]"], .chatQuote, .dev_quote');
           quoteTags.forEach(quoteTag => {
-            // 引用内容を取得（様々なクラス名に対応）
-            const quoteContent = quoteTag.querySelector('.sc-klVQfs, .chatTimeLineQuoteLine, [class*="Quote"], pre');
-            if (quoteContent) {
-              const qText = quoteContent.textContent.trim();
+            // 引用テキスト部分を取得（.quoteText クラスを優先）
+            const quoteTextEl = quoteTag.querySelector('.quoteText');
+            if (quoteTextEl) {
+              // .quoteText 内のテキストを取得（プレビューボタンのテキストは除外）
+              const textNodes = [];
+              const walker = document.createTreeWalker(
+                quoteTextEl,
+                NodeFilter.SHOW_TEXT,
+                {
+                  acceptNode: (node) => {
+                    const parent = node.parentElement;
+                    if (!parent) return NodeFilter.FILTER_REJECT;
+                    // プレビューボタン内のテキストは除外
+                    if (parent.closest('._previewLink, [data-type*="preview"]')) {
+                      return NodeFilter.FILTER_REJECT;
+                    }
+                    return NodeFilter.FILTER_ACCEPT;
+                  }
+                }
+              );
+              let textNode;
+              while (textNode = walker.nextNode()) {
+                const text = textNode.textContent;
+                if (text && text.trim()) {
+                  textNodes.push(text);
+                }
+              }
+              const qText = textNodes.join('').trim();
               if (qText) {
                 quotedMessage = quotedMessage ? quotedMessage + '\n' + qText : qText;
               }
+              
+              // 引用内の外部リンクとプレビューボタンを収集
+              const quoteLinks = quoteTextEl.querySelectorAll('a[href]');
+              quoteLinks.forEach(link => {
+                const href = link.getAttribute('href') || '';
+                // ChatWork内部リンクやダウンロードURLは除外
+                if (!href || 
+                    href.startsWith('#') || 
+                    href.startsWith('javascript:') ||
+                    href.includes('chatwork.com') ||
+                    href.includes('/gateway/') ||
+                    href.includes('download_file') ||
+                    link.classList.contains('_previewLink')) {
+                  return;
+                }
+                
+                // 近くにプレビューボタンがあるか確認
+                const parentContainer = link.closest('[data-cwtag^="http"], [class*="url"], [class*="link"]') || link.parentElement;
+                let hasPreviewButton = false;
+                let previewElement = null;
+                if (parentContainer) {
+                  const previewBtn = parentContainer.querySelector('a._previewLink[data-url]');
+                  if (previewBtn) {
+                    hasPreviewButton = true;
+                    previewElement = previewBtn;
+                  }
+                }
+                
+                // タイトルを取得
+                let title = link.textContent?.trim() || '';
+                if (title === href || title.length > 50) {
+                  try {
+                    const urlObj = new URL(href);
+                    title = urlObj.hostname + (urlObj.pathname.length > 25 ? urlObj.pathname.substring(0, 25) + '...' : urlObj.pathname);
+                  } catch {
+                    title = href.length > 50 ? href.substring(0, 50) + '...' : href;
+                  }
+                }
+                
+                if (!quoteExternalLinks.some(l => l.url === href)) {
+                  quoteExternalLinks.push({ 
+                    url: href, 
+                    title, 
+                    hasPreviewButton, 
+                    previewElement, 
+                    isInQuote: true 
+                  });
+                }
+              });
             } else {
-              // 直接テキストを取得
-              const qText = quoteTag.textContent.trim();
-              if (qText) {
-                quotedMessage = quotedMessage ? quotedMessage + '\n' + qText : qText;
+              // 引用内容を取得（様々なクラス名に対応）
+              const quoteContent = quoteTag.querySelector('.sc-klVQfs, .chatTimeLineQuoteLine, [class*="Quote"], pre');
+              if (quoteContent) {
+                const qText = quoteContent.textContent.trim();
+                if (qText) {
+                  quotedMessage = quotedMessage ? quotedMessage + '\n' + qText : qText;
+                }
+              } else {
+                // 直接テキストを取得
+                const qText = quoteTag.textContent.trim();
+                if (qText) {
+                  quotedMessage = quotedMessage ? quotedMessage + '\n' + qText : qText;
+                }
               }
             }
           });
@@ -512,6 +595,7 @@
           quotedMessage,   // 引用メッセージ
           filePreviewInfo, // ファイルプレビュー情報配列
           externalLinks,   // 外部リンク情報配列
+          quoteExternalLinks, // 引用内の外部リンク情報配列
           toTargets,       // To先ユーザー配列
           senderAid        // 送信者のAID
         };
@@ -636,6 +720,7 @@
         quotedMessage: null,
         filePreviewInfo: [],
         externalLinks: [],
+        quoteExternalLinks: [],
         toTargets: [],
         senderAid: null
       };
@@ -1153,9 +1238,9 @@
         ? `<div class="cw-threader-to-targets">To: ${node.toTargets.map(t => this.escapeHtml(t)).join(', ')}</div>` 
         : '';
       
-      // 引用表示用HTML
+      // 引用表示用HTML（引用内のプレビューボタンも表示）
       const quotedHtml = node.quotedMessage 
-        ? `<div class="cw-threader-quote"><span class="cw-threader-quote-icon">❝</span>${this.escapeHtml(node.quotedMessage)}</div>` 
+        ? this.formatQuoteWithPreviews(node.quotedMessage, node.mid, node.quoteExternalLinks || [])
         : '';
       
       // メッセージ本文（URLの直後にプレビューボタンを挿入）
@@ -1204,7 +1289,7 @@
         });
       });
 
-      // 外部リンクボタンのクリックイベントを設定
+      // 外部リンクボタンのクリックイベントを設定（引用内ボタンも含む）
       const externalLinkButtons = messageEl.querySelectorAll('.cw-threader-external-link-btn');
       externalLinkButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -1213,7 +1298,8 @@
           const url = btn.getAttribute('data-url');
           const mid = btn.getAttribute('data-mid');
           const linkIndex = parseInt(btn.getAttribute('data-link-index'), 10);
-          this.triggerExternalLinkPreview(mid, url, linkIndex);
+          const isInQuote = btn.getAttribute('data-in-quote') === 'true';
+          this.triggerExternalLinkPreview(mid, url, linkIndex, isInQuote);
         });
       });
 
@@ -1319,6 +1405,100 @@
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    /**
+     * 引用テキストをフォーマット（プレビューボタン付き）
+     * @param {string} text - 引用テキスト
+     * @param {string} mid - メッセージID
+     * @param {Array} quoteExternalLinks - 引用内の外部リンク情報配列
+     * @returns {string} フォーマットされたHTML
+     */
+    formatQuoteWithPreviews(text, mid, quoteExternalLinks = []) {
+      // 「プレビュー」という文言を除去
+      let cleanedText = text.replace(/プレビュー/g, '');
+      // 連続した空白行を1つに
+      cleanedText = cleanedText.replace(/(\r\n|\r|\n){3,}/g, '\n\n');
+      
+      // URLとそれ以外のテキストを分割しながら処理
+      const urlPattern = /(https?:\/\/[^\s<>"']+)/g;
+      const parts = [];
+      let lastIndex = 0;
+      let match;
+      
+      while ((match = urlPattern.exec(cleanedText)) !== null) {
+        // URLより前のテキスト
+        if (match.index > lastIndex) {
+          parts.push({
+            type: 'text',
+            content: cleanedText.substring(lastIndex, match.index)
+          });
+        }
+        // URL部分
+        parts.push({
+          type: 'url',
+          content: match[1]
+        });
+        lastIndex = urlPattern.lastIndex;
+      }
+      
+      // 最後のテキスト部分
+      if (lastIndex < cleanedText.length) {
+        parts.push({
+          type: 'text',
+          content: cleanedText.substring(lastIndex)
+        });
+      }
+      
+      // 外部リンクのURLマップを作成
+      const externalLinkMap = new Map();
+      quoteExternalLinks.forEach((link, index) => {
+        if (!externalLinkMap.has(link.url)) {
+          externalLinkMap.set(link.url, index);
+        }
+      });
+      
+      // HTMLを構築
+      let contentHtml = '';
+      parts.forEach(part => {
+        if (part.type === 'text') {
+          // テキスト部分はエスケープして改行を<br>に変換
+          let escaped = this.escapeHtml(part.content);
+          contentHtml += escaped.replace(/\r\n|\r|\n/g, '<br>');
+        } else if (part.type === 'url') {
+          const url = part.content;
+          const escapedUrl = this.escapeHtml(url);
+          
+          // URLをリンクとして追加
+          contentHtml += `<a href="${escapedUrl}" class="cw-threader-link" target="_blank" rel="noopener noreferrer">${escapedUrl}</a>`;
+          
+          // 外部リンクプレビューボタンを追加
+          const linkIndex = externalLinkMap.get(url);
+          if (linkIndex !== undefined) {
+            const linkInfo = quoteExternalLinks[linkIndex];
+            if (linkInfo && linkInfo.hasPreviewButton) {
+              contentHtml += `<a class="cw-threader-external-link-btn cw-threader-inline-preview cw-threader-quote-preview-btn" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}" data-in-quote="true">プレビュー</a>`;
+            }
+            // このリンクは処理済みとしてマーク
+            externalLinkMap.delete(url);
+          }
+        }
+      });
+      
+      // 本文中に出現しなかった外部リンク（プレビューボタンがあるもの）を末尾に追加
+      externalLinkMap.forEach((linkIndex, url) => {
+        const link = quoteExternalLinks[linkIndex];
+        if (link && link.hasPreviewButton) {
+          const escapedUrl = this.escapeHtml(url);
+          const title = this.escapeHtml(link.title || url);
+          contentHtml += `<div class="cw-threader-external-link-item">
+            <a href="${escapedUrl}" class="cw-threader-link" target="_blank" rel="noopener noreferrer">🔗 ${title}</a>
+            <a class="cw-threader-external-link-btn cw-threader-inline-preview cw-threader-quote-preview-btn" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}" data-in-quote="true">プレビュー</a>
+          </div>`;
+        }
+      });
+      
+      return `<div class="cw-threader-quote"><span class="cw-threader-quote-icon">❝</span>${contentHtml}</div>`;
     }
 
     /**
@@ -1549,8 +1729,9 @@
      * @param {string} mid - メッセージID
      * @param {string} url - リンクURL
      * @param {number} linkIndex - リンクのインデックス
+     * @param {boolean} isInQuote - 引用内のリンクかどうか
      */
-    triggerExternalLinkPreview(mid, url, linkIndex) {
+    triggerExternalLinkPreview(mid, url, linkIndex, isInQuote = false) {
       // 元のメッセージ要素を探す
       const messageEl = document.querySelector(`[data-mid="${mid}"]`);
       if (!messageEl) {
@@ -1561,9 +1742,14 @@
       // URLに対応するプレビューボタンを探す
       let previewBtn = null;
       
+      // 引用内のプレビューボタンを探す場合は、引用要素内のみを検索
+      const searchArea = isInQuote 
+        ? (messageEl.querySelector('.chatQuote, .dev_quote, [data-cwopen="[qt]"]') || messageEl)
+        : messageEl;
+      
       // パターン1: data-cwtag属性でURLを含むspan要素を探し、その中の_previewLinkを取得
       // ChatWorkのHTML構造: <span data-cwtag="URL"><a href="URL">URL</a><a class="_previewLink" data-url="URL">プレビュー</a></span>
-      const urlContainers = messageEl.querySelectorAll('[data-cwtag]');
+      const urlContainers = searchArea.querySelectorAll('[data-cwtag]');
       for (const container of urlContainers) {
         const cwtag = container.getAttribute('data-cwtag') || '';
         // data-cwtagがURLと一致するか確認
@@ -1579,7 +1765,7 @@
       
       // パターン2: data-url属性でURLが一致する_previewLinkを探す
       if (!previewBtn) {
-        const previewLinks = messageEl.querySelectorAll('a._previewLink[data-url]');
+        const previewLinks = searchArea.querySelectorAll('a._previewLink[data-url]');
         for (const link of previewLinks) {
           const dataUrl = link.getAttribute('data-url') || '';
           if (dataUrl === url) {
@@ -1591,7 +1777,7 @@
       
       // パターン3: URLを含むリンクの近くにあるプレビューボタン
       if (!previewBtn) {
-        const links = messageEl.querySelectorAll('a[href]');
+        const links = searchArea.querySelectorAll('a[href]');
         for (const link of links) {
           if (link.getAttribute('href') === url) {
             // このリンクの親要素からプレビューボタンを探す
@@ -1609,7 +1795,7 @@
       
       // パターン4: 「プレビュー」テキストを持つ外部リンクプレビューボタンを順番で探す
       if (!previewBtn) {
-        const allPreviewBtns = messageEl.querySelectorAll('a._previewLink[data-url]');
+        const allPreviewBtns = searchArea.querySelectorAll('a._previewLink[data-url]');
         const filteredBtns = Array.from(allPreviewBtns).filter(btn => {
           const dataUrl = btn.getAttribute('data-url') || '';
           // ファイルプレビューは除外
