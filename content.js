@@ -2644,12 +2644,12 @@
           }
         }
         
-        // スクロールしてハイライト
+        // スクロールして揺れるアニメーションで強調
         targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         targetEl.classList.add('cw-threader-highlight-panel');
         setTimeout(() => {
           targetEl.classList.remove('cw-threader-highlight-panel');
-        }, 5000);
+        }, 1500); // 0.5秒 x 3回 = 1.5秒
       }
     }
 
