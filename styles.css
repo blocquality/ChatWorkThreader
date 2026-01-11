@@ -455,8 +455,26 @@
 
 /* ファイルプレビュー項目（本文中に出現しなかったファイル用） */
 .cw-threader-file-preview-item {
-  display: block;
-  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+/* ファイル情報（ファイル名とサイズ） */
+.cw-threader-file-info {
+  font-size: 12px;
+  color: #333;
+}
+
+/* 外部リンク項目（本文中に出現しなかった外部リンク用） */
+.cw-threader-external-link-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
 }
 
 /* 外部リンクボタン（ファイルプレビューと同じスタイル） */

@@ -1315,10 +1315,27 @@
       });
       
       // ファイルプレビュー（URLとして本文中に出現しなかったもの）を末尾に追加
+      // ChatWorkの仕様に合わせて「ファイル名 (サイズ)」と「プレビュー」ボタンを分離
       fileUrlMap.forEach((file, fileId) => {
         const displayName = this.escapeHtml(this.truncateFileName(file.fileName));
         const sizeDisplay = file.fileSize ? ` (${this.escapeHtml(file.fileSize)})` : '';
-        html += `<div class="cw-threader-file-preview-item"><a class="cw-threader-preview-btn" data-file-id="${this.escapeHtml(fileId)}" data-mid="${this.escapeHtml(mid)}">📎 ${displayName}${sizeDisplay}</a></div>`;
+        html += `<div class="cw-threader-file-preview-item">
+          <span class="cw-threader-file-info">📎 ${displayName}${sizeDisplay}</span>
+          <a class="cw-threader-preview-btn cw-threader-inline-preview" data-file-id="${this.escapeHtml(fileId)}" data-mid="${this.escapeHtml(mid)}">プレビュー</a>
+        </div>`;
+      });
+      
+      // 外部リンク（URLとして本文中に出現しなかったもの）を末尾に追加
+      externalLinkMap.forEach((linkIndex, url) => {
+        const link = externalLinks[linkIndex];
+        if (link) {
+          const escapedUrl = this.escapeHtml(url);
+          const title = this.escapeHtml(link.title || url);
+          html += `<div class="cw-threader-external-link-item">
+            <a href="${escapedUrl}" class="cw-threader-link" target="_blank" rel="noopener noreferrer">🔗 ${title}</a>
+            <a class="cw-threader-external-link-btn cw-threader-inline-preview" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}">プレビュー</a>
+          </div>`;
+        }
       });
       
       return html;
