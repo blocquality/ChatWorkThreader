@@ -2657,31 +2657,14 @@
           }, 1500); // 0.5秒 x 3回 = 1.5秒
         };
         
-        // スクロールして、完了後にアニメーション
+        // スクロールしてからアニメーション
         targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
-        // scrollIntoViewの完了を検知（scrollendイベント + フォールバック）
-        const scrollContainer = document.querySelector('.cw-threader-content');
-        let animationStarted = false;
-        
-        const triggerAnimation = () => {
-          if (animationStarted) return;
-          animationStarted = true;
-          startShakeAnimation();
-        };
-        
-        // 方法1: scrollendイベント（モダンブラウザ対応）
-        const onScrollEnd = () => {
-          scrollContainer.removeEventListener('scrollend', onScrollEnd);
-          triggerAnimation();
-        };
-        scrollContainer.addEventListener('scrollend', onScrollEnd);
-        
-        // 方法2: フォールバック - 500ms後に強制実行（スクロールが不要な場合やscrollend非対応時）
+        // スクロール完了を待ってからアニメーション開始
+        // smooth scrollは約300-500ms程度かかるので、600ms後に実行
         setTimeout(() => {
-          scrollContainer.removeEventListener('scrollend', onScrollEnd);
-          triggerAnimation();
-        }, 500);
+          startShakeAnimation();
+        }, 600);
       }
     }
 
