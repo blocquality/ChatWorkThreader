@@ -71,16 +71,19 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 6px;
+  width: 8px;
   height: 100%;
   cursor: ew-resize;
-  background: transparent;
+  background: #e0e0e0;
   transition: background 0.15s ease;
   z-index: 10;
+  /* 中央に細いラインを表示してドラッグ可能であることを示す */
+  border-left: 2px solid #bdbdbd;
 }
 
 .cw-threader-resize-handle:hover {
-  background: rgba(25, 118, 210, 0.3);
+  background: rgba(25, 118, 210, 0.2);
+  border-left-color: #1976d2;
 }
 
 .cw-threader-resize-handle:active {
