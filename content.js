@@ -1451,6 +1451,8 @@
 
       const messageEl = document.createElement('div');
       messageEl.className = 'cw-threader-message';
+      // メッセージIDを属性として追加（スレッドで表示ボタンからの検索用）
+      messageEl.setAttribute('data-thread-mid', node.mid);
       if (node.isPlaceholder) {
         messageEl.classList.add('cw-threader-placeholder');
       }
@@ -2352,6 +2354,241 @@
   }
 
   /**
+   * メッセージ一覧に「スレッドで表示」ボタンを追加・管理するクラス
+   */
+  class ShowInThreadButtonManager {
+    constructor(threadUI) {
+      this.threadUI = threadUI;
+      this.addedButtons = new Set(); // 追加済みボタンのMIDを管理
+    }
+
+    /**
+     * メッセージがスレッドに含まれているかチェック
+     * @param {string} mid - メッセージID
+     * @returns {boolean}
+     */
+    isMessageInThread(mid) {
+      const builder = this.threadUI.threadBuilder;
+      // replyMapに含まれている（親がいる）または childrenMapに含まれている（子がいる）
+      return builder.replyMap.has(mid) || 
+             (builder.childrenMap.has(mid) && builder.childrenMap.get(mid).length > 0);
+    }
+
+    /**
+     * メッセージのルートスレッドMIDを取得
+     * @param {string} mid - メッセージID
+     * @returns {string} ルートスレッドのMID
+     */
+    getRootThreadMid(mid) {
+      return this.threadUI.threadBuilder.findRootMid(mid);
+    }
+
+    /**
+     * 「スレッドで表示」ボタンを作成
+     * @param {string} mid - メッセージID
+     * @returns {HTMLElement}
+     */
+    createShowInThreadButton(mid) {
+      const button = document.createElement('button');
+      button.className = 'cw-threader-show-in-thread-btn';
+      button.innerHTML = `<span class="cw-threader-sit-icon">💬</span><span class="cw-threader-sit-text">スレッドで表示</span>`;
+      button.title = 'スレッド一覧で表示';
+      button.setAttribute('data-mid', mid);
+      
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.onShowInThreadClick(mid);
+      });
+      
+      return button;
+    }
+
+    /**
+     * 「スレッドで表示」ボタンがクリックされた時の処理
+     * @param {string} mid - メッセージID
+     */
+    async onShowInThreadClick(mid) {
+      // スレッドパネルが閉じていたら開く
+      if (!this.threadUI.isVisible) {
+        await this.threadUI.show();
+      } else {
+        // 既に開いている場合は更新
+        await this.threadUI.refresh();
+      }
+      
+      // 少し待ってからスレッドパネル内で該当メッセージにスクロール
+      setTimeout(() => {
+        this.scrollToMessageInPanel(mid);
+      }, 100);
+    }
+
+    /**
+     * スレッドパネル内で該当メッセージにスクロール
+     * @param {string} mid - メッセージID
+     */
+    scrollToMessageInPanel(mid) {
+      const panel = this.threadUI.panel;
+      if (!panel) return;
+      
+      // ルートスレッドを見つける
+      const rootMid = this.getRootThreadMid(mid);
+      
+      // まずルートスレッドのトグルを開く（閉じている場合）
+      const threadContainer = panel.querySelector('.cw-threader-threads');
+      if (!threadContainer) return;
+      
+      // 対象メッセージの要素を探す
+      // data-mid属性でパネル内のメッセージを探すため、まず全てのトグルを確認
+      const allThreadItems = panel.querySelectorAll('.cw-threader-thread-item');
+      let targetThreadItem = null;
+      let parentToggleCheckbox = null;
+      
+      for (const item of allThreadItems) {
+        const messageEl = item.querySelector('.cw-threader-message');
+        if (!messageEl) continue;
+        
+        // data-midがないのでクリックイベントから探す必要がある
+        // 代わりに、親のスレッドコンテナを探して、そのトグルを操作する
+      }
+      
+      // パネル内のスレッドアイテムをMIDで検索するため、
+      // renderThreads時にdata-mid属性を追加する方法を取る
+      // まず既存の実装を活用して、メッセージ要素を探す
+      const messageElements = panel.querySelectorAll('[data-thread-mid]');
+      let targetEl = null;
+      let parentThread = null;
+      
+      for (const el of messageElements) {
+        if (el.getAttribute('data-thread-mid') === mid) {
+          targetEl = el;
+          // 親のスレッドコンテナを探す
+          parentThread = el.closest('.cw-threader-thread');
+          break;
+        }
+      }
+      
+      // data-thread-mid属性がまだ追加されていない場合は、
+      // メッセージテキストやユーザー名などから探す（フォールバック）
+      if (!targetEl) {
+        // メッセージデータを取得
+        const messageData = this.threadUI.threadBuilder.messages.get(mid);
+        if (messageData) {
+          // ユーザー名とタイムスタンプで検索
+          const allMessages = panel.querySelectorAll('.cw-threader-message');
+          for (const msg of allMessages) {
+            const userNameEl = msg.querySelector('.cw-threader-username');
+            const timeEl = msg.querySelector('.cw-threader-time');
+            
+            if (userNameEl && timeEl) {
+              const userName = userNameEl.textContent.trim();
+              const timeText = timeEl.textContent.replace('·', '').trim();
+              
+              // タイムスタンプをフォーマットして比較
+              if (messageData.timestamp) {
+                const formattedTime = this.threadUI.formatDateTime(messageData.timestamp);
+                if (userName === messageData.userName && timeText === formattedTime) {
+                  targetEl = msg;
+                  parentThread = msg.closest('.cw-threader-thread');
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      if (targetEl) {
+        // 親スレッドのトグルが閉じている場合は開く
+        if (parentThread) {
+          const toggleCheckbox = parentThread.querySelector('.cw-threader-toggle-switch input');
+          if (toggleCheckbox && !toggleCheckbox.checked) {
+            toggleCheckbox.checked = true;
+            toggleCheckbox.dispatchEvent(new Event('change'));
+          }
+        }
+        
+        // スクロールしてハイライト
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.classList.add('cw-threader-highlight-panel');
+        setTimeout(() => {
+          targetEl.classList.remove('cw-threader-highlight-panel');
+        }, 2000);
+      }
+    }
+
+    /**
+     * 全てのメッセージに「スレッドで表示」ボタンを追加
+     */
+    addButtonsToMessages() {
+      // まずスレッド情報を収集
+      this.threadUI.threadBuilder.messages.clear();
+      this.threadUI.threadBuilder.threads.clear();
+      this.threadUI.threadBuilder.replyMap.clear();
+      this.threadUI.threadBuilder.childrenMap.clear();
+      this.threadUI.threadBuilder.allMessages = [];
+      this.threadUI.threadBuilder.collectMessages();
+      this.threadUI.threadBuilder.buildThreads();
+      
+      // 全メッセージ要素をチェック
+      const messageElements = document.querySelectorAll('[data-mid]._message');
+      
+      messageElements.forEach(el => {
+        const mid = el.getAttribute('data-mid');
+        if (!mid) return;
+        
+        // 既にボタンが追加されていたらスキップ
+        if (el.querySelector('.cw-threader-show-in-thread-btn')) return;
+        
+        // スレッドに含まれているかチェック
+        if (!this.isMessageInThread(mid)) return;
+        
+        // ボタンを追加する位置を探す
+        // ChatWorkのメッセージ構造: アクションメニュー（リアクション、返信など）の近くに追加
+        const actionArea = el.querySelector('._reaction, [data-testid*="reaction"], [class*="messageAction"]');
+        
+        if (actionArea) {
+          // アクションエリアの親に追加
+          const parentEl = actionArea.parentElement;
+          if (parentEl) {
+            const button = this.createShowInThreadButton(mid);
+            // アクションエリアの前に挿入
+            parentEl.insertBefore(button, actionArea);
+            this.addedButtons.add(mid);
+          }
+        } else {
+          // フォールバック: メッセージ本文の後ろに追加
+          const preEl = el.querySelector('pre');
+          if (preEl) {
+            const button = this.createShowInThreadButton(mid);
+            preEl.parentElement.appendChild(button);
+            this.addedButtons.add(mid);
+          }
+        }
+      });
+    }
+
+    /**
+     * 追加済みボタンをクリーンアップ（ルーム切り替え時など）
+     */
+    cleanup() {
+      const buttons = document.querySelectorAll('.cw-threader-show-in-thread-btn');
+      buttons.forEach(btn => btn.remove());
+      this.addedButtons.clear();
+    }
+
+    /**
+     * ボタンの表示を更新
+     */
+    refresh() {
+      // 既存のボタンを削除
+      this.cleanup();
+      // 再度追加
+      this.addButtonsToMessages();
+    }
+  }
+
+  /**
    * ショートカットキーを設定
    */
   function setupShortcutKey(threadUI) {
@@ -2378,7 +2615,7 @@
   /**
    * メッセージ変更を監視
    */
-  function observeMessages(threadUI) {
+  function observeMessages(threadUI, showInThreadButtonManager) {
     // タイムラインのコンテナを探す
     const findTimelineContainer = () => {
       // data-mid を持つ要素の親を探す
@@ -2413,12 +2650,21 @@
         }
       }
 
-      if (hasMessageChange && threadUI.isVisible) {
+      if (hasMessageChange) {
         // デバウンス：短時間に大量の更新が来た場合に備える
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
           console.log('ChatWork Threader: メッセージ変更を検知、更新中...');
-          threadUI.refresh();
+          
+          // 「スレッドで表示」ボタンを更新
+          if (showInThreadButtonManager) {
+            showInThreadButtonManager.refresh();
+          }
+          
+          // パネルが開いている場合は更新
+          if (threadUI.isVisible) {
+            threadUI.refresh();
+          }
         }, 500);
       }
     });
@@ -2428,6 +2674,24 @@
       childList: true,
       subtree: true
     });
+
+    // URL（ルーム）変更を監視
+    let lastUrl = window.location.href;
+    const urlObserver = new MutationObserver(() => {
+      if (window.location.href !== lastUrl) {
+        lastUrl = window.location.href;
+        console.log('ChatWork Threader: ルーム変更を検知');
+        
+        // ボタンをクリーンアップして再追加
+        if (showInThreadButtonManager) {
+          showInThreadButtonManager.cleanup();
+          setTimeout(() => {
+            showInThreadButtonManager.addButtonsToMessages();
+          }, 1000);
+        }
+      }
+    });
+    urlObserver.observe(document.body, { childList: true, subtree: true });
 
     console.log('ChatWork Threader: メッセージ監視を開始');
   }
@@ -2445,13 +2709,21 @@
         const threadBuilder = new ThreadBuilder();
         const threadUI = new ThreadUI(threadBuilder);
         
+        // 「スレッドで表示」ボタンマネージャーを初期化
+        const showInThreadButtonManager = new ShowInThreadButtonManager(threadUI);
+        
         createToggleButton(threadUI);
         
         // ショートカットキーを設定
         setupShortcutKey(threadUI);
         
         // メッセージの変更を監視
-        observeMessages(threadUI);
+        observeMessages(threadUI, showInThreadButtonManager);
+        
+        // 初回のボタン追加
+        setTimeout(() => {
+          showInThreadButtonManager.addButtonsToMessages();
+        }, 1000);
         
         console.log('ChatWork Threader initialized');
       }

@@ -778,6 +778,60 @@
   }
 }
 
+/* 「スレッドで表示」ボタン */
+.cw-threader-show-in-thread-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  margin: 4px 8px 4px 0;
+  border: 1px solid #ddd;
+  border-radius: 14px;
+  background: #f8f9fa;
+  color: #333;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.cw-threader-show-in-thread-btn:hover {
+  background: #e3f2fd;
+  border-color: #2196F3;
+  color: #1976D2;
+  box-shadow: 0 1px 3px rgba(33, 150, 243, 0.2);
+}
+
+.cw-threader-show-in-thread-btn:active {
+  background: #bbdefb;
+  transform: scale(0.98);
+}
+
+.cw-threader-sit-icon {
+  font-size: 12px;
+}
+
+.cw-threader-sit-text {
+  font-weight: 500;
+}
+
+/* スレッドパネル内のハイライト効果 */
+.cw-threader-highlight-panel {
+  animation: cw-threader-panel-highlight 2s ease-out;
+}
+
+@keyframes cw-threader-panel-highlight {
+  0%, 30% {
+    background: rgba(33, 150, 243, 0.25);
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.4);
+  }
+  100% {
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
 /* スクロールバー */
 .cw-threader-content::-webkit-scrollbar {
   width: 8px;
