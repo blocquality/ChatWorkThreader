@@ -900,6 +900,111 @@
   background: #b0b0b0;
 }
 
+/* 検索バー */
+.cw-threader-search-bar {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px 8px 32px;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  gap: 8px;
+}
+
+.cw-threader-search-input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cw-threader-search-icon {
+  position: absolute;
+  left: 10px;
+  color: #909090;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.cw-threader-search-input {
+  width: 100%;
+  padding: 8px 32px 8px 32px;
+  border: 1px solid #d0d0d0;
+  border-radius: 20px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  background: #f5f5f5;
+}
+
+.cw-threader-search-input:focus {
+  border-color: #2196F3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+  background: #fff;
+}
+
+.cw-threader-search-input::placeholder {
+  color: #a0a0a0;
+}
+
+.cw-threader-search-clear {
+  position: absolute;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: #d0d0d0;
+  color: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.cw-threader-search-clear:hover {
+  background: #b0b0b0;
+}
+
+.cw-threader-search-input:not(:placeholder-shown) + .cw-threader-search-clear {
+  display: flex;
+}
+
+.cw-threader-search-count {
+  font-size: 11px;
+  color: #606060;
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: right;
+}
+
+/* 検索ハイライト */
+.cw-threader-search-highlight {
+  background: #fff59d;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* 検索マッチしたメッセージの強調 */
+.cw-threader-message.cw-threader-search-match {
+  background: #fffde7 !important;
+}
+
+.cw-threader-message.cw-threader-search-match:hover {
+  background: #fff9c4 !important;
+}
+
+/* 検索マッチなしの場合に薄く表示 */
+.cw-threader-thread.cw-threader-no-match {
+  opacity: 0.35;
+}
+
+.cw-threader-thread.cw-threader-no-match:hover {
+  opacity: 0.6;
+}
+
 /* レスポンシブ */
 @media (max-width: 500px) {
   #cw-threader-panel {

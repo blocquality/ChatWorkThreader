@@ -1183,6 +1183,7 @@
       this.currentUserAid = null; // 現在のユーザーAID
       this.selectedSpeaker = ''; // 選択中の発言者（空の場合は全員表示）
       this.flatIndentMode = false; // フラット表示モード（全子要素を1階層で表示）
+      this.searchQuery = ''; // 検索クエリ
     }
 
     /**
@@ -1388,6 +1389,14 @@
             </div>
           </div>
         </div>
+        <div class="cw-threader-search-bar">
+          <div class="cw-threader-search-input-wrapper">
+            <span class="cw-threader-search-icon">🔍</span>
+            <input type="text" id="cw-threader-search" class="cw-threader-search-input" placeholder="メッセージを検索...">
+            <button id="cw-threader-search-clear" class="cw-threader-search-clear" title="クリア">×</button>
+          </div>
+          <span id="cw-threader-search-count" class="cw-threader-search-count"></span>
+        </div>
         <div class="cw-threader-content">
           <div class="cw-threader-threads"></div>
         </div>
@@ -1434,6 +1443,52 @@
           this.selectedSpeaker = speakerSelect.value;
           this.saveRoomSettings(); // 設定を保存
           this.renderThreads();
+        });
+      }
+
+      // 検索機能のイベントリスナー
+      const searchInput = document.getElementById('cw-threader-search');
+      const searchClear = document.getElementById('cw-threader-search-clear');
+      if (searchInput) {
+        // 入力時にリアルタイム検索
+        let searchTimeout = null;
+        searchInput.addEventListener('input', () => {
+          // デバウンス処理（200ms後に検索実行）
+          if (searchTimeout) {
+            clearTimeout(searchTimeout);
+          }
+          searchTimeout = setTimeout(() => {
+            this.searchQuery = searchInput.value.trim();
+            this.applySearchFilter();
+          }, 200);
+        });
+
+        // Enterキーで即座に検索
+        searchInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            if (searchTimeout) {
+              clearTimeout(searchTimeout);
+            }
+            this.searchQuery = searchInput.value.trim();
+            this.applySearchFilter();
+          }
+          // Escapeキーでクリア
+          if (e.key === 'Escape') {
+            searchInput.value = '';
+            this.searchQuery = '';
+            this.applySearchFilter();
+          }
+        });
+      }
+
+      // 検索クリアボタン
+      if (searchClear) {
+        searchClear.addEventListener('click', () => {
+          if (searchInput) {
+            searchInput.value = '';
+          }
+          this.searchQuery = '';
+          this.applySearchFilter();
         });
       }
     }
@@ -1557,6 +1612,236 @@
     }
 
     /**
+     * 検索クエリにマッチするかチェック（メッセージ単体）
+     * @param {Object} node - メッセージノード
+     * @param {string} query - 検索クエリ（小文字）
+     * @returns {boolean}
+     */
+    isMessageMatchingSearch(node, query) {
+      if (!query) return true;
+      
+      const searchTarget = [
+        node.messageText || '',
+        node.userName || '',
+        node.quotedMessage || '',
+        (node.toTargets || []).join(' ')
+      ].join(' ').toLowerCase();
+      
+      return searchTarget.includes(query);
+    }
+
+    /**
+     * スレッド内に検索クエリにマッチするメッセージがあるかチェック（再帰）
+     * @param {Object} node - スレッドノード
+     * @param {string} query - 検索クエリ（小文字）
+     * @returns {boolean}
+     */
+    isSearchMatchInThread(node, query) {
+      if (!query) return true;
+      
+      if (this.isMessageMatchingSearch(node, query)) {
+        return true;
+      }
+      if (node.children && node.children.length > 0) {
+        for (const child of node.children) {
+          if (this.isSearchMatchInThread(child, query)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    /**
+     * スレッド内のマッチするメッセージ数をカウント（再帰）
+     * @param {Object} node - スレッドノード
+     * @param {string} query - 検索クエリ（小文字）
+     * @returns {number}
+     */
+    countSearchMatchesInThread(node, query) {
+      if (!query) return 0;
+      
+      let count = this.isMessageMatchingSearch(node, query) ? 1 : 0;
+      if (node.children && node.children.length > 0) {
+        for (const child of node.children) {
+          count += this.countSearchMatchesInThread(child, query);
+        }
+      }
+      return count;
+    }
+
+    /**
+     * 全スレッドからマッチ数を集計
+     * @param {string} query - 検索クエリ（小文字）
+     * @returns {Object} { matchedThreads: number, matchedMessages: number }
+     */
+    countAllSearchMatches(query) {
+      if (!query) return { matchedThreads: 0, matchedMessages: 0 };
+      
+      const threads = this.threadBuilder.threads;
+      let matchedThreads = 0;
+      let matchedMessages = 0;
+      
+      threads.forEach(thread => {
+        const threadMatchCount = this.countSearchMatchesInThread(thread, query);
+        if (threadMatchCount > 0) {
+          matchedThreads++;
+          matchedMessages += threadMatchCount;
+        }
+      });
+      
+      return { matchedThreads, matchedMessages };
+    }
+
+    /**
+     * 検索フィルターを適用（DOM操作による表示/非表示切り替え）
+     */
+    applySearchFilter() {
+      const query = this.searchQuery.toLowerCase();
+      const countEl = document.getElementById('cw-threader-search-count');
+      const clearBtn = document.getElementById('cw-threader-search-clear');
+      
+      // クリアボタンの表示/非表示
+      if (clearBtn) {
+        clearBtn.style.display = query ? 'flex' : 'none';
+      }
+      
+      // 検索クエリが空の場合はすべて表示
+      if (!query) {
+        if (countEl) countEl.textContent = '';
+        // 全スレッドを通常表示に戻す
+        const threads = this.panel.querySelectorAll('.cw-threader-thread');
+        threads.forEach(thread => {
+          thread.classList.remove('cw-threader-no-match');
+          // 検索ハイライトをクリア
+          const highlights = thread.querySelectorAll('.cw-threader-search-highlight');
+          highlights.forEach(hl => {
+            const text = document.createTextNode(hl.textContent);
+            hl.parentNode.replaceChild(text, hl);
+          });
+          // マッチクラスを削除
+          const matchedMessages = thread.querySelectorAll('.cw-threader-search-match');
+          matchedMessages.forEach(msg => msg.classList.remove('cw-threader-search-match'));
+        });
+        return;
+      }
+      
+      // 検索結果をカウント
+      const { matchedThreads, matchedMessages } = this.countAllSearchMatches(query);
+      
+      // カウント表示
+      if (countEl) {
+        if (matchedMessages > 0) {
+          countEl.textContent = `${matchedMessages}件`;
+        } else {
+          countEl.textContent = '該当なし';
+        }
+      }
+      
+      // DOMに検索結果を反映
+      const threadElements = this.panel.querySelectorAll('.cw-threader-thread');
+      const threadValues = Array.from(this.threadBuilder.threads.values());
+      
+      threadElements.forEach((threadEl, index) => {
+        const threadData = threadValues[index];
+        if (!threadData) return;
+        
+        // スレッド全体のハイライト（DOM再構築を避けてクラスで制御）
+        const hasMatch = this.isSearchMatchInThread(threadData, query);
+        if (hasMatch) {
+          threadEl.classList.remove('cw-threader-no-match');
+        } else {
+          threadEl.classList.add('cw-threader-no-match');
+        }
+        
+        // 個別メッセージのハイライト
+        this.applySearchHighlightToNode(threadEl, threadData, query);
+      });
+    }
+
+    /**
+     * ノードに検索ハイライトを適用（再帰）
+     * @param {Element} containerEl - DOM要素
+     * @param {Object} node - メッセージノード
+     * @param {string} query - 検索クエリ（小文字）
+     */
+    applySearchHighlightToNode(containerEl, node, query) {
+      // このノードに対応するメッセージ要素を探す
+      const messageEl = containerEl.querySelector(`[data-thread-mid="${node.mid}"]`);
+      
+      if (messageEl) {
+        const isMatch = this.isMessageMatchingSearch(node, query);
+        if (isMatch) {
+          messageEl.classList.add('cw-threader-search-match');
+          // テキストハイライト（メッセージ本文のみ）
+          this.highlightTextInElement(messageEl.querySelector('.cw-threader-message-body'), query);
+          this.highlightTextInElement(messageEl.querySelector('.cw-threader-username'), query);
+          this.highlightTextInElement(messageEl.querySelector('.cw-threader-quote'), query);
+          this.highlightTextInElement(messageEl.querySelector('.cw-threader-to-targets'), query);
+        } else {
+          messageEl.classList.remove('cw-threader-search-match');
+        }
+      }
+      
+      // 子ノードを再帰処理
+      if (node.children && node.children.length > 0) {
+        node.children.forEach(child => {
+          this.applySearchHighlightToNode(containerEl, child, query);
+        });
+      }
+    }
+
+    /**
+     * 要素内のテキストをハイライト
+     * @param {Element} el - DOM要素
+     * @param {string} query - 検索クエリ（小文字）
+     */
+    highlightTextInElement(el, query) {
+      if (!el || !query) return;
+      
+      // 既存のハイライトをクリア
+      const existingHighlights = el.querySelectorAll('.cw-threader-search-highlight');
+      existingHighlights.forEach(hl => {
+        const text = document.createTextNode(hl.textContent);
+        hl.parentNode.replaceChild(text, hl);
+      });
+      
+      // テキストノードを走査してハイライト
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+      const textNodes = [];
+      let node;
+      while (node = walker.nextNode()) {
+        textNodes.push(node);
+      }
+      
+      textNodes.forEach(textNode => {
+        const text = textNode.textContent;
+        const lowerText = text.toLowerCase();
+        const index = lowerText.indexOf(query);
+        
+        if (index >= 0) {
+          const before = text.substring(0, index);
+          const match = text.substring(index, index + query.length);
+          const after = text.substring(index + query.length);
+          
+          const fragment = document.createDocumentFragment();
+          if (before) {
+            fragment.appendChild(document.createTextNode(before));
+          }
+          const span = document.createElement('span');
+          span.className = 'cw-threader-search-highlight';
+          span.textContent = match;
+          fragment.appendChild(span);
+          if (after) {
+            fragment.appendChild(document.createTextNode(after));
+          }
+          
+          textNode.parentNode.replaceChild(fragment, textNode);
+        }
+      });
+    }
+
+    /**
      * メッセージを表示（YouTube/Redditコメント欄風）
      * 返信関係のあるスレッドのみ表示
      */
@@ -1618,6 +1903,11 @@
         messageWrapper.appendChild(threadEl);
         container.appendChild(messageWrapper);
       });
+
+      // 検索フィルターを適用（検索クエリがある場合）
+      if (this.searchQuery) {
+        this.applySearchFilter();
+      }
     }
 
     /**
