@@ -2472,10 +2472,22 @@
       const messageEl = document.querySelector(`[data-mid="${mid}"]`);
       if (messageEl) {
         let hasAnimated = false;
+        let isVisible = false;
+        let scrollStopTimer = null;
+        
+        // スクロールコンテナを取得
+        const scrollContainer = messageEl.closest('#_timeLine, ._timeLine, [role="log"]') 
+          || document.querySelector('#_timeLine, ._timeLine, [role="log"]');
         
         const startShakeAnimation = () => {
           if (hasAnimated) return;
           hasAnimated = true;
+          
+          // クリーンアップ
+          if (scrollContainer) {
+            scrollContainer.removeEventListener('scroll', onScroll);
+          }
+          window.removeEventListener('scroll', onScroll);
           
           // 前のアニメーションを完全にリセット
           messageEl.style.animation = 'none';
@@ -2494,16 +2506,34 @@
           }, 500);
         };
         
+        // スクロール停止を検出
+        const onScroll = () => {
+          clearTimeout(scrollStopTimer);
+          scrollStopTimer = setTimeout(() => {
+            // スクロールが200ms止まった & 要素が表示されている
+            if (isVisible) {
+              startShakeAnimation();
+            }
+          }, 200);
+        };
+        
+        // スクロールイベントを監視
+        if (scrollContainer) {
+          scrollContainer.addEventListener('scroll', onScroll);
+        }
+        window.addEventListener('scroll', onScroll);
+        
         // IntersectionObserverで要素が表示されたことを検出
         const observer = new IntersectionObserver((entries) => {
           entries.forEach(entry => {
             if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-              // 要素が50%以上表示されたら、少し待ってからアニメーション開始
-              // （スクロールが完全に止まるのを待つ）
-              setTimeout(() => {
-                observer.disconnect();
+              isVisible = true;
+              observer.disconnect();
+              // 既にスクロールが止まっている場合に備えてタイマーを開始
+              clearTimeout(scrollStopTimer);
+              scrollStopTimer = setTimeout(() => {
                 startShakeAnimation();
-              }, 150);
+              }, 200);
             }
           });
         }, {
@@ -2516,11 +2546,15 @@
         // スクロール開始
         messageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
-        // 最大待機時間（5秒）を超えたら強制的に実行
+        // 最大待機時間（8秒）を超えたら強制的に実行
         setTimeout(() => {
           observer.disconnect();
+          if (scrollContainer) {
+            scrollContainer.removeEventListener('scroll', onScroll);
+          }
+          window.removeEventListener('scroll', onScroll);
           startShakeAnimation();
-        }, 5000);
+        }, 8000);
       }
     }
 
