@@ -818,6 +818,11 @@
   top: 8px;
 }
 
+/* 連続投稿（他人のメッセージで_speakerがない場合）: 上に配置 */
+.cw-threader-show-in-thread-wrapper.cw-threader-sit-continuous-post {
+  top: 4px; /* 連続投稿は上部余白が少ないため、より上に配置 */
+}
+
 /* 「スレッドで表示」ボタン */
 .cw-threader-show-in-thread-btn {
   display: flex;

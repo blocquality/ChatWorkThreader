@@ -2734,14 +2734,19 @@
     /**
      * 「スレッドで表示」ボタンを作成
      * @param {string} mid - メッセージID
+     * @param {boolean} hasAvatar - アバターの有無
+     * @param {boolean} isContinuousPost - 連続投稿かどうか
      * @returns {HTMLElement}
      */
-    createShowInThreadButton(mid, hasAvatar = true) {
+    createShowInThreadButton(mid, hasAvatar = true, isContinuousPost = false) {
       // ラッパーdivでボタンを包む（ホバー安定化）
       const wrapper = document.createElement('div');
       wrapper.className = 'cw-threader-show-in-thread-wrapper';
-      // アバターの有無に応じてクラスを追加
-      if (hasAvatar) {
+      // アバターの有無、連続投稿かどうかに応じてクラスを追加
+      if (isContinuousPost) {
+        // 連続投稿（_speaker要素がない）: 一番上に配置
+        wrapper.classList.add('cw-threader-sit-continuous-post');
+      } else if (hasAvatar) {
         wrapper.classList.add('cw-threader-sit-below-avatar');
       } else {
         wrapper.classList.add('cw-threader-sit-at-avatar');
@@ -2921,7 +2926,11 @@
         const avatarEl = el.querySelector('.userIconImage:not(.chatQuote *):not(.dev_quote *), [data-testid="user-icon"]:not(.chatQuote *):not(.dev_quote *)');
         const hasAvatar = !!avatarEl;
         
-        const button = this.createShowInThreadButton(mid, hasAvatar);
+        // 連続投稿メッセージかどうかをチェック（_speaker要素がない場合は連続投稿）
+        const speakerEl = el.querySelector('._speaker');
+        const isContinuousPost = !speakerEl;
+        
+        const button = this.createShowInThreadButton(mid, hasAvatar, isContinuousPost);
         el.appendChild(button);
         this.addedButtons.add(mid);
       });
