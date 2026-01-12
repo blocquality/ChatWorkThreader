@@ -2471,36 +2471,12 @@
     scrollToMessage(mid) {
       const messageEl = document.querySelector(`[data-mid="${mid}"]`);
       if (messageEl) {
-        // スクロールコンテナを取得（ChatWorkのメッセージリスト）
-        const scrollContainer = messageEl.closest('#_timeLine, ._timeLine, [role="log"]') 
-          || document.querySelector('#_timeLine, ._timeLine, [role="log"]')
-          || messageEl.closest('[style*="overflow"]');
-        
-        messageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // スクロール完了を検出してから揺らすアニメーション
-        let scrollTimeout;
-        let maxWaitTimeout;
-        
-        const onScrollEnd = () => {
-          clearTimeout(scrollTimeout);
-          scrollTimeout = setTimeout(() => {
-            // スクロールが止まった
-            cleanup();
-            startShakeAnimation();
-          }, 100); // 100ms スクロールが止まったら完了とみなす
-        };
-        
-        const cleanup = () => {
-          clearTimeout(maxWaitTimeout);
-          clearTimeout(scrollTimeout);
-          if (scrollContainer) {
-            scrollContainer.removeEventListener('scroll', onScrollEnd);
-          }
-          window.removeEventListener('scroll', onScrollEnd);
-        };
+        let hasAnimated = false;
         
         const startShakeAnimation = () => {
+          if (hasAnimated) return;
+          hasAnimated = true;
+          
           // 前のアニメーションを完全にリセット
           messageEl.style.animation = 'none';
           messageEl.offsetWidth; // reflow を強制
@@ -2518,23 +2494,33 @@
           }, 500);
         };
         
-        // スクロールイベントを監視
-        if (scrollContainer) {
-          scrollContainer.addEventListener('scroll', onScrollEnd);
-        }
-        window.addEventListener('scroll', onScrollEnd);
+        // IntersectionObserverで要素が表示されたことを検出
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+              // 要素が50%以上表示されたら、少し待ってからアニメーション開始
+              // （スクロールが完全に止まるのを待つ）
+              setTimeout(() => {
+                observer.disconnect();
+                startShakeAnimation();
+              }, 150);
+            }
+          });
+        }, {
+          threshold: [0.5, 1.0],
+          rootMargin: '0px'
+        });
         
-        // 初回のスクロールイベントを待つ（既に表示範囲内の場合への対策）
-        scrollTimeout = setTimeout(() => {
-          cleanup();
-          startShakeAnimation();
-        }, 100);
+        observer.observe(messageEl);
         
-        // 最大待機時間（2秒）を超えたら強制的に実行
-        maxWaitTimeout = setTimeout(() => {
-          cleanup();
+        // スクロール開始
+        messageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // 最大待機時間（5秒）を超えたら強制的に実行
+        setTimeout(() => {
+          observer.disconnect();
           startShakeAnimation();
-        }, 2000);
+        }, 5000);
       }
     }
 
