@@ -2471,10 +2471,36 @@
     scrollToMessage(mid) {
       const messageEl = document.querySelector(`[data-mid="${mid}"]`);
       if (messageEl) {
+        // スクロールコンテナを取得（ChatWorkのメッセージリスト）
+        const scrollContainer = messageEl.closest('#_timeLine, ._timeLine, [role="log"]') 
+          || document.querySelector('#_timeLine, ._timeLine, [role="log"]')
+          || messageEl.closest('[style*="overflow"]');
+        
         messageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
-        // スクロール完了を待ってから揺らすアニメーション
-        setTimeout(() => {
+        // スクロール完了を検出してから揺らすアニメーション
+        let scrollTimeout;
+        let maxWaitTimeout;
+        
+        const onScrollEnd = () => {
+          clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(() => {
+            // スクロールが止まった
+            cleanup();
+            startShakeAnimation();
+          }, 100); // 100ms スクロールが止まったら完了とみなす
+        };
+        
+        const cleanup = () => {
+          clearTimeout(maxWaitTimeout);
+          clearTimeout(scrollTimeout);
+          if (scrollContainer) {
+            scrollContainer.removeEventListener('scroll', onScrollEnd);
+          }
+          window.removeEventListener('scroll', onScrollEnd);
+        };
+        
+        const startShakeAnimation = () => {
           // 前のアニメーションを完全にリセット
           messageEl.style.animation = 'none';
           messageEl.offsetWidth; // reflow を強制
@@ -2490,7 +2516,25 @@
               messageEl.classList.remove('cw-threader-highlight');
             }, 2000);
           }, 500);
-        }, 400);
+        };
+        
+        // スクロールイベントを監視
+        if (scrollContainer) {
+          scrollContainer.addEventListener('scroll', onScrollEnd);
+        }
+        window.addEventListener('scroll', onScrollEnd);
+        
+        // 初回のスクロールイベントを待つ（既に表示範囲内の場合への対策）
+        scrollTimeout = setTimeout(() => {
+          cleanup();
+          startShakeAnimation();
+        }, 100);
+        
+        // 最大待機時間（2秒）を超えたら強制的に実行
+        maxWaitTimeout = setTimeout(() => {
+          cleanup();
+          startShakeAnimation();
+        }, 2000);
       }
     }
 
