@@ -801,6 +801,19 @@
   }
 }
 
+/* ChatWorkメッセージ用の揺らすアニメーション */
+@keyframes cw-threader-shake-message {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-8px);
+  }
+  75% {
+    transform: translateX(8px);
+  }
+}
+
 /* 「スレッドで表示」ボタン ラッパー */
 .cw-threader-show-in-thread-wrapper {
   position: absolute;

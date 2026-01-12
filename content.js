@@ -2473,11 +2473,24 @@
       if (messageEl) {
         messageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
-        // ハイライト効果
-        messageEl.classList.add('cw-threader-highlight');
+        // スクロール完了を待ってから揺らすアニメーション
         setTimeout(() => {
-          messageEl.classList.remove('cw-threader-highlight');
-        }, 2000);
+          // 前のアニメーションを完全にリセット
+          messageEl.style.animation = 'none';
+          messageEl.offsetWidth; // reflow を強制
+          // 揺らすアニメーションを適用
+          messageEl.style.animation = 'cw-threader-shake-message 0.15s ease-in-out 3';
+          
+          // アニメーション終了後にハイライト効果を適用
+          setTimeout(() => {
+            messageEl.style.animation = '';
+            // ハイライト効果
+            messageEl.classList.add('cw-threader-highlight');
+            setTimeout(() => {
+              messageEl.classList.remove('cw-threader-highlight');
+            }, 2000);
+          }, 500);
+        }, 400);
       }
     }
 
