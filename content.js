@@ -1184,6 +1184,8 @@
       this.selectedSpeaker = ''; // 選択中の発言者（空の場合は全員表示）
       this.flatIndentMode = false; // フラット表示モード（全子要素を1階層で表示）
       this.searchQuery = ''; // 検索クエリ
+      this.searchMatches = []; // 検索マッチしたメッセージ要素のリスト
+      this.currentSearchIndex = -1; // 現在の検索結果インデックス
     }
 
     /**
@@ -1394,6 +1396,10 @@
             <input type="text" id="cw-threader-search" class="cw-threader-search-input" placeholder="メッセージを検索...">
             <button id="cw-threader-search-clear" class="cw-threader-search-clear" title="クリア">×</button>
           </div>
+          <div id="cw-threader-search-nav" class="cw-threader-search-nav">
+            <button id="cw-threader-search-prev" class="cw-threader-search-nav-btn" title="前の結果">▲</button>
+            <button id="cw-threader-search-next" class="cw-threader-search-nav-btn" title="次の結果">▼</button>
+          </div>
           <span id="cw-threader-search-count" class="cw-threader-search-count"></span>
         </div>
         <div class="cw-threader-content">
@@ -1488,6 +1494,22 @@
           }
           this.searchQuery = '';
           this.applySearchFilter();
+        });
+      }
+
+      // 検索ナビゲーションボタン
+      const searchPrev = document.getElementById('cw-threader-search-prev');
+      const searchNext = document.getElementById('cw-threader-search-next');
+      
+      if (searchPrev) {
+        searchPrev.addEventListener('click', () => {
+          this.navigateSearchResult(-1);
+        });
+      }
+      
+      if (searchNext) {
+        searchNext.addEventListener('click', () => {
+          this.navigateSearchResult(1);
         });
       }
     }
@@ -1699,15 +1721,27 @@
       const query = this.searchQuery.toLowerCase();
       const countEl = document.getElementById('cw-threader-search-count');
       const clearBtn = document.getElementById('cw-threader-search-clear');
+      const navEl = document.getElementById('cw-threader-search-nav');
       
       // クリアボタンの表示/非表示
       if (clearBtn) {
         clearBtn.style.display = query ? 'flex' : 'none';
       }
       
+      // 検索マッチリストと現在インデックスをリセット
+      this.searchMatches = [];
+      this.currentSearchIndex = -1;
+      
+      // 現在フォーカスのクラスを削除
+      const currentFocused = this.panel.querySelector('.cw-threader-search-current');
+      if (currentFocused) {
+        currentFocused.classList.remove('cw-threader-search-current');
+      }
+      
       // 検索クエリが空の場合はすべて表示
       if (!query) {
         if (countEl) countEl.textContent = '';
+        if (navEl) navEl.classList.remove('visible');
         // 全スレッドを通常表示に戻す
         const threads = this.panel.querySelectorAll('.cw-threader-thread');
         threads.forEach(thread => {
@@ -1725,37 +1759,109 @@
         return;
       }
       
-      // 検索結果をカウント
-      const { matchedThreads, matchedMessages } = this.countAllSearchMatches(query);
+      // DOMに検索結果を反映
+      const threadElements = this.panel.querySelectorAll('.cw-threader-thread');
       
-      // カウント表示
+      threadElements.forEach((threadEl) => {
+        // スレッド内の全メッセージ要素を取得
+        const messageEls = threadEl.querySelectorAll('[data-thread-mid]');
+        let threadHasMatch = false;
+        
+        messageEls.forEach(messageEl => {
+          const mid = messageEl.getAttribute('data-thread-mid');
+          const messageData = this.threadBuilder.messages.get(mid);
+          
+          if (messageData) {
+            const isMatch = this.isMessageMatchingSearch(messageData, query);
+            if (isMatch) {
+              threadHasMatch = true;
+              messageEl.classList.add('cw-threader-search-match');
+              // テキストハイライト
+              this.highlightTextInElement(messageEl.querySelector('.cw-threader-message-body'), query);
+              this.highlightTextInElement(messageEl.querySelector('.cw-threader-username'), query);
+              this.highlightTextInElement(messageEl.querySelector('.cw-threader-quote'), query);
+              this.highlightTextInElement(messageEl.querySelector('.cw-threader-to-targets'), query);
+            } else {
+              messageEl.classList.remove('cw-threader-search-match');
+            }
+          }
+        });
+        
+        // スレッド全体のハイライト
+        if (threadHasMatch) {
+          threadEl.classList.remove('cw-threader-no-match');
+        } else {
+          threadEl.classList.add('cw-threader-no-match');
+        }
+      });
+      
+      // 検索マッチしたメッセージ要素を収集（DOM順）
+      this.searchMatches = Array.from(this.panel.querySelectorAll('.cw-threader-search-match'));
+      
+      // カウント表示とナビゲーション表示
+      const matchCount = this.searchMatches.length;
       if (countEl) {
-        if (matchedMessages > 0) {
-          countEl.textContent = `${matchedMessages}件`;
+        if (matchCount > 0) {
+          countEl.textContent = `${matchCount}件`;
         } else {
           countEl.textContent = '該当なし';
         }
       }
       
-      // DOMに検索結果を反映
-      const threadElements = this.panel.querySelectorAll('.cw-threader-thread');
-      const threadValues = Array.from(this.threadBuilder.threads.values());
-      
-      threadElements.forEach((threadEl, index) => {
-        const threadData = threadValues[index];
-        if (!threadData) return;
-        
-        // スレッド全体のハイライト（DOM再構築を避けてクラスで制御）
-        const hasMatch = this.isSearchMatchInThread(threadData, query);
-        if (hasMatch) {
-          threadEl.classList.remove('cw-threader-no-match');
+      // ナビゲーションボタンの表示/非表示
+      if (navEl) {
+        if (matchCount > 0) {
+          navEl.classList.add('visible');
         } else {
-          threadEl.classList.add('cw-threader-no-match');
+          navEl.classList.remove('visible');
         }
-        
-        // 個別メッセージのハイライト
-        this.applySearchHighlightToNode(threadEl, threadData, query);
-      });
+      }
+      
+      // 最初の結果に自動で移動
+      if (matchCount > 0) {
+        this.navigateSearchResult(0, true);
+      }
+    }
+
+    /**
+     * 検索結果をナビゲート
+     * @param {number} direction - 移動方向（-1: 前, 1: 次, 0: 現在位置を設定）
+     * @param {boolean} isInitial - 初回呼び出しかどうか
+     */
+    navigateSearchResult(direction, isInitial = false) {
+      if (this.searchMatches.length === 0) return;
+      
+      // 現在フォーカスのクラスを削除
+      if (this.currentSearchIndex >= 0 && this.currentSearchIndex < this.searchMatches.length) {
+        this.searchMatches[this.currentSearchIndex].classList.remove('cw-threader-search-current');
+      }
+      
+      // 新しいインデックスを計算
+      if (isInitial) {
+        this.currentSearchIndex = 0;
+      } else {
+        this.currentSearchIndex += direction;
+        // 循環
+        if (this.currentSearchIndex >= this.searchMatches.length) {
+          this.currentSearchIndex = 0;
+        } else if (this.currentSearchIndex < 0) {
+          this.currentSearchIndex = this.searchMatches.length - 1;
+        }
+      }
+      
+      // 現在の要素にフォーカスクラスを追加
+      const currentEl = this.searchMatches[this.currentSearchIndex];
+      if (currentEl) {
+        currentEl.classList.add('cw-threader-search-current');
+        // スクロールして表示
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      
+      // カウント表示を更新（現在位置/全件）
+      const countEl = document.getElementById('cw-threader-search-count');
+      if (countEl && this.searchMatches.length > 0) {
+        countEl.textContent = `${this.currentSearchIndex + 1}/${this.searchMatches.length}`;
+      }
     }
 
     /**

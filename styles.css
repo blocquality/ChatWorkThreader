@@ -457,6 +457,26 @@
   background: #d0ebe6 !important;
 }
 
+/* 検索マッチしたメッセージの強調（緑背景より優先） */
+.cw-threader-message.cw-threader-search-match {
+  background: #fffde7 !important;
+  border-right: none;
+}
+
+.cw-threader-message.cw-threader-search-match:hover {
+  background: #fff9c4 !important;
+}
+
+/* 検索マッチ + 自分宛ての場合も黄色優先 */
+.cw-threader-message.cw-threader-mention.cw-threader-search-match {
+  background: #fffde7 !important;
+  border-right: none;
+}
+
+.cw-threader-message.cw-threader-mention.cw-threader-search-match:hover {
+  background: #fff9c4 !important;
+}
+
 .cw-threader-message-body {
   font-size: 13px;
   color: #1a1a1a;
@@ -969,24 +989,72 @@
   font-size: 11px;
   color: #606060;
   white-space: nowrap;
-  min-width: 60px;
+  min-width: 40px;
   text-align: right;
 }
 
-/* 検索ハイライト */
+/* 検索ナビゲーションボタン */
+.cw-threader-search-nav {
+  display: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.cw-threader-search-nav.visible {
+  display: flex;
+}
+
+.cw-threader-search-nav-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #fff;
+  color: #606060;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.cw-threader-search-nav-btn:hover {
+  background: #e3f2fd;
+  border-color: #2196F3;
+  color: #1976D2;
+}
+
+.cw-threader-search-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cw-threader-search-nav-btn:disabled:hover {
+  background: #fff;
+  border-color: #d0d0d0;
+  color: #606060;
+}
+
+/* 現在の検索位置表示 */
+.cw-threader-search-position {
+  font-size: 11px;
+  color: #606060;
+  min-width: 50px;
+  text-align: center;
+}
+
+/* 現在フォーカスされている検索結果 */
+.cw-threader-message.cw-threader-search-current {
+  outline: 2px solid #ff9800;
+  outline-offset: -2px;
+}
+
+/* 検索ハイライト（テキスト内） */
 .cw-threader-search-highlight {
   background: #fff59d;
   border-radius: 2px;
   padding: 0 1px;
-}
-
-/* 検索マッチしたメッセージの強調 */
-.cw-threader-message.cw-threader-search-match {
-  background: #fffde7 !important;
-}
-
-.cw-threader-message.cw-threader-search-match:hover {
-  background: #fff9c4 !important;
 }
 
 /* 検索マッチなしの場合に薄く表示 */
