@@ -904,6 +904,7 @@
 .cw-threader-search-bar {
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 8px 16px 8px 32px;
   background: #fff;
   border-bottom: 1px solid #e0e0e0;
@@ -911,23 +912,15 @@
 }
 
 .cw-threader-search-input-wrapper {
-  flex: 1;
+  width: 80%;
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.cw-threader-search-icon {
-  position: absolute;
-  left: 10px;
-  color: #909090;
-  font-size: 14px;
-  pointer-events: none;
-}
-
 .cw-threader-search-input {
   width: 100%;
-  padding: 8px 32px 8px 32px;
+  padding: 8px 32px 8px 12px;
   border: 1px solid #d0d0d0;
   border-radius: 20px;
   font-size: 13px;

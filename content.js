@@ -1391,7 +1391,6 @@
         </div>
         <div class="cw-threader-search-bar">
           <div class="cw-threader-search-input-wrapper">
-            <span class="cw-threader-search-icon">🔍</span>
             <input type="text" id="cw-threader-search" class="cw-threader-search-input" placeholder="メッセージを検索...">
             <button id="cw-threader-search-clear" class="cw-threader-search-clear" title="クリア">×</button>
           </div>
