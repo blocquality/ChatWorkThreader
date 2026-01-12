@@ -1721,7 +1721,6 @@
       const query = this.searchQuery.toLowerCase();
       const countEl = document.getElementById('cw-threader-search-count');
       const clearBtn = document.getElementById('cw-threader-search-clear');
-      const navEl = document.getElementById('cw-threader-search-nav');
       
       // クリアボタンの表示/非表示
       if (clearBtn) {
@@ -1738,10 +1737,16 @@
         currentFocused.classList.remove('cw-threader-search-current');
       }
       
+      // ナビゲーションボタンの参照
+      const prevBtn = document.getElementById('cw-threader-search-prev');
+      const nextBtn = document.getElementById('cw-threader-search-next');
+      
       // 検索クエリが空の場合はすべて表示
       if (!query) {
         if (countEl) countEl.textContent = '';
-        if (navEl) navEl.classList.remove('visible');
+        // ナビゲーションボタンを無効化
+        if (prevBtn) prevBtn.disabled = true;
+        if (nextBtn) nextBtn.disabled = true;
         // 全スレッドを通常表示に戻す
         const threads = this.panel.querySelectorAll('.cw-threader-thread');
         threads.forEach(thread => {
@@ -1798,7 +1803,7 @@
       // 検索マッチしたメッセージ要素を収集（DOM順）
       this.searchMatches = Array.from(this.panel.querySelectorAll('.cw-threader-search-match'));
       
-      // カウント表示とナビゲーション表示
+      // カウント表示
       const matchCount = this.searchMatches.length;
       if (countEl) {
         if (matchCount > 0) {
@@ -1808,14 +1813,9 @@
         }
       }
       
-      // ナビゲーションボタンの表示/非表示
-      if (navEl) {
-        if (matchCount > 0) {
-          navEl.classList.add('visible');
-        } else {
-          navEl.classList.remove('visible');
-        }
-      }
+      // ナビゲーションボタンの有効/無効
+      if (prevBtn) prevBtn.disabled = matchCount === 0;
+      if (nextBtn) nextBtn.disabled = matchCount === 0;
       
       // 最初の結果に自動で移動
       if (matchCount > 0) {
