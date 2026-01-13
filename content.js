@@ -1429,7 +1429,7 @@
           // フラットモード切り替え時にパネル幅を再計算
           let panelWidth;
           if (this.flatIndentMode) {
-            panelWidth = 600; // 最小幅
+            panelWidth = 550; // 最小幅
           } else {
             const actualMaxDepth = this.threadBuilder.getOverallMaxDepth();
             panelWidth = this.calculatePanelWidth(actualMaxDepth);
