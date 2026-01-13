@@ -2975,9 +2975,9 @@
       const baseWidth = 380;
       const widthPerDepth = 44;
       const calculatedWidth = baseWidth + (maxDepth * widthPerDepth);
-      // 最小440px、最大は画面幅の90%
+      // 最小550px、最大は画面幅の90%
       const maxWidth = window.innerWidth * 0.9;
-      return Math.min(Math.max(calculatedWidth, 440), maxWidth);
+      return Math.min(Math.max(calculatedWidth, 550), maxWidth);
     }
 
     /**
@@ -3008,10 +3008,10 @@
       this.threadBuilder.buildThreads();
       
       // 最大階層に応じてパネル幅を設定
-      // フラットモードの場合は最小幅(440px)に設定
+      // フラットモードの場合は最小幅(550px)に設定
       let panelWidth;
       if (this.flatIndentMode) {
-        panelWidth = 440; // 最小幅
+        panelWidth = 550; // 最小幅
       } else {
         const actualMaxDepth = this.threadBuilder.getOverallMaxDepth();
         panelWidth = this.calculatePanelWidth(actualMaxDepth);
@@ -3080,10 +3080,10 @@
       this.threadBuilder.buildThreads();
       
       // 最大階層に応じてパネル幅を再計算
-      // フラットモードの場合は最小幅(440px)に設定
+      // フラットモードの場合は最小幅(550px)に設定
       let panelWidth;
       if (this.flatIndentMode) {
-        panelWidth = 440; // 最小幅
+        panelWidth = 550; // 最小幅
       } else {
         const actualMaxDepth = this.threadBuilder.getOverallMaxDepth();
         panelWidth = this.calculatePanelWidth(actualMaxDepth);
