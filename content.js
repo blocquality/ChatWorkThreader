@@ -1366,7 +1366,6 @@
       this.panel.innerHTML = `
         <div class="cw-threader-resize-handle"></div>
         <div class="cw-threader-header">
-          <h3>スレッド</h3>
           <div class="cw-threader-header-right">
             <select id="cw-threader-speaker-filter" class="cw-threader-speaker-select" title="発言者でフィルター">
               <option value="">全員</option>
@@ -1545,7 +1544,7 @@
         if (!isResizing) return;
         const diff = startX - e.clientX;
         const maxWidth = window.innerWidth * 0.9; // 画面幅の90%まで
-        const newWidth = Math.min(Math.max(startWidth + diff, 280), maxWidth);
+        const newWidth = Math.min(Math.max(startWidth + diff, 440), maxWidth);
         this.panel.style.width = newWidth + 'px';
         // リサイズ中もChatWorkメインコンテンツの幅を調整
         if (this.isVisible) {
