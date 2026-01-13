@@ -1427,10 +1427,9 @@
           this.flatIndentMode = flatModeCheckbox.checked;
           this.saveRoomSettings(); // 設定を保存
           // フラットモード切り替え時にパネル幅を再計算
-          // フラットモードでは最小幅(320px)に設定
           let panelWidth;
           if (this.flatIndentMode) {
-            panelWidth = 500; // 最小幅
+            panelWidth = 600; // 最小幅
           } else {
             const actualMaxDepth = this.threadBuilder.getOverallMaxDepth();
             panelWidth = this.calculatePanelWidth(actualMaxDepth);
