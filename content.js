@@ -1430,7 +1430,7 @@
           // フラットモードでは最小幅(320px)に設定
           let panelWidth;
           if (this.flatIndentMode) {
-            panelWidth = 320; // 最小幅
+            panelWidth = 500; // 最小幅
           } else {
             const actualMaxDepth = this.threadBuilder.getOverallMaxDepth();
             panelWidth = this.calculatePanelWidth(actualMaxDepth);
