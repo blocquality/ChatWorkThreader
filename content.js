@@ -1547,7 +1547,7 @@
         if (!isResizing) return;
         const diff = startX - e.clientX;
         const maxWidth = window.innerWidth * 0.9; // 画面幅の90%まで
-        const newWidth = Math.min(Math.max(startWidth + diff, 320), maxWidth);
+        const newWidth = Math.min(Math.max(startWidth + diff, 550), maxWidth);
         this.panel.style.width = newWidth + 'px';
         // リサイズ中もChatWorkメインコンテンツの幅を調整
         if (this.isVisible) {
