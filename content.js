@@ -1427,6 +1427,15 @@
         flatModeCheckbox.addEventListener('change', () => {
           this.flatIndentMode = flatModeCheckbox.checked;
           this.saveRoomSettings(); // 設定を保存
+          // フラットモード切り替え時にパネル幅を再計算
+          // フラットモードでは階層が1段階（最発端とそれ以下）しかないので幅を狭くできる
+          const actualMaxDepth = this.threadBuilder.getOverallMaxDepth();
+          const maxDepth = this.flatIndentMode ? Math.min(actualMaxDepth, 1) : actualMaxDepth;
+          const panelWidth = this.calculatePanelWidth(maxDepth);
+          this.panel.style.width = panelWidth + 'px';
+          if (this.isVisible) {
+            this.adjustChatworkMainContent(panelWidth);
+          }
           this.renderThreads();
         });
       }
@@ -2997,7 +3006,9 @@
       this.threadBuilder.buildThreads();
       
       // 最大階層に応じてパネル幅を設定
-      const maxDepth = this.threadBuilder.getOverallMaxDepth();
+      // フラットモードの場合は階層が1段階（最発端とそれ以下）しかないので最大階層を1とする
+      const actualMaxDepth = this.threadBuilder.getOverallMaxDepth();
+      const maxDepth = this.flatIndentMode ? Math.min(actualMaxDepth, 1) : actualMaxDepth;
       const panelWidth = this.calculatePanelWidth(maxDepth);
       this.panel.style.width = panelWidth + 'px';
       
@@ -3063,7 +3074,9 @@
       this.threadBuilder.buildThreads();
       
       // 最大階層に応じてパネル幅を再計算
-      const maxDepth = this.threadBuilder.getOverallMaxDepth();
+      // フラットモードの場合は階層が1段階（最発端とそれ以下）しかないので最大階層を1とする
+      const actualMaxDepth = this.threadBuilder.getOverallMaxDepth();
+      const maxDepth = this.flatIndentMode ? Math.min(actualMaxDepth, 1) : actualMaxDepth;
       const panelWidth = this.calculatePanelWidth(maxDepth);
       this.panel.style.width = panelWidth + 'px';
       
