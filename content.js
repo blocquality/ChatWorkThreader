@@ -1427,10 +1427,10 @@
           this.flatIndentMode = flatModeCheckbox.checked;
           this.saveRoomSettings(); // 設定を保存
           // フラットモード切り替え時にパネル幅を再計算
-          // フラットモードでは最小幅(440px)に設定
+          // フラットモードでは最小幅(320px)に設定
           let panelWidth;
           if (this.flatIndentMode) {
-            panelWidth = 440; // 最小幅
+            panelWidth = 320; // 最小幅
           } else {
             const actualMaxDepth = this.threadBuilder.getOverallMaxDepth();
             panelWidth = this.calculatePanelWidth(actualMaxDepth);
@@ -1548,7 +1548,7 @@
         if (!isResizing) return;
         const diff = startX - e.clientX;
         const maxWidth = window.innerWidth * 0.9; // 画面幅の90%まで
-        const newWidth = Math.min(Math.max(startWidth + diff, 440), maxWidth);
+        const newWidth = Math.min(Math.max(startWidth + diff, 320), maxWidth);
         this.panel.style.width = newWidth + 'px';
         // リサイズ中もChatWorkメインコンテンツの幅を調整
         if (this.isVisible) {

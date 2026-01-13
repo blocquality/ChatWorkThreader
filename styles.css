@@ -131,6 +131,8 @@
   align-items: center;
   gap: 12px;
   flex-wrap: nowrap;
+  width: 100%;
+  overflow: hidden;
 }
 
 /* フィルタートグル */
@@ -138,12 +140,17 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 1; /* 幅が足りない時は縮む */
+  overflow: hidden;
 }
 
 .cw-threader-filter-label {
   font-size: 11px;
   color: #606060;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1; /* ラベルだけが縮む */
 }
 
 /* フィルタースイッチはトグルスイッチ共通スタイルを継承 */
@@ -151,6 +158,8 @@
 .cw-threader-controls {
   display: flex;
   gap: 4px;
+  flex-shrink: 0; /* リロード・閉じるボタンは縮まない */
+  margin-left: auto; /* 右寄せ */
 }
 
 .cw-threader-controls button {
@@ -176,7 +185,7 @@
 
 /* 発言者プルダウン（ヘッダー内） */
 .cw-threader-speaker-select {
-  min-width: 80px;
+  min-width: 60px;
   max-width: 160px;
   padding: 4px 24px 4px 8px;
   font-size: 11px;
@@ -196,6 +205,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
+  flex-shrink: 1; /* 幅が足りない時は縮む */
 }
 
 .cw-threader-speaker-select:hover {
@@ -753,6 +763,7 @@
   width: 40px;
   height: 22px;
   cursor: pointer;
+  flex-shrink: 0; /* スイッチ自体は縮まない */
 }
 
 .cw-threader-toggle-switch input {
