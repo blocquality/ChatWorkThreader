@@ -87,13 +87,11 @@
   content: '';
   width: 8px;
   height: 24px;
-  background: repeating-linear-gradient(
-    to right,
-    #999 0px,
-    #999 2px,
-    transparent 2px,
-    transparent 4px
-  );
+  background: repeating-linear-gradient(to right,
+      #999 0px,
+      #999 2px,
+      transparent 2px,
+      transparent 4px);
   border-radius: 1px;
 }
 
@@ -102,13 +100,11 @@
 }
 
 .cw-threader-resize-handle:hover::before {
-  background: repeating-linear-gradient(
-    to right,
-    #1976d2 0px,
-    #1976d2 2px,
-    transparent 2px,
-    transparent 4px
-  );
+  background: repeating-linear-gradient(to right,
+      #1976d2 0px,
+      #1976d2 2px,
+      transparent 2px,
+      transparent 4px);
 }
 
 .cw-threader-resize-handle:active {
@@ -120,7 +116,8 @@
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  padding: 12px 16px 12px 32px; /* 左側をリサイズハンドル(16px)+余白(16px)分確保 */
+  padding: 12px 16px 12px 32px;
+  /* 左側をリサイズハンドル(16px)+余白(16px)分確保 */
   background: #fff;
   border-bottom: 1px solid #e0e0e0;
 }
@@ -140,7 +137,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 1; /* 幅が足りない時は縮む */
+  flex-shrink: 1;
+  /* 幅が足りない時は縮む */
   overflow: hidden;
 }
 
@@ -150,7 +148,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex-shrink: 1; /* ラベルだけが縮む */
+  flex-shrink: 1;
+  /* ラベルだけが縮む */
 }
 
 /* フィルタースイッチはトグルスイッチ共通スタイルを継承 */
@@ -158,8 +157,10 @@
 .cw-threader-controls {
   display: flex;
   gap: 4px;
-  flex-shrink: 0; /* リロード・閉じるボタンは縮まない */
-  margin-left: auto; /* 右寄せ */
+  flex-shrink: 0;
+  /* リロード・閉じるボタンは縮まない */
+  margin-left: auto;
+  /* 右寄せ */
 }
 
 .cw-threader-controls button {
@@ -205,7 +206,8 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
-  flex-shrink: 1; /* 幅が足りない時は縮む */
+  flex-shrink: 1;
+  /* 幅が足りない時は縮む */
 }
 
 .cw-threader-speaker-select:hover {
@@ -221,11 +223,14 @@
 .cw-threader-content {
   flex: 1;
   overflow-y: scroll;
-  padding: 8px 0 8px 16px; /* 左側をリサイズハンドル(16px)の内側に余白確保 */
+  padding: 8px 0 8px 16px;
+  /* 左側をリサイズハンドル(16px)の内側に余白確保 */
   background: #fff;
   /* スクロールバーを非表示にしつつスクロール可能に */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
 }
 
 /* Chrome/Safari用スクロールバー非表示 */
@@ -287,7 +292,7 @@
   transition: none !important;
 }
 
-.cw-threader-message > * {
+.cw-threader-message>* {
   pointer-events: none;
 }
 
@@ -303,7 +308,8 @@
 .cw-threader-ancestor-lines {
   display: flex;
   flex-shrink: 0;
-  align-self: stretch; /* 行全体の高さに伸ばす */
+  align-self: stretch;
+  /* 行全体の高さに伸ばす */
 }
 
 /* 各祖先レベルの縦線
@@ -320,10 +326,13 @@
 .cw-threader-ancestor-line.has-more::before {
   content: '';
   position: absolute;
-  top: -8px; /* 前の行のパディング分だけ上に延長して接続 */
-  left: 22px; /* アバター中心位置: margin-left(10px) + avatar半径(12px) */
+  top: -8px;
+  /* 前の行のパディング分だけ上に延長して接続 */
+  left: 22px;
+  /* アバター中心位置: margin-left(10px) + avatar半径(12px) */
   transform: translateX(-50%);
-  height: calc(100% + 8px); /* 上に伸ばした分を含める */
+  height: calc(100% + 8px);
+  /* 上に伸ばした分を含める */
   width: 2px;
   background: #e0e0e0;
   border-radius: 1px;
@@ -333,7 +342,8 @@
  * 親のアバター位置から子のアバターに接続
  */
 .cw-threader-connect-line {
-  width: 44px; /* 祖先線と同じ幅に統一 */
+  width: 44px;
+  /* 祖先線と同じ幅に統一 */
   flex-shrink: 0;
   position: relative;
   min-height: 32px;
@@ -343,10 +353,13 @@
 .cw-threader-connect-line::before {
   content: '';
   position: absolute;
-  top: -8px; /* 前の行のパディング分だけ上に延長して接続 */
-  left: 22px; /* アバター中心位置: margin-left(10px) + avatar半径(12px) */
+  top: -8px;
+  /* 前の行のパディング分だけ上に延長して接続 */
+  left: 22px;
+  /* アバター中心位置: margin-left(10px) + avatar半径(12px) */
   transform: translateX(-50%);
-  height: 28px; /* 20px + 上に伸ばした8px */
+  height: 28px;
+  /* 20px + 上に伸ばした8px */
   width: 2px;
   background: #e0e0e0;
   border-radius: 1px;
@@ -357,8 +370,10 @@
   content: '';
   position: absolute;
   top: 20px;
-  left: 21px; /* 縦線と同じ位置から開始（transform考慮） */
-  width: 23px; /* 横に伸ばして子アバターの左端まで: 44px - 21px = 23px */
+  left: 21px;
+  /* 縦線と同じ位置から開始（transform考慮） */
+  width: 23px;
+  /* 横に伸ばして子アバターの左端まで: 44px - 21px = 23px */
   height: 2px;
   background: #e0e0e0;
   border-radius: 1px;
@@ -367,7 +382,8 @@
 
 /* 後続の兄弟がある場合、L字の縦線を下まで延長 */
 .cw-threader-connect-line.has-more::before {
-  height: calc(100% + 8px); /* 上に伸ばした分を含めて行全体をカバー */
+  height: calc(100% + 8px);
+  /* 上に伸ばした分を含めて行全体をカバー */
 }
 
 /* アバター */
@@ -751,7 +767,8 @@
   width: 40px;
   height: 22px;
   cursor: pointer;
-  flex-shrink: 0; /* スイッチ自体は縮まない */
+  flex-shrink: 0;
+  /* スイッチ自体は縮まない */
 }
 
 .cw-threader-toggle-switch input {
@@ -784,11 +801,11 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.cw-threader-toggle-switch input:checked + .cw-threader-toggle-slider {
+.cw-threader-toggle-switch input:checked+.cw-threader-toggle-slider {
   background-color: #2196F3;
 }
 
-.cw-threader-toggle-switch input:checked + .cw-threader-toggle-slider::before {
+.cw-threader-toggle-switch input:checked+.cw-threader-toggle-slider::before {
   transform: translateX(18px);
 }
 
@@ -808,6 +825,7 @@
   0% {
     background: rgba(25, 118, 210, 0.2) !important;
   }
+
   100% {
     background: transparent !important;
   }
@@ -815,9 +833,12 @@
 
 /* ChatWorkメッセージ用の揺らすアニメーション */
 @keyframes cw-threader-shake-message {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateX(0);
   }
+
   50% {
     transform: translateX(-5px);
   }
@@ -826,8 +847,8 @@
 /* 「スレッドで表示」ボタン ラッパー - メッセージの左上に配置 */
 .cw-threader-show-in-thread-wrapper {
   position: absolute;
-  top: 22px;
-  left: 10px;
+  top: 20px;
+  left: 8px;
   z-index: 10;
 }
 
@@ -872,9 +893,12 @@
 }
 
 @keyframes cw-threader-shake {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateX(0);
   }
+
   50% {
     transform: translateX(-5px);
   }
@@ -961,7 +985,7 @@
   color: #606060;
 }
 
-.cw-threader-search-input:not(:placeholder-shown) + .cw-threader-search-clear {
+.cw-threader-search-input:not(:placeholder-shown)+.cw-threader-search-clear {
   display: flex;
 }
 
