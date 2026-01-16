@@ -2459,14 +2459,27 @@
         messageEl.classList.add('cw-threader-mention');
       }
       
-      // To宛先表示用HTML
+      // To宛先表示用HTML（ChatWork風アイコン付き）
       const toTargetsHtml = (node.toTargets && node.toTargets.length > 0) 
-        ? `<div class="cw-threader-to-targets">To: ${node.toTargets.map(t => this.escapeHtml(t)).join(', ')}</div>` 
+        ? `<div class="cw-threader-to-badge">
+            <svg viewBox="0 0 10 10" width="14" height="14" class="cw-threader-to-icon">
+              <use fill-rule="evenodd" xlink:href="#icon_chatTimeLineTo"></use>
+            </svg>
+            <span class="cw-threader-to-text">${node.toTargets.map(t => this.escapeHtml(t)).join(', ')}</span>
+          </div>` 
         : '';
       
-      // Re（返信先）表示用HTML
+      // Re（返信先）表示用HTML（ChatWork風アイコン付き）
       const replyToHtml = (node.parentUserName && depth > 0) 
-        ? `<div class="cw-threader-reply-to">Re: ${this.escapeHtml(node.parentUserName)}</div>` 
+        ? `<div class="cw-threader-reply-badge">
+            <svg viewBox="0 0 10 10" width="12" height="12" class="cw-threader-reply-icon-bg">
+              <use fill-rule="evenodd" xlink:href="#icon_chatTimeLineReplyBadge"></use>
+            </svg>
+            <svg viewBox="0 0 10 10" width="14" height="14" class="cw-threader-reply-icon">
+              <use fill-rule="evenodd" xlink:href="#icon_chatTimeLineReply"></use>
+            </svg>
+            <span class="cw-threader-reply-text">${this.escapeHtml(node.parentUserName)}</span>
+          </div>` 
         : '';
       
       // メッセージ本文をセグメント順序で構築
