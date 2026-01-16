@@ -519,8 +519,7 @@
   margin-bottom: 6px;
   border-radius: 0 4px 4px 0;
   line-height: 1.4;
-  max-height: 150px;
-  overflow-y: auto;
+  /* 全文表示のため max-height 制限を削除 */
 }
 
 /* 引用元発言者ヘッダー */
