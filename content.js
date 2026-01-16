@@ -3666,8 +3666,8 @@
           }
         }
         
-        // スクロールしてからアニメーション（メッセージが上端に来るように）
-        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // スクロールしてからアニメーション（メッセージが下端に来るように）
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
         
         // スクロール完了を待ってからアニメーション開始
         setTimeout(() => {
