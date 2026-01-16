@@ -2464,6 +2464,11 @@
         ? `<div class="cw-threader-to-targets">To: ${node.toTargets.map(t => this.escapeHtml(t)).join(', ')}</div>` 
         : '';
       
+      // Re（返信先）表示用HTML
+      const replyToHtml = (node.parentUserName && depth > 0) 
+        ? `<div class="cw-threader-reply-to">Re: ${this.escapeHtml(node.parentUserName)}</div>` 
+        : '';
+      
       // メッセージ本文をセグメント順序で構築
       // messageSegmentsがある場合はセグメント順序で表示、ない場合は後方互換性のため旧形式
       let messageContentHtml = '';
@@ -2528,7 +2533,7 @@
               </div>
             ` : ''}
           </div>
-          ${toTargetsHtml}
+          ${toTargetsHtml}${replyToHtml}
           ${messageContentHtml}
         </div>
       `;
