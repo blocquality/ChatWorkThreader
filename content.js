@@ -3704,13 +3704,11 @@
         // スレッドに含まれているかチェック
         if (!this.isMessageInThread(mid)) return;
         
-        // 日時要素を探す
-        const timeStampEl = el.querySelector('._timeStamp');
-        if (!timeStampEl) return;
+        // メッセージ要素を絶対位置の基準にする
+        el.style.position = 'relative';
         
         const button = this.createShowInThreadButton(mid);
-        // 日時要素の直後に挿入
-        timeStampEl.insertAdjacentElement('afterend', button);
+        el.appendChild(button);
         this.addedButtons.add(mid);
       });
     }

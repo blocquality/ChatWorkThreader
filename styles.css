@@ -823,11 +823,12 @@
   }
 }
 
-/* 「スレッドで表示」ボタン ラッパー - 日時要素の横に配置 */
+/* 「スレッドで表示」ボタン ラッパー - メッセージの右上に配置 */
 .cw-threader-show-in-thread-wrapper {
-  display: inline-flex;
-  margin-left: 6px;
-  vertical-align: middle;
+  position: absolute;
+  top: 5px;
+  right: 2px;
+  z-index: 10;
 }
 
 /* 「スレッドで表示」ボタン */
