@@ -826,8 +826,8 @@
 /* 「スレッドで表示」ボタン ラッパー - メッセージの右上に配置 */
 .cw-threader-show-in-thread-wrapper {
   position: absolute;
-  top: 15px;
-  right: 10px;
+  top: 20px;
+  right: 8px;
   z-index: 10;
 }
 
@@ -836,8 +836,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 23px;
+  height: 23px;
   padding: 0;
   border: 1px solid transparent;
   border-radius: 4px;
@@ -860,8 +860,8 @@
 }
 
 .cw-threader-sit-icon {
-  width: 14px;
-  height: 14px;
+  width: 17px;
+  height: 17px;
   pointer-events: none;
   flex-shrink: 0;
 }
