@@ -832,17 +832,17 @@
 
 /* アバターがある場合: アバターの真下に配置 */
 .cw-threader-show-in-thread-wrapper.cw-threader-sit-below-avatar {
-  top: 52px; /* アバター（40px）+ 余白（12px） */
+  top: 47px; /* アバター（40px）+ 余白（7px） */
 }
 
 /* アバターがない場合: アバターの位置に配置 */
 .cw-threader-show-in-thread-wrapper.cw-threader-sit-at-avatar {
-  top: 8px;
+  top: 3px;
 }
 
 /* 連続投稿（他人のメッセージで_speakerがない場合）: 上に配置 */
 .cw-threader-show-in-thread-wrapper.cw-threader-sit-continuous-post {
-  top: 4px; /* 連続投稿は上部余白が少ないため、より上に配置 */
+  top: -1px; /* 連続投稿は上部余白が少ないため、より上に配置 */
 }
 
 /* 「スレッドで表示」ボタン */
