@@ -3532,19 +3532,10 @@
      * @param {boolean} isContinuousPost - 連続投稿かどうか
      * @returns {HTMLElement}
      */
-    createShowInThreadButton(mid, hasAvatar = true, isContinuousPost = false) {
+    createShowInThreadButton(mid) {
       // ラッパーdivでボタンを包む（ホバー安定化）
       const wrapper = document.createElement('div');
       wrapper.className = 'cw-threader-show-in-thread-wrapper';
-      // アバターの有無、連続投稿かどうかに応じてクラスを追加
-      if (isContinuousPost) {
-        // 連続投稿（_speaker要素がない）: 一番上に配置
-        wrapper.classList.add('cw-threader-sit-continuous-post');
-      } else if (hasAvatar) {
-        wrapper.classList.add('cw-threader-sit-below-avatar');
-      } else {
-        wrapper.classList.add('cw-threader-sit-at-avatar');
-      }
       
       const button = document.createElement('button');
       button.className = 'cw-threader-show-in-thread-btn';
@@ -3713,19 +3704,13 @@
         // スレッドに含まれているかチェック
         if (!this.isMessageInThread(mid)) return;
         
-        // ボタンを追加する位置: _message要素の左側パディングに絶対位置で配置
-        el.style.position = 'relative';
+        // 日時要素を探す
+        const timeStampEl = el.querySelector('._timeStamp');
+        if (!timeStampEl) return;
         
-        // ユーザーアイコンの有無をチェック（引用内のアイコンは除外）
-        const avatarEl = el.querySelector('.userIconImage:not(.chatQuote *):not(.dev_quote *), [data-testid="user-icon"]:not(.chatQuote *):not(.dev_quote *)');
-        const hasAvatar = !!avatarEl;
-        
-        // 連続投稿メッセージかどうかをチェック（_speaker要素がない場合は連続投稿）
-        const speakerEl = el.querySelector('._speaker');
-        const isContinuousPost = !speakerEl;
-        
-        const button = this.createShowInThreadButton(mid, hasAvatar, isContinuousPost);
-        el.appendChild(button);
+        const button = this.createShowInThreadButton(mid);
+        // 日時要素の直後に挿入
+        timeStampEl.insertAdjacentElement('afterend', button);
         this.addedButtons.add(mid);
       });
     }
