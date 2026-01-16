@@ -451,12 +451,13 @@
         const preEl = el.querySelector('pre');
         let messageText = '';
         let replyTargetUserName = null;
-        let quotedMessage = null;  // 引用メッセージ
+        let quotedMessage = null;  // 引用メッセージ（後方互換用）
         let quoteAuthor = null;    // 引用元発言者情報 { name, avatarUrl, timestamp }
         let filePreviewInfo = [];  // ファイルプレビュー情報 { fileId, mimeType, fileName, fileSize }
         let externalLinks = [];    // 外部リンク情報 { url, title, type }
         let quoteExternalLinks = [];  // 引用内の外部リンク情報
         let toTargets = [];  // To先ユーザー
+        let messageSegments = [];  // メッセージセグメント（テキストと引用を順序付きで保持）
         
         if (preEl) {
           // 引用を取得（[qt]タグ、または .chatQuote クラス）
@@ -871,8 +872,35 @@
             toTargets.push('ALL');
           }
           
-          // メッセージ本文を取得（より堅牢な方法）
-          // まず、特殊タグ以外のテキストノードを収集
+          // メッセージ本文を取得（DOM順序を保持してセグメント化）
+          // 引用セレクタ
+          const quoteSelectors = '[data-cwtag^="[qt"], [data-cwopen="[qt]"], .chatQuote, .dev_quote';
+          
+          // 除外するセレクタ（引用以外）
+          const nonQuoteExcludeSelectors = [
+            '[data-cwtag^="[rp"]',   // Reply バッジ
+            '[data-cwtag^="[to"]',   // To
+            '[data-cwtag="[toall]"]', // ToAll
+            '.chatTimeLineReply',    // 返信バッジ表示部分
+            '._replyMessage',        // 返信メッセージバッジ
+            '._filePreview',         // プレビューボタン
+            '._filePreviewButton',   // プレビューボタン
+            '[data-type="chatworkImagePreview"]', // 画像プレビューボタン
+            '._previewLink',         // 外部リンクプレビューボタン
+            '[data-cwopen*="download"]', // ダウンロードリンク（ファイル名・サイズ）
+            '.chatInfo [data-cwtag^="[preview"]' // 画像プレビュー領域
+          ];
+          
+          // 全ての除外セレクタ（テキスト収集時用）
+          const allExcludeSelectors = [
+            ...nonQuoteExcludeSelectors,
+            '[data-cwtag^="[qt"]',   // 引用（data-cwtag形式）
+            '[data-cwopen="[qt]"]',  // 引用（data-cwopen形式）
+            '.chatQuote',            // 引用コンテナ
+            '.dev_quote'             // 引用コンテナ（別形式）
+          ];
+
+          // テキストノードを収集する関数
           const collectTextNodes = (element, excludeSelectors) => {
             const texts = [];
             const walker = document.createTreeWalker(
@@ -902,35 +930,279 @@
             return texts;
           };
           
-          // 除外するセレクタ
-          const excludeSelectors = [
-            '[data-cwtag^="[rp"]',   // Reply バッジ
-            '[data-cwtag^="[qt"]',   // 引用（data-cwtag形式）
-            '[data-cwopen="[qt]"]',  // 引用（data-cwopen形式）
-            '.chatQuote',            // 引用コンテナ
-            '.dev_quote',            // 引用コンテナ（別形式）
-            '[data-cwtag^="[to"]',   // To
-            '[data-cwtag="[toall]"]', // ToAll
-            '.chatTimeLineReply',    // 返信バッジ表示部分
-            '._replyMessage',        // 返信メッセージバッジ
-            '._filePreview',         // プレビューボタン
-            '._filePreviewButton',   // プレビューボタン
-            '[data-type="chatworkImagePreview"]', // 画像プレビューボタン
-            '._previewLink',         // 外部リンクプレビューボタン
-            '[data-cwopen*="download"]', // ダウンロードリンク（ファイル名・サイズ）
-            '.chatInfo [data-cwtag^="[preview"]' // 画像プレビュー領域
-          ];
+          // DOM順序でセグメントを収集
+          // preEl内の各ノードを順番に処理して、テキストと引用の位置関係を保持
+          const processNodeForSegments = (parentEl) => {
+            const segments = [];
+            let currentTextBuffer = [];
+            
+            // 再帰的に子ノードを処理する関数
+            const processNode = (node) => {
+              // テキストノードの場合
+              if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent;
+                if (text && text.trim()) {
+                  // 親が除外セレクタに一致するか確認
+                  const parent = node.parentElement;
+                  if (parent) {
+                    let isExcluded = false;
+                    for (const selector of nonQuoteExcludeSelectors) {
+                      if (parent.closest(selector)) {
+                        isExcluded = true;
+                        break;
+                      }
+                    }
+                    if (!isExcluded) {
+                      currentTextBuffer.push(text);
+                    }
+                  }
+                }
+                return;
+              }
+              
+              // 要素ノードの場合
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                // 引用要素かチェック
+                const isQuote = node.matches && node.matches(quoteSelectors);
+                
+                if (isQuote) {
+                  // 現在のテキストバッファを先にセグメントに追加
+                  if (currentTextBuffer.length > 0) {
+                    const textContent = currentTextBuffer.join('').trim();
+                    if (textContent) {
+                      segments.push({ type: 'text', content: textContent });
+                    }
+                    currentTextBuffer = [];
+                  }
+                  
+                  // 引用セグメントを追加（引用テキストと発言者情報を取得）
+                  const quoteInfo = extractQuoteInfo(node);
+                  if (quoteInfo.text) {
+                    segments.push({ 
+                      type: 'quote', 
+                      content: quoteInfo.text, 
+                      author: quoteInfo.author,
+                      externalLinks: quoteInfo.externalLinks || []
+                    });
+                  }
+                  return; // 引用の子ノードはすでに処理済み
+                }
+                
+                // 除外セレクタに一致する要素はスキップ
+                for (const selector of nonQuoteExcludeSelectors) {
+                  if (node.matches && node.matches(selector)) {
+                    return;
+                  }
+                }
+                
+                // 子ノードを再帰処理
+                for (const child of node.childNodes) {
+                  processNode(child);
+                }
+              }
+            };
+            
+            // 引用情報を抽出する関数
+            const extractQuoteInfo = (quoteTag) => {
+              let author = null;
+              let text = '';
+              let links = [];
+              
+              // 発言者情報を取得
+              const quoteTitle = quoteTag.querySelector('.chatQuote__title');
+              if (quoteTitle) {
+                const pnameEl = quoteTitle.querySelector('[data-cwtag^="[pname"]');
+                const nameEl = pnameEl || quoteTitle.querySelector('[class*="_nameAid"]');
+                const authorName = nameEl ? nameEl.textContent.trim() : '';
+                
+                const avatarEl = quoteTitle.querySelector('img[data-testid="user-icon"], img[class*="avatar"], .userIconImage');
+                const authorAvatarUrl = avatarEl ? avatarEl.src : '';
+                
+                const timestampEl = quoteTitle.querySelector('.quoteTimeStamp, .chatQuote__timeStamp, [data-cwtag^="[date"]');
+                const authorTimestamp = timestampEl ? timestampEl.textContent.trim() : '';
+                
+                if (authorName) {
+                  author = {
+                    name: authorName,
+                    avatarUrl: authorAvatarUrl,
+                    timestamp: authorTimestamp
+                  };
+                }
+              }
+              
+              // 引用テキストを取得
+              const quoteTextEl = quoteTag.querySelector('.quoteText');
+              if (quoteTextEl) {
+                const textNodes = [];
+                const walker = document.createTreeWalker(
+                  quoteTextEl,
+                  NodeFilter.SHOW_TEXT,
+                  {
+                    acceptNode: (node) => {
+                      const parent = node.parentElement;
+                      if (!parent) return NodeFilter.FILTER_REJECT;
+                      if (parent.closest('._previewLink, [data-type*="preview"]')) {
+                        return NodeFilter.FILTER_REJECT;
+                      }
+                      if (parent.closest('.quoteTimeStamp, .chatQuote__timeStamp, [data-cwtag^="[date"]')) {
+                        return NodeFilter.FILTER_REJECT;
+                      }
+                      return NodeFilter.FILTER_ACCEPT;
+                    }
+                  }
+                );
+                let textNode;
+                while (textNode = walker.nextNode()) {
+                  const t = textNode.textContent;
+                  if (t && t.trim()) {
+                    textNodes.push(t);
+                  }
+                }
+                text = textNodes.join('').trim();
+                
+                // 引用内の外部リンクを収集
+                const quoteLinks = quoteTextEl.querySelectorAll('a[href]');
+                quoteLinks.forEach(link => {
+                  const href = link.getAttribute('href') || '';
+                  if (!href || 
+                      href.startsWith('#') || 
+                      href.startsWith('javascript:') ||
+                      href.includes('chatwork.com') ||
+                      href.includes('/gateway/') ||
+                      href.includes('download_file') ||
+                      link.classList.contains('_previewLink')) {
+                    return;
+                  }
+                  
+                  const parentContainer = link.closest('[data-cwtag^="http"], [class*="url"], [class*="link"]') || link.parentElement;
+                  let hasPreviewButton = false;
+                  let previewElement = null;
+                  if (parentContainer) {
+                    const previewBtn = parentContainer.querySelector('a._previewLink[data-url]');
+                    if (previewBtn) {
+                      hasPreviewButton = true;
+                      previewElement = previewBtn;
+                    }
+                  }
+                  
+                  let title = link.textContent?.trim() || '';
+                  if (title === href || title.length > 50) {
+                    try {
+                      const urlObj = new URL(href);
+                      title = urlObj.hostname + (urlObj.pathname.length > 25 ? urlObj.pathname.substring(0, 25) + '...' : urlObj.pathname);
+                    } catch {
+                      title = href.length > 50 ? href.substring(0, 50) + '...' : href;
+                    }
+                  }
+                  
+                  if (!links.some(l => l.url === href)) {
+                    links.push({ url: href, title, hasPreviewButton, previewElement, isInQuote: true });
+                  }
+                });
+              } else {
+                // quoteTextがない場合、他の要素から取得
+                const quoteContent = quoteTag.querySelector('.sc-klVQfs, .chatTimeLineQuoteLine');
+                if (quoteContent) {
+                  const textNodes = [];
+                  const walker = document.createTreeWalker(
+                    quoteContent,
+                    NodeFilter.SHOW_TEXT,
+                    {
+                      acceptNode: (node) => {
+                        const parent = node.parentElement;
+                        if (!parent) return NodeFilter.FILTER_REJECT;
+                        if (parent.closest('.chatQuote__title, .quoteTimeStamp, ._previewLink, [data-type*="preview"]')) {
+                          return NodeFilter.FILTER_REJECT;
+                        }
+                        return NodeFilter.FILTER_ACCEPT;
+                      }
+                    }
+                  );
+                  let textNode;
+                  while (textNode = walker.nextNode()) {
+                    const t = textNode.textContent;
+                    if (t && t.trim()) {
+                      textNodes.push(t);
+                    }
+                  }
+                  text = textNodes.join('').trim();
+                }
+                
+                if (!text) {
+                  const textNodes = [];
+                  const walker = document.createTreeWalker(
+                    quoteTag,
+                    NodeFilter.SHOW_TEXT,
+                    {
+                      acceptNode: (node) => {
+                        const parent = node.parentElement;
+                        if (!parent) return NodeFilter.FILTER_REJECT;
+                        if (parent.closest('.chatQuote__title, .chatQuote__quoteLeftArea, .quoteTimeStamp, ._previewLink, [data-type*="preview"], [data-cwtag^="[pname"]')) {
+                          return NodeFilter.FILTER_REJECT;
+                        }
+                        return NodeFilter.FILTER_ACCEPT;
+                      }
+                    }
+                  );
+                  let textNode;
+                  while (textNode = walker.nextNode()) {
+                    const t = textNode.textContent;
+                    if (t && t.trim()) {
+                      textNodes.push(t);
+                    }
+                  }
+                  text = textNodes.join('').trim();
+                }
+              }
+              
+              return { text, author, externalLinks: links };
+            };
+            
+            // 全ての子ノードを処理
+            for (const child of parentEl.childNodes) {
+              processNode(child);
+            }
+            
+            // 残りのテキストバッファをセグメントに追加
+            if (currentTextBuffer.length > 0) {
+              const textContent = currentTextBuffer.join('').trim();
+              if (textContent) {
+                segments.push({ type: 'text', content: textContent });
+              }
+            }
+            
+            return segments;
+          };
           
-          const textParts = collectTextNodes(preEl, excludeSelectors);
+          // セグメントを収集
+          messageSegments = processNodeForSegments(preEl);
           
-          if (textParts.length > 0) {
-            let rawText = textParts.join('').trim();
+          // 後方互換性のため、quotedMessage と quoteAuthor を設定
+          // 引用セグメントから最初の引用を取得
+          const firstQuoteSegment = messageSegments.find(seg => seg.type === 'quote');
+          if (firstQuoteSegment) {
+            quotedMessage = firstQuoteSegment.content;
+            quoteAuthor = firstQuoteSegment.author;
+            // 引用内の外部リンクもquoteExternalLinksに追加
+            if (firstQuoteSegment.externalLinks) {
+              quoteExternalLinks = [...quoteExternalLinks, ...firstQuoteSegment.externalLinks];
+            }
+          }
+          
+          // 全てのテキストセグメントを結合してmessageTextを作成
+          const textSegments = messageSegments.filter(seg => seg.type === 'text');
+          if (textSegments.length > 0) {
+            let rawText = textSegments.map(seg => seg.content).join('\n').trim();
             
             // 「〇〇さん」の行を抽出してから除去（返信先ユーザー名）
             const userNameMatch = rawText.match(/^(.+?)さん[\r\n\s]+/);
             if (userNameMatch) {
               replyTargetUserName = userNameMatch[1];
               rawText = rawText.replace(/^.+?さん[\r\n\s]+/, '');
+              // 最初のセグメントも更新
+              if (messageSegments.length > 0 && messageSegments[0].type === 'text') {
+                messageSegments[0].content = messageSegments[0].content.replace(/^.+?さん[\r\n\s]+/, '').trim();
+              }
             }
             
             messageText = rawText.trim();
@@ -972,7 +1244,7 @@
           parentAid,
           avatarUrl,
           element: el,
-          quotedMessage,   // 引用メッセージ
+          quotedMessage,   // 引用メッセージ（後方互換用）
           quoteAuthor,     // 引用元発言者情報 { name, avatarUrl, timestamp }
           filePreviewInfo, // ファイルプレビュー情報配列
           externalLinks,   // 外部リンク情報配列
@@ -980,7 +1252,8 @@
           toTargets,       // To先ユーザー配列
           senderAid,       // 送信者のAID
           isToMe,          // 自分宛てフラグ
-          isFromMe         // 自分が送信したメッセージフラグ
+          isFromMe,        // 自分が送信したメッセージフラグ
+          messageSegments  // メッセージセグメント（テキストと引用を順序付きで保持）
         };
 
         this.messages.set(mid, messageData);
@@ -1110,7 +1383,8 @@
         externalLinks: [],
         quoteExternalLinks: [],
         toTargets: [],
-        senderAid: null
+        senderAid: null,
+        messageSegments: []  // プレースホルダーはセグメントなし
       };
     }
 
@@ -2190,18 +2464,49 @@
         ? `<div class="cw-threader-to-targets">To: ${node.toTargets.map(t => this.escapeHtml(t)).join(', ')}</div>` 
         : '';
       
-      // 引用表示用HTML（引用内のプレビューボタンも表示、発言者情報も表示）
-      const quotedHtml = node.quotedMessage 
-        ? this.formatQuoteWithPreviews(node.quotedMessage, node.mid, node.quoteExternalLinks || [], node.quoteAuthor)
-        : '';
-      
-      // メッセージ本文（URLの直後にプレビューボタンを挿入）
-      const messageBodyHtml = this.formatMessageTextWithPreviews(
-        node.messageText,
-        node.mid,
-        node.externalLinks || [],
-        node.filePreviewInfo || []
-      );
+      // メッセージ本文をセグメント順序で構築
+      // messageSegmentsがある場合はセグメント順序で表示、ない場合は後方互換性のため旧形式
+      let messageContentHtml = '';
+      if (node.messageSegments && node.messageSegments.length > 0) {
+        // セグメント順序でHTMLを生成
+        let quoteIndex = 0;
+        node.messageSegments.forEach((segment, idx) => {
+          if (segment.type === 'quote') {
+            // 引用セグメント
+            const quoteLinks = segment.externalLinks || [];
+            messageContentHtml += this.formatQuoteWithPreviews(
+              segment.content, 
+              node.mid, 
+              quoteLinks, 
+              segment.author
+            );
+            quoteIndex++;
+          } else if (segment.type === 'text') {
+            // テキストセグメント
+            const textHtml = this.formatMessageTextWithPreviews(
+              segment.content,
+              node.mid,
+              idx === 0 ? (node.externalLinks || []) : [], // 外部リンクは最初のテキストセグメントにのみ適用
+              idx === 0 ? (node.filePreviewInfo || []) : [] // ファイルプレビューも同様
+            );
+            messageContentHtml += `<div class="cw-threader-message-body">${textHtml}</div>`;
+          }
+        });
+      } else {
+        // 後方互換性: messageSegmentsがない場合は旧形式で表示
+        const quotedHtml = node.quotedMessage 
+          ? this.formatQuoteWithPreviews(node.quotedMessage, node.mid, node.quoteExternalLinks || [], node.quoteAuthor)
+          : '';
+        
+        const messageBodyHtml = this.formatMessageTextWithPreviews(
+          node.messageText,
+          node.mid,
+          node.externalLinks || [],
+          node.filePreviewInfo || []
+        );
+        
+        messageContentHtml = quotedHtml + `<div class="cw-threader-message-body">${messageBodyHtml}</div>`;
+      }
       
       messageEl.innerHTML = `
         <div class="cw-threader-avatar-wrap">
@@ -2224,8 +2529,7 @@
             ` : ''}
           </div>
           ${toTargetsHtml}
-          ${quotedHtml}
-          <div class="cw-threader-message-body">${messageBodyHtml}</div>
+          ${messageContentHtml}
         </div>
       `;
 
