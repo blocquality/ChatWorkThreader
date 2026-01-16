@@ -3247,8 +3247,21 @@
         
         observer.observe(messageEl);
         
-        // スクロール開始
-        messageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // スクロール開始：メッセージがメッセージ欄の上辺に来るようにスクロール
+        if (scrollContainer) {
+          // scrollContainerの上端を基準に、メッセージが上端に来るようにスクロール
+          const containerRect = scrollContainer.getBoundingClientRect();
+          const messageRect = messageEl.getBoundingClientRect();
+          // 現在のスクロール位置 + (メッセージの上端 - コンテナの上端) でメッセージが上端に来る
+          const targetScrollTop = scrollContainer.scrollTop + (messageRect.top - containerRect.top);
+          scrollContainer.scrollTo({
+            top: targetScrollTop,
+            behavior: 'smooth'
+          });
+        } else {
+          // フォールバック: scrollContainerが見つからない場合は従来の方法
+          messageEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
         
         // 最大待機時間（8秒）を超えたら強制的に実行
         setTimeout(() => {
