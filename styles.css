@@ -823,11 +823,11 @@
   }
 }
 
-/* 「スレッドで表示」ボタン ラッパー - メッセージの右上に配置 */
+/* 「スレッドで表示」ボタン ラッパー - メッセージの左上に配置 */
 .cw-threader-show-in-thread-wrapper {
   position: absolute;
   top: 22px;
-  right: 10px;
+  left: 10px;
   z-index: 10;
 }
 
