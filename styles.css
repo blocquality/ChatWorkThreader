@@ -862,7 +862,7 @@
   padding: 0;
   border: 1px solid transparent;
   border-radius: 4px;
-  background: transparent;
+  background: #fff;
   color: #999;
   cursor: pointer;
   /* チカチカ防止: transitionなしで即座に変化 */
