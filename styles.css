@@ -826,8 +826,8 @@
 /* 「スレッドで表示」ボタン ラッパー - メッセージの右上に配置 */
 .cw-threader-show-in-thread-wrapper {
   position: absolute;
-  top: 20px;
-  right: 8px;
+  top: 25px;
+  right: 10px;
   z-index: 10;
 }
 
