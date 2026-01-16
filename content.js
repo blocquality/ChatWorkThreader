@@ -1641,37 +1641,37 @@
         <div class="cw-threader-resize-handle"></div>
         <div class="cw-threader-header">
           <div class="cw-threader-header-right">
-            <select id="cw-threader-speaker-filter" class="cw-threader-speaker-select" title="発言者でフィルター">
-              <option value="">全員</option>
+            <select id="cw-threader-speaker-filter" class="cw-threader-speaker-select" title="Filter by Speaker">
+              <option value="">All</option>
             </select>
             <div class="cw-threader-filter-toggle">
-              <span class="cw-threader-filter-label">フラット</span>
+              <span class="cw-threader-filter-label">Flat</span>
               <label class="cw-threader-toggle-switch cw-threader-filter-switch">
                 <input type="checkbox" id="cw-threader-flat-mode">
                 <span class="cw-threader-toggle-slider"></span>
               </label>
             </div>
             <div class="cw-threader-filter-toggle">
-              <span class="cw-threader-filter-label" title="自分が返信した、または自分宛ての返信があるスレッドのみ表示">自分参加のみ</span>
+              <span class="cw-threader-filter-label" title="Show only threads where you replied or were replied to">My Participation Only </span>
               <label class="cw-threader-toggle-switch cw-threader-filter-switch">
                 <input type="checkbox" id="cw-threader-my-filter">
                 <span class="cw-threader-toggle-slider"></span>
               </label>
             </div>
             <div class="cw-threader-controls">
-              <button id="cw-threader-refresh" title="更新">↻</button>
-              <button id="cw-threader-close" title="閉じる">×</button>
+              <button id="cw-threader-refresh" title="Refresh">↻</button>
+              <button id="cw-threader-close" title="Close">×</button>
             </div>
           </div>
         </div>
         <div class="cw-threader-search-bar">
           <div class="cw-threader-search-input-wrapper">
-            <input type="text" id="cw-threader-search" class="cw-threader-search-input" placeholder="メッセージを検索...">
-            <button id="cw-threader-search-clear" class="cw-threader-search-clear" title="クリア">×</button>
+            <input type="text" id="cw-threader-search" class="cw-threader-search-input" placeholder="Search messages...">
+            <button id="cw-threader-search-clear" class="cw-threader-search-clear" title="Clear">×</button>
           </div>
           <div id="cw-threader-search-nav" class="cw-threader-search-nav">
-            <button id="cw-threader-search-prev" class="cw-threader-search-nav-btn" title="前の結果">▲</button>
-            <button id="cw-threader-search-next" class="cw-threader-search-nav-btn" title="次の結果">▼</button>
+            <button id="cw-threader-search-prev" class="cw-threader-search-nav-btn" title="Previous Result">▲</button>
+            <button id="cw-threader-search-next" class="cw-threader-search-nav-btn" title="Next Result">▼</button>
           </div>
           <span id="cw-threader-search-count" class="cw-threader-search-count"></span>
         </div>
@@ -1885,7 +1885,7 @@
       }
 
       // オプションを再構築
-      speakerSelect.innerHTML = '<option value="">全員</option>';
+      speakerSelect.innerHTML = '<option value="">All</option>';
       speakers.forEach(speaker => {
         const option = document.createElement('option');
         option.value = speaker;
@@ -2244,7 +2244,7 @@
 
       if (threads.size === 0) {
         this.updateSpeakerDropdown();
-        container.innerHTML = '<div class="cw-threader-empty">スレッドが見つかりませんでした</div>';
+        container.innerHTML = '<div class="cw-threader-empty">No threads found</div>';
         return;
       }
 
@@ -2281,7 +2281,7 @@
       }
 
       if (sortedThreads.length === 0) {
-        container.innerHTML = '<div class="cw-threader-empty">該当するスレッドがありません</div>';
+        container.innerHTML = '<div class="cw-threader-empty">No matching threads</div>';
         return;
       }
 
@@ -3480,11 +3480,11 @@
       }
     }
     if (iconUrl) {
-      button.innerHTML = `<img src="${iconUrl}" class="cw-threader-icon" alt="スレッド"><span class="cw-threader-shortcut">Shift+S</span>`;
+      button.innerHTML = `<img src="${iconUrl}" class="cw-threader-icon" alt="Thread"><span class="cw-threader-shortcut">Shift+S</span>`;
     } else {
       button.innerHTML = `<span class="cw-threader-icon">💬</span><span class="cw-threader-shortcut">Shift+S</span>`;
     }
-    button.title = 'スレッド表示を切り替え (Shift+S)';
+    button.title = 'Toggle thread view (Shift+S)';
     
     button.addEventListener('click', () => {
       threadUI.toggle();
@@ -3540,7 +3540,7 @@
       const button = document.createElement('button');
       button.className = 'cw-threader-show-in-thread-btn';
       button.innerHTML = `<svg class="cw-threader-sit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="13" y2="14"/></svg>`;
-      button.title = 'スレッド一覧で表示';
+      button.title = 'Display in Thread List';
       button.setAttribute('data-mid', mid);
       
       button.addEventListener('click', (e) => {
