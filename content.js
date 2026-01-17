@@ -2092,9 +2092,9 @@
       const matchCount = this.searchMatches.length;
       if (countEl) {
         if (matchCount > 0) {
-          countEl.textContent = `${matchCount}件`;
+          countEl.textContent = `${matchCount} matches`;
         } else {
-          countEl.textContent = '該当なし';
+          countEl.textContent = 'No matches';
         }
       }
       
@@ -2755,7 +2755,7 @@
           if (linkIndex !== undefined) {
             const linkInfo = quoteExternalLinks[linkIndex];
             if (linkInfo && linkInfo.hasPreviewButton) {
-              contentHtml += `<a class="cw-threader-external-link-btn cw-threader-inline-preview cw-threader-quote-preview-btn" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}" data-in-quote="true">プレビュー</a>`;
+              contentHtml += `<a class="cw-threader-external-link-btn cw-threader-inline-preview cw-threader-quote-preview-btn" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}" data-in-quote="true">Preview</a>`;
             }
             // このリンクは処理済みとしてマーク
             externalLinkMap.delete(url);
@@ -2771,7 +2771,7 @@
           const title = this.escapeHtml(link.title || url);
           contentHtml += `<div class="cw-threader-external-link-item">
             <a href="${escapedUrl}" class="cw-threader-link" target="_blank" rel="noopener noreferrer">🔗 ${title}</a>
-            <a class="cw-threader-external-link-btn cw-threader-inline-preview cw-threader-quote-preview-btn" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}" data-in-quote="true">プレビュー</a>
+            <a class="cw-threader-external-link-btn cw-threader-inline-preview cw-threader-quote-preview-btn" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}" data-in-quote="true">Preview</a>
           </div>`;
         }
       });
@@ -2875,7 +2875,7 @@
             const fileId = fileIdMatch[1];
             const fileInfo = fileUrlMap.get(fileId);
             if (fileInfo) {
-              html += `<a class="cw-threader-preview-btn cw-threader-inline-preview" data-file-id="${this.escapeHtml(fileId)}" data-mid="${this.escapeHtml(mid)}">プレビュー</a>`;
+              html += `<a class="cw-threader-preview-btn cw-threader-inline-preview" data-file-id="${this.escapeHtml(fileId)}" data-mid="${this.escapeHtml(mid)}">Preview</a>`;
               // このファイルは処理済みとしてマーク
               fileUrlMap.delete(fileId);
             }
@@ -2886,7 +2886,7 @@
           if (linkIndex !== undefined) {
             const linkInfo = externalLinks[linkIndex];
             if (linkInfo && linkInfo.hasPreviewButton) {
-              html += `<a class="cw-threader-external-link-btn cw-threader-inline-preview" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}">プレビュー</a>`;
+              html += `<a class="cw-threader-external-link-btn cw-threader-inline-preview" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}">Preview</a>`;
             }
             // このリンクは処理済みとしてマーク
             externalLinkMap.delete(url);
@@ -2901,7 +2901,7 @@
         const sizeDisplay = file.fileSize ? ` (${this.escapeHtml(file.fileSize)})` : '';
         html += `<div class="cw-threader-file-preview-item">
           <span class="cw-threader-file-info">📎 ${displayName}${sizeDisplay}</span>
-          <a class="cw-threader-preview-btn cw-threader-inline-preview" data-file-id="${this.escapeHtml(fileId)}" data-mid="${this.escapeHtml(mid)}">プレビュー</a>
+          <a class="cw-threader-preview-btn cw-threader-inline-preview" data-file-id="${this.escapeHtml(fileId)}" data-mid="${this.escapeHtml(mid)}">Preview</a>
         </div>`;
       });
       
@@ -2913,7 +2913,7 @@
           const title = this.escapeHtml(link.title || url);
           html += `<div class="cw-threader-external-link-item">
             <a href="${escapedUrl}" class="cw-threader-link" target="_blank" rel="noopener noreferrer">🔗 ${title}</a>
-            <a class="cw-threader-external-link-btn cw-threader-inline-preview" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}">プレビュー</a>
+            <a class="cw-threader-external-link-btn cw-threader-inline-preview" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}">Preview</a>
           </div>`;
         }
       });
