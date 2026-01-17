@@ -1,84 +1,74 @@
-# Privacy Policy - ChatWork Threader
+# Privacy Policy (ChatWork Threader)
 
-**Last Updated: January 17, 2026**
-
-## Overview
-
-ChatWork Threader ("the Extension") is a Chrome browser extension that visualizes ChatWork reply threads as a tree structure for better conversation tracking. This Privacy Policy describes how we handle user data.
-
----
+Last Updated: January 17, 2026
 
 ## 1. Information We Collect
 
-The Extension may process the following information locally within your browser:
+This extension may handle the following information:
 
-- **ChatWork Message Content**: Message text, sender names, timestamps, reply relationships, and quoted content displayed on ChatWork pages
-- **User Settings**: Your preferences such as filter selections, panel width, and thread collapse states stored in Chrome's local storage (`chrome.storage.local`)
+### 1.1 Information from ChatWork Pages
+- Message content, sender names, and timestamps
+- Message IDs and Room IDs
+- Reply relationships (quote information)
+- Avatar image URLs
+- To/Mention information
 
----
+This information is **read from the page** to build and display the thread tree.
+
+### 1.2 Locally Stored Settings
+- Panel open/close state (per room)
+- Speaker filter selection (per room)
+- "My Participation Only" toggle state (per room)
+- "Flat" display mode state (per room)
+- Thread collapse/expand state (per room)
+
+These settings are stored in the browser's local storage (`chrome.storage.local`).
 
 ## 2. How We Use Information
 
 The collected information is used solely for the following purposes:
 
-- **Thread Visualization**: To display ChatWork messages in a hierarchical tree structure showing reply relationships
-- **Settings Persistence**: To save and restore your preferences (e.g., selected filters, collapsed threads) across browser sessions on a per-room basis
-- **UI Functionality**: To enable features like search, filtering by sender, and "My Participation Only" mode
+- Visualizing ChatWork message reply relationships in a tree structure
+- Filtering to display specific threads
+- Saving and restoring user settings (for convenience on subsequent visits)
+- Highlighting messages addressed to you (mentions)
 
----
+## 3. Third-Party Sharing and External Transmission
 
-## 3. Data Sharing and Transmission
+- This extension **does NOT send any collected information to the developer's servers**.
+- This extension **does NOT sell or share any collected information with third parties**.
+- This extension **does NOT communicate with any external APIs**.
+- All processing is completed locally within the user's browser.
 
-- **We do NOT transmit any data to external servers**: All data processing occurs entirely within your browser. The Extension does not send any user data to the developer's servers or any third-party services.
-- **We do NOT sell or share your data**: Your information is never sold, shared, or transferred to any third parties.
-- **No analytics or tracking**: The Extension does not include any analytics, telemetry, or tracking mechanisms.
+## 4. Data Retention and Deletion
 
----
+### Retention Period
+Settings are stored in the browser's local storage until the user deletes them.
 
-## 4. Data Storage and Retention
+### How to Delete
+To delete stored settings, use one of the following methods:
 
-- **Local Storage Only**: All settings and preferences are stored locally in your browser using Chrome's `chrome.storage.local` API.
-- **Retention Period**: Settings are retained until you manually clear them or uninstall the Extension.
-- **How to Delete Your Data**: 
-  - Uninstall the Extension from Chrome to remove all stored settings
-  - Alternatively, use Chrome's "Clear browsing data" feature to clear extension data
+1. **Remove the Extension**
+   - Removing this extension from Chrome's "Manage Extensions" will delete all stored data.
 
----
+2. **Clear Browser Site Data**
+   - Go to Chrome Settings > Privacy and Security > Clear browsing data, and delete "Cookies and other site data."
 
 ## 5. Security
 
-The Extension is designed with security in mind:
+This extension is committed to protecting user data:
 
-- **No External Communication**: The Extension does not make any network requests or send data outside your browser
-- **Minimal Permissions**: The Extension only requests permissions necessary for its core functionality:
-  - `activeTab`: To interact with the current ChatWork tab
-  - `scripting`: To inject the thread visualization UI
-  - `storage`: To save your preferences locally
-- **Host Permissions**: Limited to `https://*.chatwork.com/*` only
+- **No External Communication**: Since no collected information is sent externally, there is no risk of interception.
+- **Local Processing**: All data processing occurs within the browser.
+- **Minimal Permissions**: Only the minimum required browser permissions are used (`activeTab`, `scripting`, `storage`).
+- **Limited Host Permissions**: The extension only operates on the `chatwork.com` domain.
 
----
+## 6. Contact Us
 
-## 6. Children's Privacy
-
-The Extension does not knowingly collect any personal information from children under 13 years of age.
-
----
-
-## 7. Changes to This Privacy Policy
-
-We may update this Privacy Policy from time to time. Any changes will be reflected on this page with an updated "Last Updated" date.
-
----
-
-## 8. Contact Us
-
-If you have any questions or concerns about this Privacy Policy, please contact us at:
+For questions about this Privacy Policy, please contact us through:
 
 - **GitHub Issues**: [https://github.com/blocquality/ChatWorkThreader/issues](https://github.com/blocquality/ChatWorkThreader/issues)
-- **Email**: [blocquality@gmail.com](mailto:blocquality@gmail.com)
 
----
+## 7. Changes to This Policy
 
-## 9. Consent
-
-By installing and using ChatWork Threader, you consent to this Privacy Policy.
+If we make changes to this Privacy Policy, we will update this page. For significant changes, we may notify users when updating the extension.
