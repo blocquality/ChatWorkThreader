@@ -2,7 +2,7 @@
 	"manifest_version": 3,
 	"name": "ChatWork Threader",
 	"version": "1.0.0",
-	"description": "ChatWork message reply relationships are visualized in a tree format. You can grasp complex conversation flows at a glance and streamline team communication.",
+	"description": "Visualize ChatWork reply threads as a tree to track complex conversations at a glance and streamline teamwork.",
 	"permissions": [
 		"activeTab",
 		"scripting",
