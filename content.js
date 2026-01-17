@@ -1645,16 +1645,16 @@
               <option value="">All</option>
             </select>
             <div class="cw-threader-filter-toggle">
-              <span class="cw-threader-filter-label">Flat</span>
+              <span class="cw-threader-filter-label" title="Show only threads where you replied or were replied to">My Participation Only </span>
               <label class="cw-threader-toggle-switch cw-threader-filter-switch">
-                <input type="checkbox" id="cw-threader-flat-mode">
+                <input type="checkbox" id="cw-threader-my-filter">
                 <span class="cw-threader-toggle-slider"></span>
               </label>
             </div>
             <div class="cw-threader-filter-toggle">
-              <span class="cw-threader-filter-label" title="Show only threads where you replied or were replied to">My Participation Only </span>
+              <span class="cw-threader-filter-label">Flat</span>
               <label class="cw-threader-toggle-switch cw-threader-filter-switch">
-                <input type="checkbox" id="cw-threader-my-filter">
+                <input type="checkbox" id="cw-threader-flat-mode">
                 <span class="cw-threader-toggle-slider"></span>
               </label>
             </div>
