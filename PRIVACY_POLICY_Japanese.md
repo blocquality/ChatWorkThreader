@@ -67,7 +67,7 @@
 
 本プライバシーポリシーに関するお問い合わせは、以下までご連絡ください。
 
-- **GitHub Issues**: [https://github.com/blocquality/ChatWorkThreader/issues](https://github.com/blocquality/ChatWorkThreader/issues)
+- **Email**: support_chrome_extensions@blocquality.com
 
 ## 7. 改定
 

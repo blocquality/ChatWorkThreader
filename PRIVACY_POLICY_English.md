@@ -67,7 +67,7 @@ This extension is committed to protecting user data:
 
 For questions about this Privacy Policy, please contact us through:
 
-- **GitHub Issues**: [https://github.com/blocquality/ChatWorkThreader/issues](https://github.com/blocquality/ChatWorkThreader/issues)
+- **Email**: support_chrome_extensions@blocquality.com
 
 ## 7. Changes to This Policy
 
