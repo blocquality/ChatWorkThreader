@@ -5,7 +5,6 @@
 	"description": "Visualize ChatWork reply threads as a tree to track complex conversations at a glance and streamline teamwork.",
 	"permissions": [
 		"activeTab",
-		"scripting",
 		"storage"
 	],
 	"host_permissions": [
