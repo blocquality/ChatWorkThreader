@@ -1,6 +1,6 @@
 # Privacy Policy (ChatWork Threader)
 
-Last Updated: January 17, 2026
+Last Updated: January 21, 2026
 
 ## 1. Information We Collect
 
@@ -46,13 +46,7 @@ The collected information is used solely for the following purposes:
 Settings are stored in the browser's local storage until the user deletes them.
 
 ### How to Delete
-To delete stored settings, use one of the following methods:
-
-1. **Remove the Extension**
-   - Removing this extension from Chrome's "Manage Extensions" will delete all stored data.
-
-2. **Clear Browser Site Data**
-   - Go to Chrome Settings > Privacy and Security > Clear browsing data, and delete "Cookies and other site data."
+To delete stored settings, remove this extension from Chrome's "Manage Extensions." This will delete all stored data.
 
 ## 5. Security
 
@@ -60,8 +54,8 @@ This extension is committed to protecting user data:
 
 - **No External Communication**: Since no collected information is sent externally, there is no risk of interception.
 - **Local Processing**: All data processing occurs within the browser.
-- **Minimal Permissions**: Only the minimum required browser permissions are used (`activeTab`, `scripting`, `storage`).
-- **Limited Host Permissions**: The extension only operates on the `chatwork.com` domain.
+- **Minimal Permissions**: Only the minimum required permission is used (`storage`) to save user settings locally.
+- **Limited Host Permissions**: The extension only operates on `https://www.chatwork.com/*`.
 
 ## 6. Contact Us
 

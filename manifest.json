@@ -1,19 +1,18 @@
 {
 	"manifest_version": 3,
 	"name": "ChatWork Threader",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Visualize ChatWork reply threads as a tree to track complex conversations at a glance and streamline teamwork.",
 	"permissions": [
-		"activeTab",
 		"storage"
 	],
 	"host_permissions": [
-		"https://*.chatwork.com/*"
+		"https://www.chatwork.com/*"
 	],
 	"content_scripts": [
 		{
 			"matches": [
-				"https://*.chatwork.com/*"
+				"https://www.chatwork.com/*"
 			],
 			"js": [
 				"content.js"
@@ -33,7 +32,7 @@
 	"web_accessible_resources": [
 		{
 			"resources": ["icon128.png"],
-			"matches": ["https://*.chatwork.com/*"]
+			"matches": ["https://www.chatwork.com/*"]
 		}
 	]
 }

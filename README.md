@@ -409,12 +409,12 @@ ChatWorkThreader/
 {
   "manifest_version": 3,
   "name": "ChatWork Threader",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Visualize ChatWork reply threads as a tree to track complex conversations at a glance and streamline teamwork.",
-  "permissions": ["activeTab", "scripting", "storage"],
-  "host_permissions": ["https://*.chatwork.com/*"],
+  "permissions": ["storage"],
+  "host_permissions": ["https://www.chatwork.com/*"],
   "content_scripts": [{
-    "matches": ["https://*.chatwork.com/*"],
+    "matches": ["https://www.chatwork.com/*"],
     "js": ["content.js"],
     "css": ["styles.css"],
     "run_at": "document_idle"
@@ -427,7 +427,7 @@ ChatWorkThreader/
   },
   "web_accessible_resources": [{
     "resources": ["icon128.png"],
-    "matches": ["https://*.chatwork.com/*"]
+    "matches": ["https://www.chatwork.com/*"]
   }]
 }
 ```
@@ -436,10 +436,8 @@ ChatWorkThreader/
 
 | 権限 | 用途 |
 |------|------|
-| `activeTab` | 現在のタブでスクリプトを実行 |
-| `scripting` | コンテンツスクリプトの動的注入 |
 | `storage` | 設定・状態の永続化（chrome.storage.local） |
-| `host_permissions` | chatwork.comドメインへのアクセス |
+| `host_permissions` | https://www.chatwork.com/* へのアクセス |
 
 ---
 

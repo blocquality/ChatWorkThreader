@@ -410,12 +410,12 @@ ChatWorkThreader/
 {
   "manifest_version": 3,
   "name": "ChatWork Threader",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Visualize ChatWork reply threads as a tree to track complex conversations at a glance and streamline teamwork.",
-  "permissions": ["activeTab", "scripting", "storage"],
-  "host_permissions": ["https://*.chatwork.com/*"],
+  "permissions": ["storage"],
+  "host_permissions": ["https://www.chatwork.com/*"],
   "content_scripts": [{
-    "matches": ["https://*.chatwork.com/*"],
+    "matches": ["https://www.chatwork.com/*"],
     "js": ["content.js"],
     "css": ["styles.css"],
     "run_at": "document_idle"
@@ -428,7 +428,7 @@ ChatWorkThreader/
   },
   "web_accessible_resources": [{
     "resources": ["icon128.png"],
-    "matches": ["https://*.chatwork.com/*"]
+    "matches": ["https://www.chatwork.com/*"]
   }]
 }
 ```
@@ -437,10 +437,8 @@ ChatWorkThreader/
 
 | Permission         | Usage                                           |
 | ------------------ | ----------------------------------------------- |
-| `activeTab`        | Run scripts on the current tab                  |
-| `scripting`        | Dynamically inject content scripts              |
 | `storage`          | Persist settings/state (`chrome.storage.local`) |
-| `host_permissions` | Access to the chatwork.com domain               |
+| `host_permissions` | Access to `https://www.chatwork.com/*`          |
 
 ---
 
