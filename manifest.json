@@ -31,7 +31,7 @@
 	},
 	"web_accessible_resources": [
 		{
-			"resources": ["icon128.png"],
+			"resources": ["icons/chat-round-line-svgrepo-com.svg"],
 			"matches": ["https://www.chatwork.com/*"]
 		}
 	]

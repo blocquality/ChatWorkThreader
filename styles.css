@@ -254,6 +254,7 @@
 /* スレッドルート */
 .cw-threader-thread {
   border-bottom: 1px solid #e0e0e0;
+  position: relative;
 }
 
 /* パネル内の全要素でtransitionを無効化（ちらつき防止） */
@@ -1071,5 +1072,64 @@
   #cw-threader-panel {
     width: 100%;
     right: -100%;
+  }
+}
+
+/* Trackingボタン（スレッド左上） */
+.cw-threader-tracking-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  z-index: 5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.cw-threader-tracking-btn:hover {
+  opacity: 1;
+  background: #e3f2fd;
+  border-color: #2196F3;
+}
+
+.cw-threader-tracking-btn:active {
+  transform: scale(0.95);
+}
+
+.cw-threader-tracking-btn.cw-threader-tracking-active {
+  opacity: 1;
+  background: #e3f2fd;
+  border-color: #2196F3;
+  animation: cw-threader-tracking-pulse 1.5s ease-in-out infinite;
+}
+
+.cw-threader-tracking-btn svg {
+  width: 16px;
+  height: 16px;
+  color: #606060;
+}
+
+.cw-threader-tracking-btn:hover svg,
+.cw-threader-tracking-btn.cw-threader-tracking-active svg {
+  color: #1976D2;
+}
+
+@keyframes cw-threader-tracking-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
   }
 }
