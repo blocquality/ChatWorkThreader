@@ -3409,12 +3409,62 @@
       // ボタンの状態を解除
       trackingBtn.classList.remove('cw-threader-tracking-active');
 
+      // スレッド一覧内で該当スレッドにスクロール
+      this.scrollToThreadInPanel(mid);
+
       if (targetMessage) {
         console.log(`[ChatWorkThreader] Successfully tracked message: ${mid}`);
-        // メッセージにスクロール
+        // ChatWork側でもメッセージにスクロール
         this.scrollToMessage(mid);
       } else {
         console.log(`[ChatWorkThreader] Could not find message: ${mid} (may be beyond plan limit or deleted)`);
+      }
+    }
+
+    /**
+     * スレッド一覧内で該当スレッドにスクロール
+     * @param {string} mid - メッセージID
+     */
+    scrollToThreadInPanel(mid) {
+      if (!this.panel) return;
+      
+      const contentContainer = this.panel.querySelector('.cw-threader-content');
+      if (!contentContainer) return;
+      
+      // data-thread-mid属性で該当メッセージを探す
+      const targetEl = this.panel.querySelector(`[data-thread-mid="${mid}"]`);
+      if (targetEl) {
+        // スレッドコンテナ（.cw-threader-thread）を取得
+        const threadContainer = targetEl.closest('.cw-threader-thread');
+        if (threadContainer) {
+          // スレッドコンテナにスクロール
+          threadContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // ハイライト効果を追加
+          targetEl.classList.add('cw-threader-highlight-panel');
+          setTimeout(() => {
+            targetEl.classList.remove('cw-threader-highlight-panel');
+          }, 2000);
+          return;
+        }
+      }
+      
+      // 見つからない場合は、スレッドのルートMIDを探す
+      // 子メッセージのMIDからルートを探す
+      const thread = this.threadBuilder.threads.get(mid);
+      if (thread) {
+        // このMIDがルートの場合
+        const rootEl = this.panel.querySelector(`[data-thread-mid="${mid}"]`);
+        if (rootEl) {
+          const threadContainer = rootEl.closest('.cw-threader-thread');
+          if (threadContainer) {
+            threadContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            rootEl.classList.add('cw-threader-highlight-panel');
+            setTimeout(() => {
+              rootEl.classList.remove('cw-threader-highlight-panel');
+            }, 2000);
+          }
+        }
       }
     }
 
