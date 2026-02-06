@@ -1109,7 +1109,21 @@
   opacity: 1;
   background: #e3f2fd;
   border-color: #2196F3;
-  animation: cw-threader-tracking-pulse 1.5s ease-in-out infinite;
+}
+
+/* トラッキング中はSVGを非表示にしてスピナーを表示 */
+.cw-threader-tracking-btn.cw-threader-tracking-active svg {
+  display: none;
+}
+
+.cw-threader-tracking-btn.cw-threader-tracking-active::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e3f2fd;
+  border-top-color: #1976D2;
+  border-radius: 50%;
+  animation: cw-threader-spinner 0.8s linear infinite;
 }
 
 .cw-threader-tracking-btn svg {
@@ -1118,18 +1132,12 @@
   color: #606060;
 }
 
-.cw-threader-tracking-btn:hover svg,
-.cw-threader-tracking-btn.cw-threader-tracking-active svg {
+.cw-threader-tracking-btn:hover svg {
   color: #1976D2;
 }
 
-@keyframes cw-threader-tracking-pulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
+@keyframes cw-threader-spinner {
+  to {
+    transform: rotate(360deg);
   }
 }
