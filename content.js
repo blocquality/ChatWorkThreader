@@ -3441,6 +3441,9 @@
       // 最終確認：メッセージが見つかったか
       targetMessage = document.querySelector(`[data-mid="${mid}"]._message`);
 
+      // トラッキング完了後もしばらくスレッドを表示し続ける（メッセージ読み込みで位置がずれるため）
+      this.keepThreadVisibleAfterTracking(mid);
+
       if (targetMessage) {
         console.log(`[ChatWorkThreader] Successfully tracked message: ${mid}`);
         // スレッド一覧内で該当スレッドにスクロールしてハイライト（成功）
@@ -3452,6 +3455,29 @@
         // スレッド一覧内で該当スレッドにスクロールしてハイライト（失敗）
         this.scrollToThreadInPanel(mid, false);
       }
+    }
+
+    /**
+     * トラッキング完了後もしばらくスレッドを表示し続ける
+     * renderThreadsが呼ばれてもスレッドを見失わないようにする
+     * @param {string} mid - メッセージID
+     */
+    keepThreadVisibleAfterTracking(mid) {
+      // 3秒間、定期的にスレッドを表示位置に維持
+      const duration = 3000;
+      const interval = 200;
+      const startTime = Date.now();
+      
+      const keepVisible = () => {
+        if (Date.now() - startTime > duration) {
+          return; // 時間切れ
+        }
+        
+        this.keepTrackingThreadVisible(mid);
+        setTimeout(keepVisible, interval);
+      };
+      
+      keepVisible();
     }
 
     /**
