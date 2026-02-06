@@ -11,6 +11,81 @@
     return;
   }
 
+  // Global settings storage key
+  const SETTINGS_KEY = 'cw-threader-settings';
+
+  // Default settings
+  const defaultSettings = {
+    language: 'en',
+    theme: 'system'
+  };
+
+  // Current settings cache
+  let currentSettings = { ...defaultSettings };
+
+  /**
+   * Load settings from chrome.storage.sync
+   */
+  async function loadGlobalSettings() {
+    if (!isExtensionContextValid()) return defaultSettings;
+    try {
+      const result = await chrome.storage.sync.get(SETTINGS_KEY);
+      currentSettings = { ...defaultSettings, ...result[SETTINGS_KEY] };
+      return currentSettings;
+    } catch (error) {
+      console.error('[ChatWorkThreader] Failed to load settings:', error);
+      return defaultSettings;
+    }
+  }
+
+  /**
+   * Apply theme to the page
+   * @param {string} theme - 'system', 'light', or 'dark'
+   */
+  function applyTheme(theme) {
+    const body = document.body;
+    body.classList.remove('cw-threader-light', 'cw-threader-dark');
+
+    let effectiveTheme = theme;
+    if (theme === 'system') {
+      effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    if (effectiveTheme === 'dark') {
+      body.classList.add('cw-threader-dark');
+    } else {
+      body.classList.add('cw-threader-light');
+    }
+  }
+
+  /**
+   * Initialize settings and apply theme
+   */
+  async function initializeSettings() {
+    const settings = await loadGlobalSettings();
+    applyTheme(settings.theme);
+
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (currentSettings.theme === 'system') {
+        applyTheme('system');
+      }
+    });
+
+    // Listen for settings changes from popup
+    if (isExtensionContextValid()) {
+      chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.type === 'CW_THREADER_SETTINGS_CHANGED') {
+          currentSettings = message.settings;
+          applyTheme(currentSettings.theme);
+        }
+      });
+    }
+  }
+
+  // Initialize settings on load
+  initializeSettings();
+
   /**
    * 拡張機能のコンテキストが有効かチェック
    * 拡張機能がリロードされると無効になる
@@ -235,6 +310,65 @@
       // 拡張機能のコンテキストが無効化された場合は空セットを返す
       return new Set();
     }
+  }
+
+  /**
+   * 高速スムーズスクロール
+   * 標準のscrollIntoViewよりも速いアニメーションでスクロールする
+   * @param {Element} element - スクロール対象の要素
+   * @param {Object} options - オプション
+   * @param {string} options.block - 'start', 'center', 'end' (default: 'start')
+   * @param {number} options.duration - アニメーション時間（ms）(default: 300)
+   * @param {Function} options.onComplete - スクロール完了時のコールバック
+   */
+  function fastSmoothScrollTo(element, options = {}) {
+    const { block = 'start', duration = 300, onComplete } = options;
+    
+    // スクロールコンテナを取得
+    const scrollContainer = element.closest('#_timeLine, ._timeLine, [role="log"], .cw-threader-content') 
+      || element.closest('[style*="overflow"]')
+      || document.scrollingElement 
+      || document.documentElement;
+    
+    // 要素の位置を計算
+    const elementRect = element.getBoundingClientRect();
+    const containerRect = scrollContainer === document.documentElement || scrollContainer === document.scrollingElement
+      ? { top: 0, height: window.innerHeight }
+      : scrollContainer.getBoundingClientRect();
+    
+    let targetOffset;
+    if (block === 'start') {
+      targetOffset = elementRect.top - containerRect.top;
+    } else if (block === 'center') {
+      targetOffset = elementRect.top - containerRect.top - (containerRect.height / 2) + (elementRect.height / 2);
+    } else if (block === 'end') {
+      targetOffset = elementRect.top - containerRect.top - containerRect.height + elementRect.height;
+    } else {
+      targetOffset = elementRect.top - containerRect.top;
+    }
+    
+    const startScrollTop = scrollContainer.scrollTop;
+    const targetScrollTop = startScrollTop + targetOffset;
+    const startTime = performance.now();
+    
+    // イージング関数（easeOutCubic）
+    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+    
+    function animate(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easedProgress = easeOutCubic(progress);
+      
+      scrollContainer.scrollTop = startScrollTop + (targetScrollTop - startScrollTop) * easedProgress;
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else if (onComplete) {
+        onComplete();
+      }
+    }
+    
+    requestAnimationFrame(animate);
   }
 
   /**
