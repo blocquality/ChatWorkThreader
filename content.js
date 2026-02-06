@@ -1461,6 +1461,7 @@
       this.searchMatches = []; // 検索マッチしたメッセージ要素のリスト
       this.currentSearchIndex = -1; // 現在の検索結果インデックス
       this.trackingMid = null; // トラッキング中のメッセージID
+      this.showInThreadManager = null; // ShowInThreadButtonManagerへの参照
     }
 
     /**
@@ -3443,8 +3444,13 @@
       if (targetMessage) {
         console.log(`[ChatWorkThreader] Successfully tracked message: ${mid}`);
         // ChatWork側でメッセージにスクロール
-        // ユーザーはそのメッセージの「スレッドで表示」ボタンを押せば良い
         this.scrollToMessage(mid);
+        // スレッドパネル内で該当メッセージにスクロール（「スレッドで表示」ボタンを自動クリックしたのと同じ動作）
+        setTimeout(() => {
+          if (this.showInThreadManager) {
+            this.showInThreadManager.scrollToMessageInPanel(mid);
+          }
+        }, 200);
       } else {
         console.log(`[ChatWorkThreader] Could not find message: ${mid} (may be beyond plan limit or deleted)`);
       }
@@ -4144,6 +4150,8 @@
         
         // 「スレッドで表示」ボタンマネージャーを初期化
         const showInThreadButtonManager = new ShowInThreadButtonManager(threadUI);
+        // ThreadUIからも参照できるように設定
+        threadUI.showInThreadManager = showInThreadButtonManager;
         
         createToggleButton(threadUI);
         
