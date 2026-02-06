@@ -3320,7 +3320,7 @@
       }
 
       const maxAttempts = 50; // 最大試行回数
-      const waitTime = 500; // スクロール後の待機時間（ms）
+      const waitTime = 800; // スクロール後の待機時間（ms）
       let attempts = 0;
       let noChangeCount = 0; // メッセージ数が変わらなかった回数
 
@@ -3338,17 +3338,31 @@
         }
 
         // スクロール前の状態を記録
-        const beforeScrollTop = scrollContainer.scrollTop;
         const beforeMessageCount = document.querySelectorAll('[data-mid]._message').length;
-        console.log(`[ChatWorkThreader] Attempt ${attempts}: scrollTop=${beforeScrollTop}, messageCount=${beforeMessageCount}`);
+        console.log(`[ChatWorkThreader] Attempt ${attempts}: messageCount=${beforeMessageCount}`);
 
-        // タイムラインの最上部にスクロール（古いメッセージを読み込むトリガー）
-        scrollContainer.scrollTop = 0;
-        
-        // スクロールイベントを発火させる
-        scrollContainer.dispatchEvent(new Event('scroll', { bubbles: true }));
+        // タイムライン内の最初のメッセージ要素を取得
+        const firstMessage = scrollContainer.querySelector('[data-mid]._message');
+        if (firstMessage) {
+          // 最初のメッセージにスムーズスクロール（ChatWorkの上方向読み込みをトリガー）
+          firstMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          console.log(`[ChatWorkThreader] Scrolling to first message`);
+        } else {
+          // メッセージが見つからない場合はコンテナの上部にスクロール
+          scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+          console.log(`[ChatWorkThreader] Scrolling to top of container`);
+        }
 
-        // スクロールの実行を待つ
+        // wheelイベントもシミュレート（ChatWorkのスクロールハンドラをトリガー）
+        const wheelEvent = new WheelEvent('wheel', {
+          deltaY: -500,
+          deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+          bubbles: true,
+          cancelable: true
+        });
+        scrollContainer.dispatchEvent(wheelEvent);
+
+        // スクロールの完了を待つ
         await new Promise(resolve => setTimeout(resolve, waitTime));
 
         // メッセージの読み込みを待つ（新しいメッセージが追加されるまで追加で待機）
