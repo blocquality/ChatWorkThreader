@@ -1928,16 +1928,13 @@
         </div>
         <div class="cw-threader-tab-content" data-tab-content="settings" style="display: none;">
           <div class="cw-threader-settings-content">
-            <div class="cw-threader-settings-section">
-              <h3 class="cw-threader-settings-title">🎨 Theme</h3>
-              <div class="cw-threader-settings-item">
-                <label class="cw-threader-settings-label">Color Theme</label>
-                <select id="cw-threader-theme-select" class="cw-threader-settings-select">
-                  <option value="system">System default</option>
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                </select>
-              </div>
+            <div class="cw-threader-settings-item">
+              <label class="cw-threader-settings-label">Theme</label>
+              <select id="cw-threader-theme-select" class="cw-threader-settings-select">
+                <option value="system">System default</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
             </div>
             <p class="cw-threader-settings-note">Settings are saved automatically</p>
           </div>
