@@ -317,7 +317,8 @@
 }
 
 .cw-threader-settings-select {
-  padding: 8px 28px 8px 12px;
+  min-width: 145px;
+  padding: 8px 30px 8px 12px;
   font-size: 13px;
   border: 1px solid #d0d0d0;
   border-radius: 4px;
