@@ -3289,7 +3289,8 @@
 
     /**
      * プレースホルダーメッセージの元メッセージを追跡する
-     * ChatWorkのタイムラインをスクロールして履歴を読み込み、対象メッセージを探す
+     * ChatWorkのタイムラインを上にスクロールして履歴を読み込む
+     * ユーザーがスクロールして古いメッセージを読み込むのと同じ動作
      * @param {string} mid - 探索対象のメッセージID
      * @param {HTMLElement} trackingBtn - trackingボタン要素
      */
@@ -3312,110 +3313,65 @@
       // 最初にメッセージが既に存在するか確認
       let targetMessage = document.querySelector(`[data-mid="${mid}"]._message`);
       if (targetMessage) {
-        // 見つかった場合は再構築して終了
-        this.threadBuilder.collectMessages();
-        this.threadBuilder.buildThreads();
-        this.renderThreads();
+        // 見つかった場合はスクロールして終了
+        this.scrollToMessage(mid);
         trackingBtn.classList.remove('cw-threader-tracking-active');
         return;
       }
 
       const maxAttempts = 50; // 最大試行回数
-      const scrollStep = 500; // 一度にスクロールするピクセル数
-      const waitTime = 300; // スクロール後の待機時間（ms）
+      const scrollStep = 800; // 一度にスクロールするピクセル数
+      const waitTime = 400; // スクロール後の待機時間（ms）
       let attempts = 0;
-      let lastScrollTop = scrollContainer.scrollTop;
       let noChangeCount = 0; // スクロール位置が変わらなかった回数
-      let lastUpdateMessageCount = document.querySelectorAll('[data-mid]._message').length;
 
-      console.log(`[ChatWorkThreader] Tracking origin message: ${mid}`);
+      console.log(`[ChatWorkThreader] Tracking origin message: ${mid} - scrolling up to load history`);
 
+      // タイムラインを上にスクロールするだけ（ChatWorkが自動的にメッセージを読み込む）
       while (attempts < maxAttempts) {
         attempts++;
         
         // メッセージが存在するか確認
         targetMessage = document.querySelector(`[data-mid="${mid}"]._message`);
         if (targetMessage) {
-          console.log(`[ChatWorkThreader] Found message after ${attempts} attempts`);
+          console.log(`[ChatWorkThreader] Found message after ${attempts} scroll attempts`);
           break;
         }
 
         // スクロール前の状態を記録
         const beforeScrollTop = scrollContainer.scrollTop;
-        const beforeMessageCount = document.querySelectorAll('[data-mid]._message').length;
 
         // タイムラインを上にスクロール（古いメッセージを読み込む）
         scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop - scrollStep);
 
-        // スクロールの実行を待つ
+        // スクロールとメッセージ読み込みを待つ
         await new Promise(resolve => setTimeout(resolve, waitTime));
-
-        // メッセージの読み込みを待つ（新しいメッセージが追加されるまで追加で待機）
-        const afterMessageCount = document.querySelectorAll('[data-mid]._message').length;
-        if (afterMessageCount > beforeMessageCount) {
-          // 新しいメッセージが読み込まれた場合は追加で待機
-          await new Promise(resolve => setTimeout(resolve, 200));
-          
-          // リアルタイムでスレッド一覧を更新（一定数以上の新メッセージが追加された場合）
-          if (afterMessageCount - lastUpdateMessageCount >= 5) {
-            console.log(`[ChatWorkThreader] Updating thread list... (${afterMessageCount} messages)`);
-            this.threadBuilder.collectMessages();
-            this.threadBuilder.buildThreads();
-            this.renderThreads();
-            
-            // トラッキング中のスレッドにスクロール（見失わないように）
-            this.scrollToThreadInPanel(mid);
-            
-            // トラッキングボタンを再取得（renderThreadsでDOMが再構築されるため）
-            const newTrackingBtn = this.panel.querySelector(`.cw-threader-tracking-btn`);
-            if (newTrackingBtn) {
-              newTrackingBtn.classList.add('cw-threader-tracking-active');
-            }
-            
-            lastUpdateMessageCount = afterMessageCount;
-          }
-        }
 
         // スクロール位置が変わらなかった場合（最上部に到達）
         if (scrollContainer.scrollTop === beforeScrollTop || scrollContainer.scrollTop === 0) {
           noChangeCount++;
           
-          // 追加のメッセージ読み込みを試みる（少し待って再確認）
+          // 追加のメッセージ読み込みを待つ
           await new Promise(resolve => setTimeout(resolve, 500));
           
-          // それでもメッセージ数が増えていない場合は、これ以上読み込めないと判断
-          const finalMessageCount = document.querySelectorAll('[data-mid]._message').length;
-          if (finalMessageCount === afterMessageCount && noChangeCount >= 3) {
-            console.log(`[ChatWorkThreader] Reached scroll limit after ${attempts} attempts (plan limit or beginning of chat)`);
+          if (noChangeCount >= 3) {
+            console.log(`[ChatWorkThreader] Reached scroll limit after ${attempts} attempts`);
             break;
           }
         } else {
           noChangeCount = 0;
         }
-
-        lastScrollTop = scrollContainer.scrollTop;
       }
+
+      // 完了後にボタン状態を解除
+      trackingBtn.classList.remove('cw-threader-tracking-active');
 
       // 最終確認：メッセージが見つかったか
       targetMessage = document.querySelector(`[data-mid="${mid}"]._message`);
-      
-      // スレッドを再構築
-      this.threadBuilder.collectMessages();
-      this.threadBuilder.buildThreads();
-      this.renderThreads();
-
-      // ボタンの状態を解除（renderThreads後のDOMでは既に新しいボタンが存在）
-      const finalTrackingBtn = this.panel.querySelector(`[data-tracking-mid="${mid}"]`);
-      if (finalTrackingBtn) {
-        finalTrackingBtn.classList.remove('cw-threader-tracking-active');
-      }
-
-      // スレッド一覧内で該当スレッドにスクロール
-      this.scrollToThreadInPanel(mid);
 
       if (targetMessage) {
         console.log(`[ChatWorkThreader] Successfully tracked message: ${mid}`);
-        // ChatWork側でもメッセージにスクロール
+        // ChatWork側でメッセージにスクロール
         this.scrollToMessage(mid);
       } else {
         console.log(`[ChatWorkThreader] Could not find message: ${mid} (may be beyond plan limit or deleted)`);
