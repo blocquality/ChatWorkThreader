@@ -2324,12 +2324,14 @@
         this.applySearchFilter();
       }
 
-      // トラッキング中の場合、ボタンのアクティブ状態を復元
+      // トラッキング中の場合、ボタンのアクティブ状態を復元し、スレッドを表示し続ける
       if (this.trackingMid) {
         const trackingBtn = this.panel.querySelector(`[data-tracking-mid="${this.trackingMid}"]`);
         if (trackingBtn) {
           trackingBtn.classList.add('cw-threader-tracking-active');
         }
+        // トラッキング中のスレッドが見えるように自動スクロール（ハイライトなし）
+        this.keepTrackingThreadVisible(this.trackingMid);
       }
     }
 
@@ -3512,6 +3514,26 @@
       setTimeout(() => {
         threadContainer.classList.remove(highlightClass);
       }, 2000);
+    }
+
+    /**
+     * トラッキング中のスレッドを常に表示し続ける（ハイライトなし）
+     * renderThreads後に呼ばれ、スレッド一覧が更新されてもトラッキング中のスレッドが見えるようにする
+     * @param {string} mid - トラッキング中のメッセージID
+     */
+    keepTrackingThreadVisible(mid) {
+      if (!this.panel) return;
+      
+      // data-thread-mid属性で該当メッセージを探す
+      const targetEl = this.panel.querySelector(`[data-thread-mid="${mid}"]`);
+      if (targetEl) {
+        // スレッドコンテナ（.cw-threader-thread）を取得
+        const threadContainer = targetEl.closest('.cw-threader-thread');
+        if (threadContainer) {
+          // スムーズではなく即座にスクロール（トラッキング中は頻繁に呼ばれるため）
+          threadContainer.scrollIntoView({ behavior: 'auto', block: 'center' });
+        }
+      }
     }
 
     /**
