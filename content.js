@@ -3288,6 +3288,51 @@
     }
 
     /**
+     * ChatWorkのタイムラインのスクロールコンテナを取得
+     * 複数のセレクタを試し、実際にスクロール可能なコンテナを返す
+     */
+    getTimelineScrollContainer() {
+      // セレクタ候補（優先順位順）
+      const selectors = [
+        '#_chatContent',
+        '#_timeLine',
+        '._timeLine',
+        '.chatTimeLineBody',
+        '[role="log"]',
+        '#_mainContent',
+        '.sc-dnqmqq' // 新しいChatWorkのクラス
+      ];
+
+      for (const selector of selectors) {
+        const el = document.querySelector(selector);
+        if (el && el.scrollHeight > el.clientHeight) {
+          console.log(`[ChatWorkThreader] Found scroll container: ${selector}`, {
+            scrollHeight: el.scrollHeight,
+            clientHeight: el.clientHeight,
+            scrollTop: el.scrollTop
+          });
+          return el;
+        }
+      }
+
+      // 既存のメッセージから親を遡ってスクロール可能な要素を見つける
+      const anyMessage = document.querySelector('[data-mid]._message');
+      if (anyMessage) {
+        let parent = anyMessage.parentElement;
+        while (parent && parent !== document.body) {
+          if (parent.scrollHeight > parent.clientHeight + 100) {
+            console.log(`[ChatWorkThreader] Found scroll container via parent traversal:`, parent.className || parent.id);
+            return parent;
+          }
+          parent = parent.parentElement;
+        }
+      }
+
+      console.error('[ChatWorkThreader] No scrollable timeline container found');
+      return null;
+    }
+
+    /**
      * プレースホルダーメッセージの元メッセージを追跡する
      * ChatWorkのタイムラインを上にスクロールして履歴を読み込む
      * ユーザーがスクロールして古いメッセージを読み込むのと同じ動作
@@ -3303,9 +3348,9 @@
       // ボタンをアクティブ状態に
       trackingBtn.classList.add('cw-threader-tracking-active');
       
-      const scrollContainer = document.querySelector('#_timeLine, ._timeLine, [role="log"]');
+      const scrollContainer = this.getTimelineScrollContainer();
       if (!scrollContainer) {
-        console.error('[ChatWorkThreader] Timeline container not found');
+        console.error('[ChatWorkThreader] Timeline container not found - cannot track');
         trackingBtn.classList.remove('cw-threader-tracking-active');
         return;
       }
@@ -3320,12 +3365,13 @@
       }
 
       const maxAttempts = 50; // 最大試行回数
-      const scrollStep = 800; // 一度にスクロールするピクセル数
-      const waitTime = 400; // スクロール後の待機時間（ms）
+      const scrollStep = 1000; // 一度にスクロールするピクセル数
+      const waitTime = 500; // スクロール後の待機時間（ms）
       let attempts = 0;
       let noChangeCount = 0; // スクロール位置が変わらなかった回数
 
-      console.log(`[ChatWorkThreader] Tracking origin message: ${mid} - scrolling up to load history`);
+      console.log(`[ChatWorkThreader] Tracking origin message: ${mid}`);
+      console.log(`[ChatWorkThreader] Starting scroll - container scrollTop: ${scrollContainer.scrollTop}, scrollHeight: ${scrollContainer.scrollHeight}`);
 
       // タイムラインを上にスクロールするだけ（ChatWorkが自動的にメッセージを読み込む）
       while (attempts < maxAttempts) {
@@ -3342,14 +3388,18 @@
         const beforeScrollTop = scrollContainer.scrollTop;
 
         // タイムラインを上にスクロール（古いメッセージを読み込む）
-        scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop - scrollStep);
+        const newScrollTop = Math.max(0, scrollContainer.scrollTop - scrollStep);
+        scrollContainer.scrollTop = newScrollTop;
+        
+        console.log(`[ChatWorkThreader] Scroll attempt ${attempts}: ${beforeScrollTop} -> ${scrollContainer.scrollTop}`);
 
         // スクロールとメッセージ読み込みを待つ
         await new Promise(resolve => setTimeout(resolve, waitTime));
 
         // スクロール位置が変わらなかった場合（最上部に到達）
-        if (scrollContainer.scrollTop === beforeScrollTop || scrollContainer.scrollTop === 0) {
+        if (scrollContainer.scrollTop === beforeScrollTop) {
           noChangeCount++;
+          console.log(`[ChatWorkThreader] Scroll position unchanged (${noChangeCount}/3)`);
           
           // 追加のメッセージ読み込みを待つ
           await new Promise(resolve => setTimeout(resolve, 500));
