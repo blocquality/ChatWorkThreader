@@ -3461,8 +3461,13 @@
         console.log(`[ChatWorkThreader] Successfully tracked message: ${mid}`);
         // スレッド一覧内で該当スレッドにスクロールしてハイライト（成功）
         this.scrollToThreadInPanel(mid, true);
-        // ChatWork側でメッセージにスクロール
-        this.scrollToMessage(mid);
+        // ChatWork側でメッセージにスクロールは遅延させる（スレッド一覧のフォーカスを先に安定させる）
+        // scrollToMessageがChatWorkをスクロールすると追加メッセージ読み込みが発生し、
+        // renderThreadsが呼ばれてスレッド一覧のスクロール位置がリセットされる可能性があるため
+        setTimeout(() => {
+          // フォーカス中でも5秒経過後はChatWork側にスクロール
+          this.scrollToMessage(mid);
+        }, 5500);
       } else {
         console.log(`[ChatWorkThreader] Could not find message: ${mid} (may be beyond plan limit or deleted)`);
         // スレッド一覧内で該当スレッドにスクロールしてハイライト（失敗）
