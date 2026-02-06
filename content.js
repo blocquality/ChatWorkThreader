@@ -1461,8 +1461,6 @@
       this.searchMatches = []; // 検索マッチしたメッセージ要素のリスト
       this.currentSearchIndex = -1; // 現在の検索結果インデックス
       this.trackingMid = null; // トラッキング中のメッセージID
-      this.focusedMid = null; // フォーカスするスレッドのID（トラッキング完了後に使用）
-      this.focusedMidExpiry = 0; // フォーカスの有効期限（タイムスタンプ）
     }
 
     /**
@@ -2334,15 +2332,6 @@
         }
         // トラッキング中のスレッドが見えるように自動スクロール（ハイライトなし）
         this.keepTrackingThreadVisible(this.trackingMid);
-      }
-
-      // フォーカス中のスレッドがあれば、期限内ならスクロールし続ける
-      if (this.focusedMid && Date.now() < this.focusedMidExpiry) {
-        this.keepTrackingThreadVisible(this.focusedMid);
-      } else if (this.focusedMid) {
-        // 期限切れならクリア
-        this.focusedMid = null;
-        this.focusedMidExpiry = 0;
       }
     }
 
@@ -3443,36 +3432,28 @@
       // 完了後にトラッキング状態を解除
       this.trackingMid = null;
       
-      // ボタンを再取得して状態を解除（DOMが再構築されている可能性があるため）
-      const finalTrackingBtn = this.panel.querySelector(`[data-tracking-mid="${mid}"]`);
-      if (finalTrackingBtn) {
-        finalTrackingBtn.classList.remove('cw-threader-tracking-active');
-      }
-
       // 最終確認：メッセージが見つかったか
       targetMessage = document.querySelector(`[data-mid="${mid}"]._message`);
 
-      // トラッキング完了後もしばらくスレッドを表示し続ける（メッセージ読み込みで位置がずれるため）
-      // 5秒間フォーカスを維持
-      this.focusedMid = mid;
-      this.focusedMidExpiry = Date.now() + 5000;
+      // スレッド一覧を最新状態に再構築（トラッキングで読み込まれたメッセージを反映）
+      this.threadBuilder.collectMessages();
+      this.threadBuilder.buildThreads();
+      this.renderThreads();
 
-      if (targetMessage) {
-        console.log(`[ChatWorkThreader] Successfully tracked message: ${mid}`);
-        // スレッド一覧内で該当スレッドにスクロールしてハイライト（成功）
-        this.scrollToThreadInPanel(mid, true);
-        // ChatWork側でメッセージにスクロールは遅延させる（スレッド一覧のフォーカスを先に安定させる）
-        // scrollToMessageがChatWorkをスクロールすると追加メッセージ読み込みが発生し、
-        // renderThreadsが呼ばれてスレッド一覧のスクロール位置がリセットされる可能性があるため
-        setTimeout(() => {
-          // フォーカス中でも5秒経過後はChatWork側にスクロール
+      // 少し待ってからスクロール（DOM更新を確実に反映させる）
+      setTimeout(() => {
+        if (targetMessage) {
+          console.log(`[ChatWorkThreader] Successfully tracked message: ${mid}`);
+          // スレッド一覧内で該当スレッドにスクロールしてハイライト（成功）
+          this.scrollToThreadInPanel(mid, true);
+          // ChatWork側でメッセージにスクロール
           this.scrollToMessage(mid);
-        }, 5500);
-      } else {
-        console.log(`[ChatWorkThreader] Could not find message: ${mid} (may be beyond plan limit or deleted)`);
-        // スレッド一覧内で該当スレッドにスクロールしてハイライト（失敗）
-        this.scrollToThreadInPanel(mid, false);
-      }
+        } else {
+          console.log(`[ChatWorkThreader] Could not find message: ${mid} (may be beyond plan limit or deleted)`);
+          // スレッド一覧内で該当スレッドにスクロールしてハイライト（失敗）
+          this.scrollToThreadInPanel(mid, false);
+        }
+      }, 100);
     }
 
     /**
