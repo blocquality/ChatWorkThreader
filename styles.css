@@ -318,8 +318,9 @@
 
 .cw-threader-settings-select {
   min-width: 145px;
-  padding: 8px 30px 8px 12px;
+  padding: 10px 30px 10px 12px;
   font-size: 13px;
+  line-height: 1.4;
   border: 1px solid #d0d0d0;
   border-radius: 4px;
   background-color: #fff;
