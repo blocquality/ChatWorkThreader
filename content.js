@@ -2291,6 +2291,29 @@
         
         const threadEl = this.createThreadElement(thread, 0, []);
         messageWrapper.appendChild(threadEl);
+        
+        // ルートメッセージがプレースホルダーの場合、trackingボタンを追加
+        if (thread.isPlaceholder) {
+          const trackingBtn = document.createElement('button');
+          trackingBtn.className = 'cw-threader-tracking-btn';
+          trackingBtn.title = 'Track origin message';
+          trackingBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12Z" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M2 12L4 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M20 12L22 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M12 4V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M12 22V20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>`;
+          
+          trackingBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.trackOriginMessage(thread.mid, trackingBtn);
+          });
+          
+          messageWrapper.appendChild(trackingBtn);
+        }
+        
         container.appendChild(messageWrapper);
       });
 
@@ -3264,6 +3287,115 @@
     }
 
     /**
+     * プレースホルダーメッセージの元メッセージを追跡する
+     * ChatWorkのタイムラインをスクロールして履歴を読み込み、対象メッセージを探す
+     * @param {string} mid - 探索対象のメッセージID
+     * @param {HTMLElement} trackingBtn - trackingボタン要素
+     */
+    async trackOriginMessage(mid, trackingBtn) {
+      // 既にトラッキング中の場合は中止
+      if (trackingBtn.classList.contains('cw-threader-tracking-active')) {
+        return;
+      }
+
+      // ボタンをアクティブ状態に
+      trackingBtn.classList.add('cw-threader-tracking-active');
+      
+      const scrollContainer = document.querySelector('#_timeLine, ._timeLine, [role="log"]');
+      if (!scrollContainer) {
+        console.error('[ChatWorkThreader] Timeline container not found');
+        trackingBtn.classList.remove('cw-threader-tracking-active');
+        return;
+      }
+
+      // 最初にメッセージが既に存在するか確認
+      let targetMessage = document.querySelector(`[data-mid="${mid}"]._message`);
+      if (targetMessage) {
+        // 見つかった場合は再構築して終了
+        this.threadBuilder.collectMessages();
+        this.threadBuilder.buildThreads();
+        this.renderThreads();
+        trackingBtn.classList.remove('cw-threader-tracking-active');
+        return;
+      }
+
+      const maxAttempts = 50; // 最大試行回数
+      const scrollStep = 500; // 一度にスクロールするピクセル数
+      const waitTime = 300; // スクロール後の待機時間（ms）
+      let attempts = 0;
+      let lastScrollTop = scrollContainer.scrollTop;
+      let noChangeCount = 0; // スクロール位置が変わらなかった回数
+
+      console.log(`[ChatWorkThreader] Tracking origin message: ${mid}`);
+
+      while (attempts < maxAttempts) {
+        attempts++;
+        
+        // メッセージが存在するか確認
+        targetMessage = document.querySelector(`[data-mid="${mid}"]._message`);
+        if (targetMessage) {
+          console.log(`[ChatWorkThreader] Found message after ${attempts} attempts`);
+          break;
+        }
+
+        // スクロール前の状態を記録
+        const beforeScrollTop = scrollContainer.scrollTop;
+        const beforeMessageCount = document.querySelectorAll('[data-mid]._message').length;
+
+        // タイムラインを上にスクロール（古いメッセージを読み込む）
+        scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop - scrollStep);
+
+        // スクロールの実行を待つ
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+
+        // メッセージの読み込みを待つ（新しいメッセージが追加されるまで追加で待機）
+        const afterMessageCount = document.querySelectorAll('[data-mid]._message').length;
+        if (afterMessageCount > beforeMessageCount) {
+          // 新しいメッセージが読み込まれた場合は追加で待機
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+
+        // スクロール位置が変わらなかった場合（最上部に到達）
+        if (scrollContainer.scrollTop === beforeScrollTop || scrollContainer.scrollTop === 0) {
+          noChangeCount++;
+          
+          // 追加のメッセージ読み込みを試みる（少し待って再確認）
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // それでもメッセージ数が増えていない場合は、これ以上読み込めないと判断
+          const finalMessageCount = document.querySelectorAll('[data-mid]._message').length;
+          if (finalMessageCount === afterMessageCount && noChangeCount >= 3) {
+            console.log(`[ChatWorkThreader] Reached scroll limit after ${attempts} attempts (plan limit or beginning of chat)`);
+            break;
+          }
+        } else {
+          noChangeCount = 0;
+        }
+
+        lastScrollTop = scrollContainer.scrollTop;
+      }
+
+      // 最終確認：メッセージが見つかったか
+      targetMessage = document.querySelector(`[data-mid="${mid}"]._message`);
+      
+      // スレッドを再構築
+      this.threadBuilder.collectMessages();
+      this.threadBuilder.buildThreads();
+      this.renderThreads();
+
+      // ボタンの状態を解除
+      trackingBtn.classList.remove('cw-threader-tracking-active');
+
+      if (targetMessage) {
+        console.log(`[ChatWorkThreader] Successfully tracked message: ${mid}`);
+        // メッセージにスクロール
+        this.scrollToMessage(mid);
+      } else {
+        console.log(`[ChatWorkThreader] Could not find message: ${mid} (may be beyond plan limit or deleted)`);
+      }
+    }
+
+    /**
      * 階層の深さに応じたパネル幅を計算
      * @param {number} maxDepth - 最大階層
      * @returns {number} パネル幅（px）
@@ -3474,7 +3606,7 @@
     let iconUrl = '';
     if (isExtensionContextValid()) {
       try {
-        iconUrl = chrome.runtime.getURL('icon128.png');
+        iconUrl = chrome.runtime.getURL('icons/chat-round-line-svgrepo-com.svg');
       } catch (e) {
         // 拡張機能のコンテキストが無効な場合
       }
