@@ -365,12 +365,6 @@
      * ページからメッセージを収集
      */
     collectMessages() {
-      // 既存のデータをクリア（再収集時の複製を防止）
-      this.messages.clear();
-      this.replyMap.clear();
-      this.childrenMap.clear();
-      this.allMessages = [];
-      
       // _message クラスを持つ実際のメッセージ要素のみを収集（返信バッジ内の参照を除外）
       const messageElements = document.querySelectorAll('[data-mid]._message');
       let lastUserName = '';
@@ -1299,9 +1293,6 @@
      * スレッドを構築
      */
     buildThreads() {
-      // 既存のスレッドデータをクリア
-      this.threads.clear();
-      
       // 返信があるメッセージ（スレッドに含まれるメッセージ）を特定
       const threadedMids = new Set();
       
@@ -2305,6 +2296,7 @@
         if (thread.isPlaceholder) {
           const trackingBtn = document.createElement('button');
           trackingBtn.className = 'cw-threader-tracking-btn';
+          trackingBtn.setAttribute('data-tracking-mid', thread.mid);
           trackingBtn.title = 'Track origin message';
           trackingBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12Z" stroke="currentColor" stroke-width="1.5"/>
@@ -3329,12 +3321,14 @@
       }
 
       const maxAttempts = 50; // 最大試行回数
-      const waitTime = 800; // スクロール後の待機時間（ms）
+      const scrollStep = 500; // 一度にスクロールするピクセル数
+      const waitTime = 300; // スクロール後の待機時間（ms）
       let attempts = 0;
-      let noChangeCount = 0; // メッセージ数が変わらなかった回数
+      let lastScrollTop = scrollContainer.scrollTop;
+      let noChangeCount = 0; // スクロール位置が変わらなかった回数
+      let lastUpdateMessageCount = document.querySelectorAll('[data-mid]._message').length;
 
       console.log(`[ChatWorkThreader] Tracking origin message: ${mid}`);
-      console.log(`[ChatWorkThreader] Scroll container:`, scrollContainer);
 
       while (attempts < maxAttempts) {
         attempts++;
@@ -3347,43 +3341,43 @@
         }
 
         // スクロール前の状態を記録
+        const beforeScrollTop = scrollContainer.scrollTop;
         const beforeMessageCount = document.querySelectorAll('[data-mid]._message').length;
-        console.log(`[ChatWorkThreader] Attempt ${attempts}: messageCount=${beforeMessageCount}`);
 
-        // タイムライン内の最初のメッセージ要素を取得
-        const firstMessage = scrollContainer.querySelector('[data-mid]._message');
-        if (firstMessage) {
-          // 最初のメッセージにスムーズスクロール（ChatWorkの上方向読み込みをトリガー）
-          firstMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
-          console.log(`[ChatWorkThreader] Scrolling to first message`);
-        } else {
-          // メッセージが見つからない場合はコンテナの上部にスクロール
-          scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-          console.log(`[ChatWorkThreader] Scrolling to top of container`);
-        }
+        // タイムラインを上にスクロール（古いメッセージを読み込む）
+        scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop - scrollStep);
 
-        // wheelイベントもシミュレート（ChatWorkのスクロールハンドラをトリガー）
-        const wheelEvent = new WheelEvent('wheel', {
-          deltaY: -500,
-          deltaMode: WheelEvent.DOM_DELTA_PIXEL,
-          bubbles: true,
-          cancelable: true
-        });
-        scrollContainer.dispatchEvent(wheelEvent);
-
-        // スクロールの完了を待つ
+        // スクロールの実行を待つ
         await new Promise(resolve => setTimeout(resolve, waitTime));
 
         // メッセージの読み込みを待つ（新しいメッセージが追加されるまで追加で待機）
         const afterMessageCount = document.querySelectorAll('[data-mid]._message').length;
-        console.log(`[ChatWorkThreader] After scroll: messageCount=${afterMessageCount}`);
-        
         if (afterMessageCount > beforeMessageCount) {
           // 新しいメッセージが読み込まれた場合は追加で待機
-          console.log(`[ChatWorkThreader] New messages loaded: ${afterMessageCount - beforeMessageCount}`);
-          await new Promise(resolve => setTimeout(resolve, 300));
-          noChangeCount = 0;
-        } else {
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
+          // リアルタイムでスレッド一覧を更新（一定数以上の新メッセージが追加された場合）
+          if (afterMessageCount - lastUpdateMessageCount >= 5) {
+            console.log(`[ChatWorkThreader] Updating thread list... (${afterMessageCount} messages)`);
+            this.threadBuilder.collectMessages();
+            this.threadBuilder.buildThreads();
+            this.renderThreads();
+            
+            // トラッキング中のスレッドにスクロール（見失わないように）
+            this.scrollToThreadInPanel(mid);
+            
+            // トラッキングボタンを再取得（renderThreadsでDOMが再構築されるため）
+            const newTrackingBtn = this.panel.querySelector(`.cw-threader-tracking-btn`);
+            if (newTrackingBtn) {
+              newTrackingBtn.classList.add('cw-threader-tracking-active');
+            }
+            
+            lastUpdateMessageCount = afterMessageCount;
+          }
+        }
+
+        // スクロール位置が変わらなかった場合（最上部に到達）
+        if (scrollContainer.scrollTop === beforeScrollTop || scrollContainer.scrollTop === 0) {
           noChangeCount++;
           
           // 追加のメッセージ読み込みを試みる（少し待って再確認）
@@ -3391,11 +3385,15 @@
           
           // それでもメッセージ数が増えていない場合は、これ以上読み込めないと判断
           const finalMessageCount = document.querySelectorAll('[data-mid]._message').length;
-          if (finalMessageCount === beforeMessageCount && noChangeCount >= 5) {
+          if (finalMessageCount === afterMessageCount && noChangeCount >= 3) {
             console.log(`[ChatWorkThreader] Reached scroll limit after ${attempts} attempts (plan limit or beginning of chat)`);
             break;
           }
+        } else {
+          noChangeCount = 0;
         }
+
+        lastScrollTop = scrollContainer.scrollTop;
       }
 
       // 最終確認：メッセージが見つかったか
@@ -3406,8 +3404,11 @@
       this.threadBuilder.buildThreads();
       this.renderThreads();
 
-      // ボタンの状態を解除
-      trackingBtn.classList.remove('cw-threader-tracking-active');
+      // ボタンの状態を解除（renderThreads後のDOMでは既に新しいボタンが存在）
+      const finalTrackingBtn = this.panel.querySelector(`[data-tracking-mid="${mid}"]`);
+      if (finalTrackingBtn) {
+        finalTrackingBtn.classList.remove('cw-threader-tracking-active');
+      }
 
       // スレッド一覧内で該当スレッドにスクロール
       this.scrollToThreadInPanel(mid);
@@ -3439,30 +3440,18 @@
         if (threadContainer) {
           // スレッドコンテナにスクロール
           threadContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          
-          // ハイライト効果を追加
-          targetEl.classList.add('cw-threader-highlight-panel');
-          setTimeout(() => {
-            targetEl.classList.remove('cw-threader-highlight-panel');
-          }, 2000);
           return;
         }
       }
       
       // 見つからない場合は、スレッドのルートMIDを探す
-      // 子メッセージのMIDからルートを探す
       const thread = this.threadBuilder.threads.get(mid);
       if (thread) {
-        // このMIDがルートの場合
         const rootEl = this.panel.querySelector(`[data-thread-mid="${mid}"]`);
         if (rootEl) {
           const threadContainer = rootEl.closest('.cw-threader-thread');
           if (threadContainer) {
             threadContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            rootEl.classList.add('cw-threader-highlight-panel');
-            setTimeout(() => {
-              rootEl.classList.remove('cw-threader-highlight-panel');
-            }, 2000);
           }
         }
       }
