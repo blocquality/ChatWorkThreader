@@ -222,20 +222,13 @@
 /* コンテンツエリア */
 .cw-threader-content {
   flex: 1;
-  overflow-y: scroll;
-  padding: 8px 0 8px 16px;
-  /* 左側をリサイズハンドル(16px)の内側に余白確保 */
+  overflow-y: auto;
+  padding: 8px 4px 8px 16px;
+  /* 左側をリサイズハンドル(16px)の内側に余白確保、右側にスクロールバー用余白 */
   background: #fff;
-  /* スクロールバーを非表示にしつつスクロール可能に */
-  scrollbar-width: none;
-  /* Firefox */
-  -ms-overflow-style: none;
-  /* IE/Edge */
-}
-
-/* Chrome/Safari用スクロールバー非表示 */
-.cw-threader-content::-webkit-scrollbar {
-  display: none;
+  /* Firefox用スクロールバー */
+  scrollbar-width: thin;
+  scrollbar-color: #d0d0d0 transparent;
 }
 
 .cw-threader-threads {
