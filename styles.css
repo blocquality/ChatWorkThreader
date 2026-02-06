@@ -334,6 +334,12 @@
   background-repeat: no-repeat;
   background-position: right 10px center;
   background-size: 10px;
+  color-scheme: light;
+}
+
+.cw-threader-settings-select option {
+  background-color: #fff;
+  color: #333;
 }
 
 .cw-threader-settings-select:hover {
@@ -1787,6 +1793,12 @@ kbd {
   background-repeat: no-repeat;
   background-position: right 10px center;
   background-size: 10px;
+  color-scheme: dark;
+}
+
+.cw-threader-dark .cw-threader-settings-select option {
+  background-color: #333;
+  color: #e0e0e0;
 }
 
 .cw-threader-dark .cw-threader-settings-select:hover {
