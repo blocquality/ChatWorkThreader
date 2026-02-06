@@ -1460,6 +1460,7 @@
       this.searchQuery = ''; // 検索クエリ
       this.searchMatches = []; // 検索マッチしたメッセージ要素のリスト
       this.currentSearchIndex = -1; // 現在の検索結果インデックス
+      this.trackingMid = null; // トラッキング中のメッセージID
     }
 
     /**
@@ -2321,6 +2322,14 @@
       // 検索フィルターを適用（検索クエリがある場合）
       if (this.searchQuery) {
         this.applySearchFilter();
+      }
+
+      // トラッキング中の場合、ボタンのアクティブ状態を復元
+      if (this.trackingMid) {
+        const trackingBtn = this.panel.querySelector(`[data-tracking-mid="${this.trackingMid}"]`);
+        if (trackingBtn) {
+          trackingBtn.classList.add('cw-threader-tracking-active');
+        }
       }
     }
 
@@ -3341,9 +3350,12 @@
      */
     async trackOriginMessage(mid, trackingBtn) {
       // 既にトラッキング中の場合は中止
-      if (trackingBtn.classList.contains('cw-threader-tracking-active')) {
+      if (this.trackingMid) {
         return;
       }
+
+      // トラッキング中のmidを記録（renderThreads後の状態復元用）
+      this.trackingMid = mid;
 
       // ボタンをアクティブ状態に
       trackingBtn.classList.add('cw-threader-tracking-active');
@@ -3351,6 +3363,7 @@
       const scrollContainer = this.getTimelineScrollContainer();
       if (!scrollContainer) {
         console.error('[ChatWorkThreader] Timeline container not found - cannot track');
+        this.trackingMid = null;
         trackingBtn.classList.remove('cw-threader-tracking-active');
         return;
       }
@@ -3360,6 +3373,7 @@
       if (targetMessage) {
         // 見つかった場合はスクロールして終了
         this.scrollToMessage(mid);
+        this.trackingMid = null;
         trackingBtn.classList.remove('cw-threader-tracking-active');
         return;
       }
@@ -3413,8 +3427,14 @@
         }
       }
 
-      // 完了後にボタン状態を解除
-      trackingBtn.classList.remove('cw-threader-tracking-active');
+      // 完了後にトラッキング状態を解除
+      this.trackingMid = null;
+      
+      // ボタンを再取得して状態を解除（DOMが再構築されている可能性があるため）
+      const finalTrackingBtn = this.panel.querySelector(`[data-tracking-mid="${mid}"]`);
+      if (finalTrackingBtn) {
+        finalTrackingBtn.classList.remove('cw-threader-tracking-active');
+      }
 
       // 最終確認：メッセージが見つかったか
       targetMessage = document.querySelector(`[data-mid="${mid}"]._message`);
