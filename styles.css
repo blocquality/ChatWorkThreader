@@ -1843,3 +1843,58 @@ kbd {
   color: #e0e0e0;
   box-shadow: inset 0 -1px 0 #444;
 }
+
+/* ダークテーマ - メッセージ本文 */
+.cw-threader-dark .cw-threader-message-body {
+  color: #e0e0e0;
+}
+
+/* ダークテーマ - ユーザー名 */
+.cw-threader-dark .cw-threader-username {
+  color: #e0e0e0;
+}
+
+/* ダークテーマ - 時刻 */
+.cw-threader-dark .cw-threader-time {
+  color: #888;
+}
+
+/* ダークテーマ - リンク */
+.cw-threader-dark .cw-threader-link {
+  color: #64b5f6;
+}
+
+.cw-threader-dark .cw-threader-link:hover {
+  color: #90caf9;
+}
+
+/* ダークテーマ - 引用メッセージ */
+.cw-threader-dark .cw-threader-quote {
+  color: #a0a0a0;
+  background: #2a2a2a;
+  border-left-color: #555;
+}
+
+/* ダークテーマ - 自分宛てメッセージ（メンション） */
+.cw-threader-dark .cw-threader-message.cw-threader-mention {
+  background: #1a3d36 !important;
+  border-right-color: #4db6a3;
+}
+
+.cw-threader-dark .cw-threader-message.cw-threader-mention:hover {
+  background: #245147 !important;
+}
+
+/* ダークテーマ - 検索マッチ */
+.cw-threader-dark .cw-threader-message.cw-threader-search-match {
+  background: #4a4520 !important;
+}
+
+.cw-threader-dark .cw-threader-message.cw-threader-search-match:hover {
+  background: #5c5528 !important;
+}
+
+/* ダークテーマ - 検索マッチ + 自分宛て */
+.cw-threader-dark .cw-threader-message.cw-threader-mention.cw-threader-search-match {
+  background: #4a4520 !important;
+}
