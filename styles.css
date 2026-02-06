@@ -317,8 +317,8 @@
 }
 
 .cw-threader-settings-select {
-  min-width: 150px;
-  padding: 8px 32px 8px 12px;
+  width: 160px;
+  padding: 8px 36px 8px 12px;
   font-size: 13px;
   border: 1px solid #d0d0d0;
   border-radius: 4px;
@@ -331,7 +331,7 @@
   -moz-appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M2 4l4 4 4-4z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 10px center;
+  background-position: right 12px center;
   background-size: 10px;
 }
 
