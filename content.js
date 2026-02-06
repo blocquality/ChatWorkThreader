@@ -3441,18 +3441,23 @@
 
       if (targetMessage) {
         console.log(`[ChatWorkThreader] Successfully tracked message: ${mid}`);
+        // スレッド一覧内で該当スレッドにスクロールしてハイライト（成功）
+        this.scrollToThreadInPanel(mid, true);
         // ChatWork側でメッセージにスクロール
         this.scrollToMessage(mid);
       } else {
         console.log(`[ChatWorkThreader] Could not find message: ${mid} (may be beyond plan limit or deleted)`);
+        // スレッド一覧内で該当スレッドにスクロールしてハイライト（失敗）
+        this.scrollToThreadInPanel(mid, false);
       }
     }
 
     /**
-     * スレッド一覧内で該当スレッドにスクロール
+     * スレッド一覧内で該当スレッドにスクロールしてハイライト
      * @param {string} mid - メッセージID
+     * @param {boolean} found - メッセージが見つかったかどうか
      */
-    scrollToThreadInPanel(mid) {
+    scrollToThreadInPanel(mid, found = true) {
       if (!this.panel) return;
       
       const contentContainer = this.panel.querySelector('.cw-threader-content');
@@ -3466,6 +3471,9 @@
         if (threadContainer) {
           // スレッドコンテナにスクロール
           threadContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // ハイライトアニメーションを適用
+          this.highlightThreadContainer(threadContainer, found);
           return;
         }
       }
@@ -3478,9 +3486,32 @@
           const threadContainer = rootEl.closest('.cw-threader-thread');
           if (threadContainer) {
             threadContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            this.highlightThreadContainer(threadContainer, found);
           }
         }
       }
+    }
+
+    /**
+     * スレッドコンテナにハイライトアニメーションを適用
+     * @param {HTMLElement} threadContainer - スレッドコンテナ要素
+     * @param {boolean} found - メッセージが見つかったかどうか
+     */
+    highlightThreadContainer(threadContainer, found) {
+      // 前のアニメーションをリセット
+      threadContainer.classList.remove('cw-threader-tracking-found', 'cw-threader-tracking-notfound');
+      
+      // リフローを強制
+      threadContainer.offsetWidth;
+      
+      // ハイライトクラスを追加
+      const highlightClass = found ? 'cw-threader-tracking-found' : 'cw-threader-tracking-notfound';
+      threadContainer.classList.add(highlightClass);
+      
+      // アニメーション終了後にクラスを削除
+      setTimeout(() => {
+        threadContainer.classList.remove(highlightClass);
+      }, 2000);
     }
 
     /**

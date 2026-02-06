@@ -1141,3 +1141,43 @@
     transform: rotate(360deg);
   }
 }
+
+/* トラッキング完了後のハイライトアニメーション */
+.cw-threader-thread.cw-threader-tracking-found {
+  animation: cw-threader-tracking-highlight 2s ease-out;
+}
+
+@keyframes cw-threader-tracking-highlight {
+  0% {
+    background: #4CAF50;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
+  }
+  30% {
+    background: #81C784;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.4);
+  }
+  100% {
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+/* トラッキング失敗時のハイライト（見つからなかった） */
+.cw-threader-thread.cw-threader-tracking-notfound {
+  animation: cw-threader-tracking-notfound 2s ease-out;
+}
+
+@keyframes cw-threader-tracking-notfound {
+  0% {
+    background: #ff9800;
+    box-shadow: 0 0 20px rgba(255, 152, 0, 0.6);
+  }
+  30% {
+    background: #ffb74d;
+    box-shadow: 0 0 15px rgba(255, 152, 0, 0.4);
+  }
+  100% {
+    background: transparent;
+    box-shadow: none;
+  }
+}
