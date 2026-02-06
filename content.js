@@ -365,6 +365,12 @@
      * ページからメッセージを収集
      */
     collectMessages() {
+      // 既存のデータをクリア（再収集時の複製を防止）
+      this.messages.clear();
+      this.replyMap.clear();
+      this.childrenMap.clear();
+      this.allMessages = [];
+      
       // _message クラスを持つ実際のメッセージ要素のみを収集（返信バッジ内の参照を除外）
       const messageElements = document.querySelectorAll('[data-mid]._message');
       let lastUserName = '';
@@ -1293,6 +1299,9 @@
      * スレッドを構築
      */
     buildThreads() {
+      // 既存のスレッドデータをクリア
+      this.threads.clear();
+      
       // 返信があるメッセージ（スレッドに含まれるメッセージ）を特定
       const threadedMids = new Set();
       
