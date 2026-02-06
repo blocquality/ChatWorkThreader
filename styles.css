@@ -207,6 +207,9 @@
   font-size: 20px;
   transition: background 0.15s ease;
   outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cw-threader-controls button:hover {
@@ -287,6 +290,9 @@
   transition: background 0.15s ease;
   outline: none;
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cw-threader-refresh-btn:hover {
