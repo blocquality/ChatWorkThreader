@@ -3440,20 +3440,14 @@
       this.threadBuilder.buildThreads();
       this.renderThreads();
 
-      // 少し待ってからスクロール（DOM更新を確実に反映させる）
-      setTimeout(() => {
-        if (targetMessage) {
-          console.log(`[ChatWorkThreader] Successfully tracked message: ${mid}`);
-          // スレッド一覧内で該当スレッドにスクロールしてハイライト（成功）
-          this.scrollToThreadInPanel(mid, true);
-          // ChatWork側でメッセージにスクロール
-          this.scrollToMessage(mid);
-        } else {
-          console.log(`[ChatWorkThreader] Could not find message: ${mid} (may be beyond plan limit or deleted)`);
-          // スレッド一覧内で該当スレッドにスクロールしてハイライト（失敗）
-          this.scrollToThreadInPanel(mid, false);
-        }
-      }, 100);
+      if (targetMessage) {
+        console.log(`[ChatWorkThreader] Successfully tracked message: ${mid}`);
+        // ChatWork側でメッセージにスクロール
+        // ユーザーはそのメッセージの「スレッドで表示」ボタンを押せば良い
+        this.scrollToMessage(mid);
+      } else {
+        console.log(`[ChatWorkThreader] Could not find message: ${mid} (may be beyond plan limit or deleted)`);
+      }
     }
 
     /**
