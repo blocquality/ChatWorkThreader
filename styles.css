@@ -1291,3 +1291,224 @@
 .cw-threader-thread {
   position: relative;
 }
+
+/* ===================================
+   Dark Theme Styles
+   =================================== */
+
+/* ダークテーマ - パネル */
+.cw-threader-dark #cw-threader-panel {
+  background: #1e1e1e;
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ダークテーマ - ヘッダー */
+.cw-threader-dark .cw-threader-header {
+  background: #252525;
+  border-bottom-color: #333;
+}
+
+/* ダークテーマ - リサイズハンドル */
+.cw-threader-dark .cw-threader-resize-handle {
+  background: #333;
+}
+
+.cw-threader-dark .cw-threader-resize-handle::before {
+  background: repeating-linear-gradient(to right,
+      #666 0px,
+      #666 2px,
+      transparent 2px,
+      transparent 4px);
+}
+
+.cw-threader-dark .cw-threader-resize-handle:hover {
+  background: rgba(100, 181, 246, 0.2);
+}
+
+/* ダークテーマ - コントロールボタン */
+.cw-threader-dark .cw-threader-controls button {
+  color: #aaa;
+}
+
+.cw-threader-dark .cw-threader-controls button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* ダークテーマ - フィルターラベル */
+.cw-threader-dark .cw-threader-filter-label {
+  color: #aaa;
+}
+
+/* ダークテーマ - セレクト */
+.cw-threader-dark .cw-threader-speaker-select {
+  background: #333;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+.cw-threader-dark .cw-threader-speaker-select:hover {
+  border-color: #555;
+}
+
+.cw-threader-dark .cw-threader-speaker-select:focus {
+  border-color: #64b5f6;
+  box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.15);
+}
+
+/* ダークテーマ - コンテンツエリア */
+.cw-threader-dark .cw-threader-content {
+  background: #1e1e1e;
+}
+
+/* ダークテーマ - セクションタイトル */
+.cw-threader-dark .cw-threader-section-title {
+  color: #888;
+  border-bottom-color: #333;
+}
+
+/* ダークテーマ - スレッドアイテム */
+.cw-threader-dark .cw-threader-thread {
+  background: #252525;
+  border-bottom-color: #333;
+}
+
+.cw-threader-dark .cw-threader-thread:hover {
+  background: #2d2d2d;
+}
+
+/* ダークテーマ - スレッドテキスト */
+.cw-threader-dark .cw-threader-thread-snippet {
+  color: #c0c0c0;
+}
+
+.cw-threader-dark .cw-threader-thread-meta {
+  color: #888;
+}
+
+.cw-threader-dark .cw-threader-thread-count {
+  color: #aaa;
+}
+
+/* ダークテーマ - 返信メッセージ */
+.cw-threader-dark .cw-threader-reply-item {
+  background: #2a2a2a;
+}
+
+.cw-threader-dark .cw-threader-reply-item:hover {
+  background: #333;
+}
+
+.cw-threader-dark .cw-threader-reply-snippet {
+  color: #b0b0b0;
+}
+
+/* ダークテーマ - 検索入力 */
+.cw-threader-dark .cw-threader-search-input {
+  background: #333;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+.cw-threader-dark .cw-threader-search-input:focus {
+  border-color: #64b5f6;
+  box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.15);
+}
+
+.cw-threader-dark .cw-threader-search-input::placeholder {
+  color: #666;
+}
+
+/* ダークテーマ - エンプティーステート */
+.cw-threader-dark .cw-threader-empty {
+  color: #888;
+}
+
+/* ダークテーマ - ローディング */
+.cw-threader-dark .cw-threader-loading {
+  color: #888;
+}
+
+/* ダークテーマ - トグルボタン */
+.cw-threader-dark #cw-threader-toggle {
+  background: #2d2d2d;
+  border-color: #444;
+  color: #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.cw-threader-dark #cw-threader-toggle:hover {
+  background: #383838;
+}
+
+.cw-threader-dark #cw-threader-toggle .cw-threader-shortcut {
+  color: #888;
+}
+
+/* ダークテーマ - ピン止めボタン */
+.cw-threader-dark .cw-threader-pin-btn {
+  color: #666;
+}
+
+.cw-threader-dark .cw-threader-pin-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+}
+
+.cw-threader-dark .cw-threader-pin-btn.pinned {
+  color: #64b5f6;
+}
+
+.cw-threader-dark .cw-threader-pin-btn.pinned:hover {
+  color: #90caf9;
+  background: rgba(100, 181, 246, 0.15);
+}
+
+/* ダークテーマ - ピン止めスレッド */
+.cw-threader-dark .cw-threader-thread.cw-threader-pinned {
+  background: linear-gradient(to right, rgba(100, 181, 246, 0.1), transparent);
+  border-left-color: #64b5f6;
+}
+
+/* ダークテーマ - バッジ */
+.cw-threader-dark .cw-threader-badge-root {
+  background: #1b4332;
+  color: #95d5b2;
+}
+
+.cw-threader-dark .cw-threader-badge-reply {
+  background: #1a365d;
+  color: #90cdf4;
+}
+
+.cw-threader-dark .cw-threader-badge-both {
+  background: #744210;
+  color: #fbd38d;
+}
+
+/* ダークテーマ - トグルスイッチ */
+.cw-threader-dark .cw-threader-toggle-switch {
+  background: #444;
+}
+
+.cw-threader-dark .cw-threader-toggle-slider {
+  background: #888;
+}
+
+.cw-threader-dark .cw-threader-toggle-input:checked+.cw-threader-toggle-slider {
+  background: #64b5f6;
+}
+
+/* ダークテーマ - スクロールバー */
+.cw-threader-dark .cw-threader-content::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.cw-threader-dark .cw-threader-content::-webkit-scrollbar-thumb {
+  background-color: #444;
+  border-color: #1e1e1e;
+}
+
+.cw-threader-dark .cw-threader-content::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}

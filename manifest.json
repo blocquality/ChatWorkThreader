@@ -1,7 +1,7 @@
 {
 	"manifest_version": 3,
 	"name": "ChatWork Threader",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Visualize ChatWork reply threads as a tree to track complex conversations at a glance and streamline teamwork.",
 	"permissions": [
 		"storage"
