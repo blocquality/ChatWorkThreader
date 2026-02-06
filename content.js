@@ -3437,23 +3437,32 @@
       targetMessage = document.querySelector(`[data-mid="${mid}"]._message`);
 
       // スレッド一覧を最新状態に再構築（トラッキングで読み込まれたメッセージを反映）
+      // まずデータをクリアしてから再収集（重複防止）
+      this.threadBuilder.messages.clear();
+      this.threadBuilder.threads.clear();
+      this.threadBuilder.replyMap.clear();
+      this.threadBuilder.childrenMap.clear();
+      this.threadBuilder.allMessages = [];
       this.threadBuilder.collectMessages();
       this.threadBuilder.buildThreads();
       this.renderThreads();
 
-      if (targetMessage) {
-        console.log(`[ChatWorkThreader] Successfully tracked message: ${mid}`);
-        // ChatWork側でメッセージにスクロール
-        this.scrollToMessage(mid);
-        // スレッドパネル内で該当メッセージにスクロール（「スレッドで表示」ボタンを自動クリックしたのと同じ動作）
-        setTimeout(() => {
-          if (this.showInThreadManager) {
-            this.showInThreadManager.scrollToMessageInPanel(mid);
-          }
-        }, 200);
-      } else {
-        console.log(`[ChatWorkThreader] Could not find message: ${mid} (may be beyond plan limit or deleted)`);
-      }
+      // DOM更新を確実に反映させてからスクロール処理
+      requestAnimationFrame(() => {
+        if (targetMessage) {
+          console.log(`[ChatWorkThreader] Successfully tracked message: ${mid}`);
+          // ChatWork側でメッセージにスクロール
+          this.scrollToMessage(mid);
+          // スレッドパネル内で該当メッセージにスクロール（「スレッドで表示」ボタンを自動クリックしたのと同じ動作）
+          setTimeout(() => {
+            if (this.showInThreadManager) {
+              this.showInThreadManager.scrollToMessageInPanel(mid);
+            }
+          }, 100);
+        } else {
+          console.log(`[ChatWorkThreader] Could not find message: ${mid} (may be beyond plan limit or deleted)`);
+        }
+      });
     }
 
     /**
