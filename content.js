@@ -238,65 +238,6 @@
   }
 
   /**
-   * 高速スムーズスクロール
-   * 標準のscrollIntoViewよりも速いアニメーションでスクロールする
-   * @param {Element} element - スクロール対象の要素
-   * @param {Object} options - オプション
-   * @param {string} options.block - 'start', 'center', 'end' (default: 'start')
-   * @param {number} options.duration - アニメーション時間（ms）(default: 300)
-   * @param {Function} options.onComplete - スクロール完了時のコールバック
-   */
-  function fastSmoothScrollTo(element, options = {}) {
-    const { block = 'start', duration = 300, onComplete } = options;
-    
-    // スクロールコンテナを取得
-    const scrollContainer = element.closest('#_timeLine, ._timeLine, [role="log"], .cw-threader-content') 
-      || element.closest('[style*="overflow"]')
-      || document.scrollingElement 
-      || document.documentElement;
-    
-    // 要素の位置を計算
-    const elementRect = element.getBoundingClientRect();
-    const containerRect = scrollContainer === document.documentElement || scrollContainer === document.scrollingElement
-      ? { top: 0, height: window.innerHeight }
-      : scrollContainer.getBoundingClientRect();
-    
-    let targetOffset;
-    if (block === 'start') {
-      targetOffset = elementRect.top - containerRect.top;
-    } else if (block === 'center') {
-      targetOffset = elementRect.top - containerRect.top - (containerRect.height / 2) + (elementRect.height / 2);
-    } else if (block === 'end') {
-      targetOffset = elementRect.top - containerRect.top - containerRect.height + elementRect.height;
-    } else {
-      targetOffset = elementRect.top - containerRect.top;
-    }
-    
-    const startScrollTop = scrollContainer.scrollTop;
-    const targetScrollTop = startScrollTop + targetOffset;
-    const startTime = performance.now();
-    
-    // イージング関数（easeOutCubic）
-    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
-    
-    function animate(currentTime) {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const easedProgress = easeOutCubic(progress);
-      
-      scrollContainer.scrollTop = startScrollTop + (targetScrollTop - startScrollTop) * easedProgress;
-      
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else if (onComplete) {
-        onComplete();
-      }
-    }
-    
-    requestAnimationFrame(animate);
-  }
-
-  /**
    * メッセージデータを解析してスレッド構造を構築
    */
   class ThreadBuilder {
@@ -2284,8 +2225,8 @@
       const currentEl = this.searchMatches[this.currentSearchIndex];
       if (currentEl) {
         currentEl.classList.add('cw-threader-search-current');
-        // スクロールして表示（高速スクロール）
-        fastSmoothScrollTo(currentEl, { block: 'center' });
+        // スクロールして表示
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
       
       // カウント表示を更新（現在位置/全件）
@@ -3534,8 +3475,8 @@
         observer.observe(messageEl);
         
         // スクロール開始：メッセージがメッセージ欄の上辺に来るようにスクロール
-        // 高速スクロールでblock: 'start'を使用して上端に配置
-        fastSmoothScrollTo(messageEl, { block: 'start' });
+        // scrollIntoViewでblock: 'start'を使用して上端に配置
+        messageEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         
         // 最大待機時間（8秒）を超えたら強制的に実行
         setTimeout(() => {
@@ -3732,8 +3673,8 @@
         // スレッドコンテナ（.cw-threader-thread）を取得
         const threadContainer = targetEl.closest('.cw-threader-thread');
         if (threadContainer) {
-          // スレッドコンテナにスクロール（高速スクロール）
-          fastSmoothScrollTo(threadContainer, { block: 'center' });
+          // スレッドコンテナにスクロール
+          threadContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
           
           // ハイライトアニメーションを適用
           this.highlightThreadContainer(threadContainer, found);
@@ -3748,7 +3689,7 @@
         if (rootEl) {
           const threadContainer = rootEl.closest('.cw-threader-thread');
           if (threadContainer) {
-            fastSmoothScrollTo(threadContainer, { block: 'center' });
+            threadContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
             this.highlightThreadContainer(threadContainer, found);
           }
         }
@@ -4196,10 +4137,10 @@
           }
         }
         
-        // スクロールしてからアニメーション（メッセージが下端に来るように・高速スクロール）
-        fastSmoothScrollTo(targetEl, { block: 'end' });
+        // スクロールしてからアニメーション（メッセージが下端に来るように）
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
         
-        // スクロール完了を待ってからアニメーション開始（高速スクロールに合わせて400msに短縮）
+        // スクロール完了を待ってからアニメーション開始
         setTimeout(() => {
           // 前のアニメーションを完全にリセット
           targetEl.style.animation = 'none';
