@@ -1898,3 +1898,219 @@ kbd {
 .cw-threader-dark .cw-threader-message.cw-threader-mention.cw-threader-search-match {
   background: #4a4520 !important;
 }
+
+/* ダークテーマ - 検索バー */
+.cw-threader-dark .cw-threader-search-bar {
+  background: #252525;
+  border-bottom-color: #444;
+}
+
+/* ダークテーマ - 検索クリアボタン */
+.cw-threader-dark .cw-threader-search-clear {
+  background: #333;
+  border-color: #555;
+  color: #aaa;
+}
+
+.cw-threader-dark .cw-threader-search-clear:hover {
+  background: #444;
+  border-color: #666;
+  color: #e0e0e0;
+}
+
+/* ダークテーマ - 検索ナビボタン */
+.cw-threader-dark .cw-threader-search-nav-btn {
+  background: #333;
+  border-color: #555;
+  color: #aaa;
+}
+
+.cw-threader-dark .cw-threader-search-nav-btn:hover {
+  background: rgba(100, 181, 246, 0.15);
+  border-color: #64b5f6;
+  color: #64b5f6;
+}
+
+.cw-threader-dark .cw-threader-search-nav-btn:disabled {
+  opacity: 0.4;
+}
+
+.cw-threader-dark .cw-threader-search-nav-btn:disabled:hover {
+  background: #333;
+  border-color: #555;
+  color: #aaa;
+}
+
+/* ダークテーマ - 検索カウント・位置表示 */
+.cw-threader-dark .cw-threader-search-count,
+.cw-threader-dark .cw-threader-search-position {
+  color: #aaa;
+}
+
+/* ダークテーマ - 検索ハイライト（テキスト内） */
+.cw-threader-dark .cw-threader-search-highlight {
+  background: #5c5528;
+  color: #fff;
+}
+
+/* ダークテーマ - トラッキングボタン */
+.cw-threader-dark .cw-threader-tracking-btn {
+  background: #333;
+  border-color: #555;
+}
+
+.cw-threader-dark .cw-threader-tracking-btn:hover {
+  background: rgba(100, 181, 246, 0.15);
+  border-color: #64b5f6;
+}
+
+.cw-threader-dark .cw-threader-tracking-btn.cw-threader-tracking-active {
+  background: rgba(100, 181, 246, 0.15);
+  border-color: #64b5f6;
+}
+
+.cw-threader-dark .cw-threader-tracking-btn svg {
+  color: #aaa;
+}
+
+.cw-threader-dark .cw-threader-tracking-btn:hover svg {
+  color: #64b5f6;
+}
+
+/* ダークテーマ - コピーボタン */
+.cw-threader-dark .cw-threader-copy-btn {
+  color: #777;
+}
+
+.cw-threader-dark .cw-threader-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+}
+
+.cw-threader-dark .cw-threader-copy-btn.cw-threader-copy-success {
+  color: #81c784;
+}
+
+/* ダークテーマ - 折りたたみボタン */
+.cw-threader-dark .cw-threader-collapse-btn {
+  color: #777;
+}
+
+.cw-threader-dark .cw-threader-collapse-btn:hover {
+  background: #444;
+  color: #e0e0e0;
+}
+
+/* ダークテーマ - プレビューボタン・外部リンクボタン */
+.cw-threader-dark .cw-threader-preview-btn,
+.cw-threader-dark .cw-threader-quote-preview-btn,
+.cw-threader-dark .cw-threader-external-link-btn {
+  background: #333;
+  border-color: #64b5f6;
+  color: #64b5f6;
+}
+
+.cw-threader-dark .cw-threader-preview-btn:hover,
+.cw-threader-dark .cw-threader-quote-preview-btn:hover,
+.cw-threader-dark .cw-threader-external-link-btn:hover {
+  background: rgba(100, 181, 246, 0.15);
+  border-color: #90caf9;
+  color: #90caf9;
+}
+
+/* ダークテーマ - ツリー線 */
+.cw-threader-dark .cw-threader-ancestor-line.has-more::before,
+.cw-threader-dark .cw-threader-connect-line::before,
+.cw-threader-dark .cw-threader-connect-line::after {
+  background: #555;
+}
+
+.cw-threader-dark .cw-threader-message-row:hover .cw-threader-ancestor-line.has-more::before,
+.cw-threader-dark .cw-threader-message-row:hover .cw-threader-connect-line::before,
+.cw-threader-dark .cw-threader-message-row:hover .cw-threader-connect-line::after {
+  background: #888;
+}
+
+/* ダークテーマ - 引用ヘッダー */
+.cw-threader-dark .cw-threader-quote-header {
+  border-bottom-color: #444;
+}
+
+/* ダークテーマ - 引用内の作者名 */
+.cw-threader-dark .cw-threader-quote-author {
+  color: #b0b0b0;
+}
+
+/* ダークテーマ - 引用内のタイムスタンプ */
+.cw-threader-dark .cw-threader-quote-timestamp {
+  color: #777;
+}
+
+/* ダークテーマ - 引用アイコン */
+.cw-threader-dark .cw-threader-quote-icon {
+  color: #777;
+}
+
+/* ダークテーマ - 引用内リンク */
+.cw-threader-dark .cw-threader-quote .cw-threader-link {
+  color: #64b5f6;
+}
+
+/* ダークテーマ - 返信ラベル・カウント */
+.cw-threader-dark .cw-threader-reply-label,
+.cw-threader-dark .cw-threader-reply-count {
+  color: #aaa;
+}
+
+/* ダークテーマ - ファイル情報 */
+.cw-threader-dark .cw-threader-file-info {
+  color: #b0b0b0;
+}
+
+/* ダークテーマ - 画像リンク */
+.cw-threader-dark .cw-threader-image-link {
+  background: #3d3020;
+}
+
+.cw-threader-dark .cw-threader-image-link a {
+  color: #ffb74d;
+}
+
+.cw-threader-dark .cw-threader-image-icon {
+  color: #ffb74d;
+}
+
+/* ダークテーマ - スレッドで表示ボタン */
+.cw-threader-dark .cw-threader-show-in-thread-btn {
+  color: #777;
+}
+
+.cw-threader-dark .cw-threader-show-in-thread-wrapper:hover .cw-threader-show-in-thread-btn {
+  background: rgba(100, 181, 246, 0.15);
+  border-color: #64b5f6;
+  color: #64b5f6;
+}
+
+.cw-threader-dark .cw-threader-show-in-thread-btn:active {
+  background: rgba(100, 181, 246, 0.25);
+}
+
+/* ダークテーマ - プレースホルダーメッセージ */
+.cw-threader-dark .cw-threader-message.cw-threader-placeholder .cw-threader-message-body {
+  color: #777;
+}
+
+/* ダークテーマ - タブコンテンツ背景 */
+.cw-threader-dark .cw-threader-tab-content[data-tab-content="threads"] {
+  background: #1e1e1e;
+}
+
+/* ダークテーマ - ホバー時メッセージ背景 */
+.cw-threader-dark .cw-threader-message:hover:not(.cw-threader-highlight-panel) {
+  background: #333;
+}
+
+/* ダークテーマ - 現在フォーカスの検索結果 */
+.cw-threader-dark .cw-threader-message.cw-threader-search-current {
+  outline-color: #ffb74d;
+}
