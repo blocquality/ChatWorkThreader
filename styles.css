@@ -301,7 +301,8 @@
 .cw-threader-message .cw-threader-toggle-wrap *,
 .cw-threader-message .cw-threader-preview-btn,
 .cw-threader-message .cw-threader-external-link-btn,
-.cw-threader-message .cw-threader-link {
+.cw-threader-message .cw-threader-link,
+.cw-threader-message .cw-threader-copy-btn {
   pointer-events: auto;
 }
 
@@ -1180,4 +1181,47 @@
     background: transparent;
     box-shadow: none;
   }
+}
+
+/* コピーボタン */
+.cw-threader-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  margin-left: 4px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #909090;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+/* メッセージホバー時にコピーボタンを表示 */
+.cw-threader-message:hover .cw-threader-copy-btn {
+  opacity: 1;
+}
+
+.cw-threader-copy-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #606060;
+}
+
+.cw-threader-copy-btn:active {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* コピー成功時のスタイル */
+.cw-threader-copy-btn.cw-threader-copy-success {
+  color: #4CAF50;
+  opacity: 1;
+}
+
+.cw-threader-copy-btn svg {
+  width: 14px;
+  height: 14px;
 }

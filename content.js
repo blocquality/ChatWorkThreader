@@ -2549,6 +2549,12 @@
           <div class="cw-threader-message-header">
             <span class="cw-threader-username">${this.escapeHtml(node.userName)}</span>
             ${node.timestamp ? `<span class="cw-threader-time">· ${this.formatDateTime(node.timestamp)}</span>` : ''}
+            <button class="cw-threader-copy-btn" title="メッセージをコピー" data-message-text="${this.escapeHtml(node.messageText || '')}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
             ${isRootWithReplies ? `
               <div class="cw-threader-toggle-wrap">
                 <span class="cw-threader-reply-label">${replyCount} Reply</span>
@@ -2589,6 +2595,17 @@
         });
       });
 
+      // コピーボタンのクリックイベントを設定
+      const copyBtn = messageEl.querySelector('.cw-threader-copy-btn');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const messageText = copyBtn.getAttribute('data-message-text');
+          this.copyMessageToClipboard(messageText, copyBtn);
+        });
+      }
+
       // クリックでメッセージにスクロール（プレースホルダーの場合は無効）
       if (!node.isPlaceholder) {
         messageEl.addEventListener('click', (e) => {
@@ -2598,6 +2615,10 @@
           }
           // プレビューボタンをクリックした場合はスクロールしない
           if (e.target.closest('.cw-threader-preview-btn') || e.target.closest('.cw-threader-external-link-btn')) {
+            return;
+          }
+          // コピーボタンをクリックした場合はスクロールしない
+          if (e.target.closest('.cw-threader-copy-btn')) {
             return;
           }
           e.stopPropagation();
@@ -3203,6 +3224,57 @@
       
       // 安全のため、30秒後には必ず元に戻す
       setTimeout(restoreVisibility, 30000);
+    }
+
+    /**
+     * メッセージをクリップボードにコピー
+     * @param {string} text - コピーするテキスト
+     * @param {HTMLElement} button - コピーボタン要素（フィードバック用）
+     */
+    async copyMessageToClipboard(text, button) {
+      try {
+        await navigator.clipboard.writeText(text);
+        // 成功フィードバック：チェックマークアイコンに変更
+        const originalHtml = button.innerHTML;
+        button.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        `;
+        button.classList.add('cw-threader-copy-success');
+        // 1.5秒後に元に戻す
+        setTimeout(() => {
+          button.innerHTML = originalHtml;
+          button.classList.remove('cw-threader-copy-success');
+        }, 1500);
+      } catch (err) {
+        console.error('[ChatWorkThreader] コピーに失敗しました:', err);
+        // フォールバック: execCommand を試行
+        try {
+          const textArea = document.createElement('textarea');
+          textArea.value = text;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-9999px';
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          // 成功フィードバック
+          const originalHtml = button.innerHTML;
+          button.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          `;
+          button.classList.add('cw-threader-copy-success');
+          setTimeout(() => {
+            button.innerHTML = originalHtml;
+            button.classList.remove('cw-threader-copy-success');
+          }, 1500);
+        } catch (fallbackErr) {
+          console.error('[ChatWorkThreader] フォールバックコピーにも失敗しました:', fallbackErr);
+        }
+      }
     }
 
     /**
