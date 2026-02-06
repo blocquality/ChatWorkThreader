@@ -1862,6 +1862,18 @@
         <div class="cw-threader-resize-handle"></div>
         <div class="cw-threader-header">
           <div class="cw-threader-header-right">
+            <div class="cw-threader-controls">
+              <button id="cw-threader-close" title="Close">×</button>
+            </div>
+          </div>
+        </div>
+        <div class="cw-threader-tab-bar">
+          <button class="cw-threader-tab active" data-tab="threads">📋 Threads</button>
+          <button class="cw-threader-tab" data-tab="settings">⚙️ Settings</button>
+          <button class="cw-threader-tab" data-tab="help">📖 Help</button>
+        </div>
+        <div class="cw-threader-tab-content" data-tab-content="threads">
+          <div class="cw-threader-thread-filters">
             <select id="cw-threader-speaker-filter" class="cw-threader-speaker-select" title="Filter by Speaker">
               <option value="">All</option>
             </select>
@@ -1879,25 +1891,87 @@
                 <span class="cw-threader-toggle-slider"></span>
               </label>
             </div>
-            <div class="cw-threader-controls">
-              <button id="cw-threader-refresh" title="Refresh">↻</button>
-              <button id="cw-threader-close" title="Close">×</button>
+            <button id="cw-threader-refresh" class="cw-threader-refresh-btn" title="Refresh">↻</button>
+          </div>
+          <div class="cw-threader-search-bar">
+            <div class="cw-threader-search-input-wrapper">
+              <input type="text" id="cw-threader-search" class="cw-threader-search-input" placeholder="Search messages...">
+              <button id="cw-threader-search-clear" class="cw-threader-search-clear" title="Clear">×</button>
+            </div>
+            <div id="cw-threader-search-nav" class="cw-threader-search-nav">
+              <button id="cw-threader-search-prev" class="cw-threader-search-nav-btn" title="Previous Result">▲</button>
+              <button id="cw-threader-search-next" class="cw-threader-search-nav-btn" title="Next Result">▼</button>
+            </div>
+            <span id="cw-threader-search-count" class="cw-threader-search-count"></span>
+          </div>
+          <div class="cw-threader-content">
+            <div class="cw-threader-threads"></div>
+          </div>
+        </div>
+        <div class="cw-threader-tab-content" data-tab-content="settings" style="display: none;">
+          <div class="cw-threader-settings-content">
+            <div class="cw-threader-settings-section">
+              <h3 class="cw-threader-settings-title">🎨 Theme</h3>
+              <div class="cw-threader-settings-item">
+                <label class="cw-threader-settings-label">Color Theme</label>
+                <select id="cw-threader-theme-select" class="cw-threader-settings-select">
+                  <option value="system">System default</option>
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </div>
+            </div>
+            <p class="cw-threader-settings-note">Settings are saved automatically</p>
+          </div>
+        </div>
+        <div class="cw-threader-tab-content" data-tab-content="help" style="display: none;">
+          <div class="cw-threader-help-content">
+            <div class="cw-threader-help-section">
+              <h3 class="cw-threader-help-title">📖 How to Use</h3>
+              <ol class="cw-threader-help-steps">
+                <li>Open a ChatWork chat room</li>
+                <li>Press <kbd>Shift</kbd>+<kbd>S</kbd> or click the button at the bottom right</li>
+                <li>Thread list will be displayed</li>
+                <li>Click a thread to jump to that message</li>
+              </ol>
+            </div>
+            <div class="cw-threader-help-section">
+              <h3 class="cw-threader-help-title">🔍 Features</h3>
+              <ul class="cw-threader-help-features">
+                <li><strong>Thread View:</strong> Display messages as a threaded conversation</li>
+                <li><strong>Search:</strong> Search messages within threads</li>
+                <li><strong>Filter by Speaker:</strong> Show only messages from a specific person</li>
+                <li><strong>My Participation:</strong> Show only threads you participated in</li>
+                <li><strong>Flat Mode:</strong> Toggle between tree view and flat list</li>
+                <li><strong>Preview:</strong> Hover over links to preview content</li>
+                <li><strong>Jump to Message:</strong> Click a message to scroll to it in ChatWork</li>
+              </ul>
+            </div>
+            <div class="cw-threader-help-section">
+              <h3 class="cw-threader-help-title">🏷️ Badge Legend</h3>
+              <div class="cw-threader-badge-legend">
+                <div class="cw-threader-badge-item">
+                  <span class="cw-threader-badge cw-threader-badge-root">Root</span>
+                  <span>Message that has replies</span>
+                </div>
+                <div class="cw-threader-badge-item">
+                  <span class="cw-threader-badge cw-threader-badge-reply">Reply</span>
+                  <span>Reply to another message</span>
+                </div>
+                <div class="cw-threader-badge-item">
+                  <span class="cw-threader-badge cw-threader-badge-both">Root+Reply</span>
+                  <span>A reply that also has replies</span>
+                </div>
+              </div>
+            </div>
+            <div class="cw-threader-help-section">
+              <h3 class="cw-threader-help-title">⌨️ Keyboard Shortcuts</h3>
+              <ul class="cw-threader-help-shortcuts">
+                <li><kbd>Shift</kbd>+<kbd>S</kbd> - Toggle thread panel</li>
+                <li><kbd>Esc</kbd> - Close panel / Clear search</li>
+              </ul>
             </div>
           </div>
-        </div>
-        <div class="cw-threader-search-bar">
-          <div class="cw-threader-search-input-wrapper">
-            <input type="text" id="cw-threader-search" class="cw-threader-search-input" placeholder="Search messages...">
-            <button id="cw-threader-search-clear" class="cw-threader-search-clear" title="Clear">×</button>
-          </div>
-          <div id="cw-threader-search-nav" class="cw-threader-search-nav">
-            <button id="cw-threader-search-prev" class="cw-threader-search-nav-btn" title="Previous Result">▲</button>
-            <button id="cw-threader-search-next" class="cw-threader-search-nav-btn" title="Next Result">▼</button>
-          </div>
-          <span id="cw-threader-search-count" class="cw-threader-search-count"></span>
-        </div>
-        <div class="cw-threader-content">
-          <div class="cw-threader-threads"></div>
         </div>
       `;
 
@@ -2016,6 +2090,65 @@
       if (searchNext) {
         searchNext.addEventListener('click', () => {
           this.navigateSearchResult(1);
+        });
+      }
+
+      // タブ切り替えのイベントリスナー
+      this.setupTabListeners();
+
+      // テーマ設定のイベントリスナー
+      this.setupSettingsListeners();
+    }
+
+    /**
+     * タブ切り替えのイベントリスナーを設定
+     */
+    setupTabListeners() {
+      const tabs = this.panel.querySelectorAll('.cw-threader-tab');
+      const tabContents = this.panel.querySelectorAll('.cw-threader-tab-content');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const targetTab = tab.getAttribute('data-tab');
+
+          // タブのアクティブ状態を切り替え
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+
+          // コンテンツの表示/非表示を切り替え
+          tabContents.forEach(content => {
+            const contentTab = content.getAttribute('data-tab-content');
+            content.style.display = contentTab === targetTab ? '' : 'none';
+          });
+        });
+      });
+    }
+
+    /**
+     * 設定タブのイベントリスナーを設定
+     */
+    setupSettingsListeners() {
+      const themeSelect = document.getElementById('cw-threader-theme-select');
+      
+      if (themeSelect) {
+        // 現在のテーマ設定を反映
+        themeSelect.value = currentSettings.theme || 'system';
+
+        themeSelect.addEventListener('change', async () => {
+          const newTheme = themeSelect.value;
+          currentSettings.theme = newTheme;
+          
+          // テーマを適用
+          applyTheme(newTheme);
+          
+          // 設定を保存
+          if (isExtensionContextValid()) {
+            try {
+              await chrome.storage.sync.set({ [SETTINGS_KEY]: currentSettings });
+            } catch (error) {
+              console.error('[ChatWorkThreader] Failed to save theme setting:', error);
+            }
+          }
         });
       }
     }

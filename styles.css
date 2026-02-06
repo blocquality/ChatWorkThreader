@@ -219,6 +219,232 @@
   box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
 }
 
+/* タブバー */
+.cw-threader-tab-bar {
+  display: flex;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 0 16px 0 32px;
+  gap: 4px;
+}
+
+.cw-threader-tab {
+  flex: 1;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+  outline: none;
+}
+
+.cw-threader-tab:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #333;
+}
+
+.cw-threader-tab.active {
+  color: #1976d2;
+  border-bottom-color: #1976d2;
+  font-weight: 500;
+}
+
+/* タブコンテンツ */
+.cw-threader-tab-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.cw-threader-tab-content[data-tab-content="threads"] {
+  background: #fff;
+}
+
+/* スレッドフィルターバー */
+.cw-threader-thread-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px 10px 32px;
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  flex-wrap: wrap;
+}
+
+.cw-threader-refresh-btn {
+  background: transparent;
+  border: none;
+  color: #606060;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background 0.15s ease;
+  outline: none;
+  margin-left: auto;
+}
+
+.cw-threader-refresh-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* 設定タブコンテンツ */
+.cw-threader-settings-content {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.cw-threader-settings-section {
+  margin-bottom: 24px;
+}
+
+.cw-threader-settings-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 12px 0;
+}
+
+.cw-threader-settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.cw-threader-settings-label {
+  font-size: 13px;
+  color: #555;
+}
+
+.cw-threader-settings-select {
+  min-width: 140px;
+  padding: 6px 28px 6px 10px;
+  font-size: 13px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M2 4l4 4 4-4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+.cw-threader-settings-select:hover {
+  border-color: #a0a0a0;
+}
+
+.cw-threader-settings-select:focus {
+  border-color: #2196F3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+.cw-threader-settings-note {
+  font-size: 11px;
+  color: #888;
+  font-style: italic;
+  margin-top: 16px;
+}
+
+/* ヘルプタブコンテンツ */
+.cw-threader-help-content {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.cw-threader-help-section {
+  margin-bottom: 24px;
+}
+
+.cw-threader-help-section:last-child {
+  margin-bottom: 0;
+}
+
+.cw-threader-help-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 12px 0;
+}
+
+.cw-threader-help-steps {
+  margin: 0;
+  padding-left: 24px;
+  color: #555;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.cw-threader-help-features {
+  margin: 0;
+  padding-left: 20px;
+  color: #555;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.cw-threader-help-features li {
+  margin-bottom: 4px;
+}
+
+.cw-threader-help-features strong {
+  color: #333;
+}
+
+.cw-threader-help-shortcuts {
+  margin: 0;
+  padding-left: 20px;
+  color: #555;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-family: monospace;
+  line-height: 1.4;
+  color: #333;
+  background: #f4f4f4;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-shadow: inset 0 -1px 0 #bbb;
+}
+
+/* バッジ凡例 */
+.cw-threader-badge-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cw-threader-badge-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #555;
+}
+
+.cw-threader-badge-item .cw-threader-badge {
+  min-width: 70px;
+  text-align: center;
+}
+
 /* コンテンツエリア */
 .cw-threader-content {
   flex: 1;
@@ -1511,4 +1737,101 @@
 
 .cw-threader-dark .cw-threader-content::-webkit-scrollbar-thumb:hover {
   background-color: #555;
+}
+
+/* ダークテーマ - タブバー */
+.cw-threader-dark .cw-threader-tab-bar {
+  background: #2d2d2d;
+  border-bottom-color: #444;
+}
+
+.cw-threader-dark .cw-threader-tab {
+  color: #aaa;
+}
+
+.cw-threader-dark .cw-threader-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ddd;
+}
+
+.cw-threader-dark .cw-threader-tab.active {
+  color: #64b5f6;
+  border-bottom-color: #64b5f6;
+}
+
+/* ダークテーマ - スレッドフィルター */
+.cw-threader-dark .cw-threader-thread-filters {
+  background: #2d2d2d;
+  border-bottom-color: #444;
+}
+
+.cw-threader-dark .cw-threader-refresh-btn {
+  color: #aaa;
+}
+
+.cw-threader-dark .cw-threader-refresh-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ダークテーマ - 設定タブ */
+.cw-threader-dark .cw-threader-settings-content {
+  background: #1e1e1e;
+}
+
+.cw-threader-dark .cw-threader-settings-title {
+  color: #e0e0e0;
+}
+
+.cw-threader-dark .cw-threader-settings-label {
+  color: #b0b0b0;
+}
+
+.cw-threader-dark .cw-threader-settings-select {
+  background: #333;
+  border-color: #444;
+  color: #e0e0e0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M2 4l4 4 4-4z'/%3E%3C/svg%3E");
+}
+
+.cw-threader-dark .cw-threader-settings-select:hover {
+  border-color: #555;
+}
+
+.cw-threader-dark .cw-threader-settings-select:focus {
+  border-color: #64b5f6;
+  box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.15);
+}
+
+.cw-threader-dark .cw-threader-settings-note {
+  color: #666;
+}
+
+/* ダークテーマ - ヘルプタブ */
+.cw-threader-dark .cw-threader-help-content {
+  background: #1e1e1e;
+}
+
+.cw-threader-dark .cw-threader-help-title {
+  color: #e0e0e0;
+}
+
+.cw-threader-dark .cw-threader-help-steps,
+.cw-threader-dark .cw-threader-help-features,
+.cw-threader-dark .cw-threader-help-shortcuts {
+  color: #b0b0b0;
+}
+
+.cw-threader-dark .cw-threader-help-features strong {
+  color: #e0e0e0;
+}
+
+.cw-threader-dark .cw-threader-badge-item {
+  color: #b0b0b0;
+}
+
+.cw-threader-dark kbd {
+  background: #333;
+  border-color: #555;
+  color: #e0e0e0;
+  box-shadow: inset 0 -1px 0 #444;
 }
