@@ -1856,21 +1856,39 @@
         existingPanel.remove();
       }
 
+      // アイコンURLを取得
+      let threadsIconUrl = '';
+      let settingsIconUrl = '';
+      let helpIconUrl = '';
+      if (isExtensionContextValid()) {
+        try {
+          threadsIconUrl = chrome.runtime.getURL('icons/chat-round-line-svgrepo-com.svg');
+          settingsIconUrl = chrome.runtime.getURL('icons/settings-svgrepo-com.svg');
+          helpIconUrl = chrome.runtime.getURL('icons/book-minimalistic-svgrepo-com.svg');
+        } catch (e) {
+          // 拡張機能のコンテキストが無効な場合
+        }
+      }
+
       this.panel = document.createElement('div');
       this.panel.id = 'cw-threader-panel';
       this.panel.innerHTML = `
         <div class="cw-threader-resize-handle"></div>
         <div class="cw-threader-header">
-          <div class="cw-threader-header-right">
-            <div class="cw-threader-controls">
-              <button id="cw-threader-close" title="Close">×</button>
-            </div>
+          <div class="cw-threader-header-tabs">
+            <button class="cw-threader-tab-icon active" data-tab="threads" title="Threads">
+              ${threadsIconUrl ? `<img src="${threadsIconUrl}" alt="Threads">` : '💬'}
+            </button>
+            <button class="cw-threader-tab-icon" data-tab="settings" title="Settings">
+              ${settingsIconUrl ? `<img src="${settingsIconUrl}" alt="Settings">` : '⚙️'}
+            </button>
+            <button class="cw-threader-tab-icon" data-tab="help" title="Help">
+              ${helpIconUrl ? `<img src="${helpIconUrl}" alt="Help">` : '📖'}
+            </button>
           </div>
-        </div>
-        <div class="cw-threader-tab-bar">
-          <button class="cw-threader-tab active" data-tab="threads">📋 Threads</button>
-          <button class="cw-threader-tab" data-tab="settings">⚙️ Settings</button>
-          <button class="cw-threader-tab" data-tab="help">📖 Help</button>
+          <div class="cw-threader-controls">
+            <button id="cw-threader-close" title="Close">×</button>
+          </div>
         </div>
         <div class="cw-threader-tab-content" data-tab-content="threads">
           <div class="cw-threader-thread-filters">
@@ -2104,7 +2122,7 @@
      * タブ切り替えのイベントリスナーを設定
      */
     setupTabListeners() {
-      const tabs = this.panel.querySelectorAll('.cw-threader-tab');
+      const tabs = this.panel.querySelectorAll('.cw-threader-tab-icon');
       const tabContents = this.panel.querySelectorAll('.cw-threader-tab-content');
 
       tabs.forEach(tab => {
