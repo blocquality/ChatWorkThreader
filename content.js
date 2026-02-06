@@ -195,6 +195,49 @@
   }
 
   /**
+   * ピン止め状態をストレージに保存
+   * @param {string} roomId - チャットルームID
+   * @param {string} mid - メッセージID
+   * @param {boolean} isPinned - ピン止め状態
+   */
+  function savePinnedState(roomId, mid, isPinned) {
+    if (!roomId || !mid) return;
+    if (!isExtensionContextValid()) return;
+    const key = `pinned_${roomId}`;
+    try {
+      chrome.storage.local.get(key, (result) => {
+        const pinnedSet = new Set(result[key] || []);
+        if (isPinned) {
+          pinnedSet.add(mid);
+        } else {
+          pinnedSet.delete(mid);
+        }
+        chrome.storage.local.set({ [key]: Array.from(pinnedSet) });
+      });
+    } catch (e) {
+      // 拡張機能のコンテキストが無効化された場合は無視
+    }
+  }
+
+  /**
+   * ピン止め状態をストレージから取得（特定のルームの全ピン止めスレッド）
+   * @param {string} roomId - チャットルームID
+   * @returns {Promise<Set<string>>} ピン止めされたメッセージIDのセット
+   */
+  async function getPinnedThreads(roomId) {
+    if (!roomId) return new Set();
+    if (!isExtensionContextValid()) return new Set();
+    const key = `pinned_${roomId}`;
+    try {
+      const result = await chrome.storage.local.get(key);
+      return new Set(result[key] || []);
+    } catch (e) {
+      // 拡張機能のコンテキストが無効化された場合は空セットを返す
+      return new Set();
+    }
+  }
+
+  /**
    * メッセージデータを解析してスレッド構造を構築
    */
   class ThreadBuilder {
@@ -1462,6 +1505,7 @@
       this.currentSearchIndex = -1; // 現在の検索結果インデックス
       this.trackingMid = null; // トラッキング中のメッセージID
       this.showInThreadManager = null; // ShowInThreadButtonManagerへの参照
+      this.pinnedThreads = new Set(); // ピン止めされたスレッドのmidセット
     }
 
     /**
@@ -1625,6 +1669,47 @@
         return this.toggleStates[threadMid];
       }
       return true; // デフォルトは開いている状態
+    }
+
+    /**
+     * 現在のルームのピン止め状態を読み込み
+     */
+    async loadPinnedThreads() {
+      const roomId = this.getCurrentRoomId();
+      if (!roomId) return;
+      
+      this.pinnedThreads = await getPinnedThreads(roomId);
+    }
+
+    /**
+     * スレッドのピン止め状態をトグル
+     * @param {string} mid - スレッドのルートメッセージID
+     */
+    async togglePinThread(mid) {
+      const roomId = this.getCurrentRoomId();
+      if (!roomId || !mid) return;
+      
+      const isPinned = this.pinnedThreads.has(mid);
+      if (isPinned) {
+        this.pinnedThreads.delete(mid);
+      } else {
+        this.pinnedThreads.add(mid);
+      }
+      
+      // ストレージに保存
+      savePinnedState(roomId, mid, !isPinned);
+      
+      // UI更新
+      this.renderThreads();
+    }
+
+    /**
+     * スレッドがピン止めされているか確認
+     * @param {string} mid - スレッドのルートメッセージID
+     * @returns {boolean}
+     */
+    isThreadPinned(mid) {
+      return this.pinnedThreads.has(mid);
     }
 
     /**
@@ -2254,9 +2339,17 @@
       this.updateSpeakerDropdown();
 
       // ルートメッセージのタイムスタンプで新しい順にソート
+      // ピン止めされたスレッドを優先的に上に表示
       // タイムスタンプがない場合はmid（メッセージID）でソート（midは時系列で割り当てられる）
       let sortedThreads = Array.from(threads.values())
         .sort((a, b) => {
+          // まずピン止め状態で比較（ピン止めが優先）
+          const aPinned = this.isThreadPinned(a.mid);
+          const bPinned = this.isThreadPinned(b.mid);
+          if (aPinned && !bPinned) return -1;
+          if (!aPinned && bPinned) return 1;
+          
+          // ピン止め状態が同じ場合はタイムスタンプで比較
           const aTime = parseInt(a.timestamp) || 0;
           const bTime = parseInt(b.timestamp) || 0;
           
@@ -2290,6 +2383,32 @@
       sortedThreads.forEach(thread => {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = 'cw-threader-thread';
+        
+        // ピン止め状態をdata属性として設定
+        const isPinned = this.isThreadPinned(thread.mid);
+        messageWrapper.setAttribute('data-thread-root-mid', thread.mid);
+        if (isPinned) {
+          messageWrapper.classList.add('cw-threader-pinned');
+        }
+        
+        // ピン止めボタンを追加（ルートスレッドの上部に配置）
+        const pinBtn = document.createElement('button');
+        pinBtn.className = 'cw-threader-pin-btn';
+        if (isPinned) {
+          pinBtn.classList.add('pinned');
+        }
+        pinBtn.setAttribute('data-pin-mid', thread.mid);
+        pinBtn.title = isPinned ? 'Unpin thread' : 'Pin thread';
+        pinBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 17V22M12 17L7 15L8 9L6 7V6H18V7L16 9L17 15L12 17Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`;
+        
+        pinBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.togglePinThread(thread.mid);
+        });
+        
+        messageWrapper.appendChild(pinBtn);
         
         const threadEl = this.createThreadElement(thread, 0, []);
         messageWrapper.appendChild(threadEl);
@@ -3649,6 +3768,9 @@
       // ルームのトグル状態を読み込み
       await this.loadToggleStates();
       
+      // ピン止め状態を読み込み
+      await this.loadPinnedThreads();
+      
       // ルーム設定を読み込んで適用
       const roomSettings = await this.loadRoomSettings();
       this.applyRoomSettings(roomSettings);
@@ -3720,6 +3842,8 @@
       const newRoomId = this.getCurrentRoomId();
       if (newRoomId !== this.currentRoomId) {
         await this.loadToggleStates();
+        // ピン止め状態を読み込み
+        await this.loadPinnedThreads();
         // ルーム設定も読み込んで適用
         const roomSettings = await this.loadRoomSettings();
         this.applyRoomSettings(roomSettings);

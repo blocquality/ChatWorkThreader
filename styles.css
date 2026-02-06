@@ -1225,3 +1225,69 @@
   width: 14px;
   height: 14px;
 }
+
+/* ピン止めボタン */
+.cw-threader-pin-btn {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #909090;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  z-index: 10;
+}
+
+.cw-threader-pin-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* スレッドホバー時にピン止めボタンを表示 */
+.cw-threader-thread:hover .cw-threader-pin-btn {
+  opacity: 1;
+}
+
+.cw-threader-pin-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #606060;
+}
+
+.cw-threader-pin-btn:active {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* ピン止め状態のボタン */
+.cw-threader-pin-btn.pinned {
+  opacity: 1;
+  color: #1976d2;
+  transform: rotate(45deg);
+}
+
+.cw-threader-pin-btn.pinned:hover {
+  color: #1565c0;
+  background: rgba(25, 118, 210, 0.1);
+}
+
+/* ピン止めされたスレッドのスタイル */
+.cw-threader-thread.cw-threader-pinned {
+  position: relative;
+  background: linear-gradient(to right, rgba(25, 118, 210, 0.05), transparent);
+  border-left: 3px solid #1976d2;
+  padding-left: 8px;
+  margin-left: -11px;
+}
+
+/* ピン止めされたスレッドでpositionをrelativeに変更（ボタン位置用） */
+.cw-threader-thread {
+  position: relative;
+}
