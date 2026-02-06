@@ -1461,6 +1461,8 @@
       this.searchMatches = []; // 検索マッチしたメッセージ要素のリスト
       this.currentSearchIndex = -1; // 現在の検索結果インデックス
       this.trackingMid = null; // トラッキング中のメッセージID
+      this.focusedMid = null; // フォーカスするスレッドのID（トラッキング完了後に使用）
+      this.focusedMidExpiry = 0; // フォーカスの有効期限（タイムスタンプ）
     }
 
     /**
@@ -2332,6 +2334,15 @@
         }
         // トラッキング中のスレッドが見えるように自動スクロール（ハイライトなし）
         this.keepTrackingThreadVisible(this.trackingMid);
+      }
+
+      // フォーカス中のスレッドがあれば、期限内ならスクロールし続ける
+      if (this.focusedMid && Date.now() < this.focusedMidExpiry) {
+        this.keepTrackingThreadVisible(this.focusedMid);
+      } else if (this.focusedMid) {
+        // 期限切れならクリア
+        this.focusedMid = null;
+        this.focusedMidExpiry = 0;
       }
     }
 
@@ -3442,7 +3453,9 @@
       targetMessage = document.querySelector(`[data-mid="${mid}"]._message`);
 
       // トラッキング完了後もしばらくスレッドを表示し続ける（メッセージ読み込みで位置がずれるため）
-      this.keepThreadVisibleAfterTracking(mid);
+      // 5秒間フォーカスを維持
+      this.focusedMid = mid;
+      this.focusedMidExpiry = Date.now() + 5000;
 
       if (targetMessage) {
         console.log(`[ChatWorkThreader] Successfully tracked message: ${mid}`);
@@ -3455,29 +3468,6 @@
         // スレッド一覧内で該当スレッドにスクロールしてハイライト（失敗）
         this.scrollToThreadInPanel(mid, false);
       }
-    }
-
-    /**
-     * トラッキング完了後もしばらくスレッドを表示し続ける
-     * renderThreadsが呼ばれてもスレッドを見失わないようにする
-     * @param {string} mid - メッセージID
-     */
-    keepThreadVisibleAfterTracking(mid) {
-      // 3秒間、定期的にスレッドを表示位置に維持
-      const duration = 3000;
-      const interval = 200;
-      const startTime = Date.now();
-      
-      const keepVisible = () => {
-        if (Date.now() - startTime > duration) {
-          return; // 時間切れ
-        }
-        
-        this.keepTrackingThreadVisible(mid);
-        setTimeout(keepVisible, interval);
-      };
-      
-      keepVisible();
     }
 
     /**
