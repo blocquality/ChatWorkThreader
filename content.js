@@ -2333,8 +2333,8 @@
           helpIconUrl = chrome.runtime.getURL('icons/book-minimalistic-svgrepo-com.svg');
           participationIconUrl = chrome.runtime.getURL('icons/user-svgrepo-com.svg');
           flatListIconUrl = chrome.runtime.getURL('icons/layers-minimalistic-svgrepo-com.svg');
-          maximizeIconUrl = chrome.runtime.getURL('icons/maximize-square-minimalistic-svgrepo-com.svg');
-          minimizeIconUrl = chrome.runtime.getURL('icons/minimize-square-minimalistic-svgrepo-com.svg');
+          maximizeIconUrl = chrome.runtime.getURL('icons/add-square-svgrepo-com.svg');
+          minimizeIconUrl = chrome.runtime.getURL('icons/minus-square-svgrepo-com.svg');
         } catch (e) {
           // 拡張機能のコンテキストが無効な場合
         }

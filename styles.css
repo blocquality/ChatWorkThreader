@@ -1158,8 +1158,8 @@ kbd {
   width: 16px;
   height: 16px;
   object-fit: contain;
-  filter: grayscale(100%);
-  opacity: 0.55;
+  filter: brightness(0) saturate(100%) invert(36%) sepia(93%) saturate(1352%) hue-rotate(196deg) brightness(97%) contrast(91%);
+  opacity: 1;
   transition: all 0.2s ease;
 }
 
@@ -1176,8 +1176,8 @@ kbd {
 }
 
 .cw-threader-thread-toggle-btn.active img {
-  opacity: 1;
-  filter: brightness(0) saturate(100%) invert(36%) sepia(93%) saturate(1352%) hue-rotate(196deg) brightness(97%) contrast(91%);
+  opacity: 0.55;
+  filter: grayscale(100%);
 }
 
 /* 返信数バッジ */
@@ -1877,8 +1877,8 @@ kbd {
 
 /* ダークテーマ - スレッド開閉アイコンボタン */
 .cw-threader-dark .cw-threader-thread-toggle-btn img {
-  filter: grayscale(100%) invert(1);
-  opacity: 0.5;
+  filter: brightness(0) saturate(100%) invert(67%) sepia(67%) saturate(497%) hue-rotate(182deg) brightness(101%) contrast(94%);
+  opacity: 1;
 }
 
 .cw-threader-dark .cw-threader-thread-toggle-btn:hover {
@@ -1890,8 +1890,8 @@ kbd {
 }
 
 .cw-threader-dark .cw-threader-thread-toggle-btn.active img {
-  opacity: 1;
-  filter: brightness(0) saturate(100%) invert(67%) sepia(67%) saturate(497%) hue-rotate(182deg) brightness(101%) contrast(94%);
+  opacity: 0.5;
+  filter: grayscale(100%) invert(1);
 }
 
 /* ダークテーマ - スクロールバー */
