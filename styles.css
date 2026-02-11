@@ -1127,6 +1127,7 @@ kbd {
   align-items: center;
   gap: 6px;
   margin-left: auto;
+  margin-right: 28px;
 }
 
 .cw-threader-reply-label {
