@@ -747,6 +747,30 @@
       const messageElements = document.querySelectorAll('[data-mid]._message');
       let lastUserName = '';
       let lastAvatarUrl = '';
+
+      // AID → Avatar URL マップを構築（ページ全体のアバター画像から）
+      // To先や返信先のアバターURL解決に使用
+      this.aidAvatarMap = new Map();
+      const allAvatarImgs = document.querySelectorAll('img.userIconImage, img[data-testid="user-icon"], img[src*="avatar"], img[src*="ico_default"]');
+      allAvatarImgs.forEach(img => {
+        const src = img.src || '';
+        if (!src) return;
+        // data-aid属性から取得
+        let aid = img.getAttribute('data-aid');
+        // 親要素のdata-aidから取得
+        if (!aid) {
+          const parent = img.closest('[data-aid]');
+          if (parent) aid = parent.getAttribute('data-aid');
+        }
+        // URLからAIDを抽出（avatar/XXXX パターン）
+        if (!aid) {
+          const aidMatch = src.match(/avatar\/(?:ico_default_\w+\.png|(\d+)|(\w+)\.\w+\.?\w*)/);
+          // ico_default パターンはAIDを持たないのでスキップ
+        }
+        if (aid && !this.aidAvatarMap.has(aid)) {
+          this.aidAvatarMap.set(aid, src);
+        }
+      });
       
       // デバッグ: 自分宛てメッセージのMIDを収集
       const toMeMids = [];
@@ -1240,9 +1264,18 @@
           const toTags = preEl.querySelectorAll('[data-cwtag^="[to"]:not([data-cwtag="[toall]"])');
           toTags.forEach(toTag => {
             const cwtag = toTag.getAttribute('data-cwtag') || '';
-            // AIDを取得
-            const aidMatch = cwtag.match(/aid=(\d+)/);
-            const aid = aidMatch ? aidMatch[1] : null;
+            // AIDを取得（[to:XXXX] 形式と [to aid=XXXX] 形式の両方に対応）
+            let aid = null;
+            const aidFormatMatch = cwtag.match(/aid=(\d+)/);
+            if (aidFormatMatch) {
+              aid = aidFormatMatch[1];
+            } else {
+              // [to:XXXX] 形式（コロン区切り）
+              const colonFormatMatch = cwtag.match(/\[to:(\d+)\]/);
+              if (colonFormatMatch) {
+                aid = colonFormatMatch[1];
+              }
+            }
             
             // アバターURLを取得（複数のセレクタパターンに対応）
             let toAvatarUrl = '';
@@ -1263,6 +1296,17 @@
               const existingAvatar = document.querySelector(`img[data-aid="${aid}"][src*="avatar"], img[data-aid="${aid}"][src*="ico_default"], [data-aid="${aid}"] img.userIconImage`);
               if (existingAvatar) {
                 toAvatarUrl = existingAvatar.src || '';
+              }
+            }
+            // AID→Avatarマップからフォールバック
+            if (!toAvatarUrl && aid && this.aidAvatarMap && this.aidAvatarMap.has(aid)) {
+              toAvatarUrl = this.aidAvatarMap.get(aid);
+            }
+            // それでも見つからない場合、_avatarAidXXXXクラスで探す
+            if (!toAvatarUrl && aid) {
+              const classAvatar = document.querySelector(`img._avatarAid${aid}`);
+              if (classAvatar && classAvatar.src) {
+                toAvatarUrl = classAvatar.src;
               }
             }
             
@@ -1714,6 +1758,17 @@
               parentAvatarUrl = rpBtnImg.src || '';
             }
           }
+          // AID→Avatarマップからフォールバック
+          if (!parentAvatarUrl && parentAid && this.aidAvatarMap && this.aidAvatarMap.has(parentAid)) {
+            parentAvatarUrl = this.aidAvatarMap.get(parentAid);
+          }
+          // _avatarAidXXXXクラスで探す
+          if (!parentAvatarUrl && parentAid) {
+            const classAvatar = document.querySelector(`img._avatarAid${parentAid}`);
+            if (classAvatar && classAvatar.src) {
+              parentAvatarUrl = classAvatar.src;
+            }
+          }
         }
 
         const messageData = {
@@ -1757,6 +1812,28 @@
       // デバッグ: 自分宛てメッセージを出力
       // console.log('[ChatWorkThreader] 自分宛てメッセージ (isToMe=true) の MID一覧:', toMeMids);
       // console.log('[ChatWorkThreader] 自分宛てメッセージ数:', toMeMids.length, '/', messageElements.length, '件');
+
+      // セカンドパス: 収集したメッセージの送信者情報を使ってAID→Avatarマップを補完し、
+      // 未解決のTo先・返信先アバターを埋める
+      this.allMessages.forEach(msg => {
+        if (msg.senderAid && msg.avatarUrl && !this.aidAvatarMap.has(msg.senderAid)) {
+          this.aidAvatarMap.set(msg.senderAid, msg.avatarUrl);
+        }
+      });
+      // 未解決のTo先アバターを補完
+      this.allMessages.forEach(msg => {
+        if (msg.toTargets && msg.toTargets.length > 0) {
+          msg.toTargets.forEach(target => {
+            if (!target.avatarUrl && target.aid && this.aidAvatarMap.has(target.aid)) {
+              target.avatarUrl = this.aidAvatarMap.get(target.aid);
+            }
+          });
+        }
+        // 未解決の返信先アバターを補完
+        if (!msg.parentAvatarUrl && msg.parentAid && this.aidAvatarMap.has(msg.parentAid)) {
+          msg.parentAvatarUrl = this.aidAvatarMap.get(msg.parentAid);
+        }
+      });
     }
 
     /**
@@ -3313,7 +3390,7 @@
               </div>
             ` : ''}
           </div>
-          ${this.formatToTargetsHtml(node.toTargets)}
+          ${this.formatReplyAndToTargetsHtml(node)}
           ${messageContentHtml}
         </div>
       `;
@@ -3617,6 +3694,35 @@
       if (!tagsHtml) return '';
       
       return `<div class="cw-threader-to-targets"><span class="cw-threader-to-label">To:</span>${tagsHtml}</div>`;
+    }
+
+    /**
+     * 返信先（Re:）とTo先ユーザーをまとめてアバター付きでフォーマット
+     * @param {Object} node - メッセージノード
+     * @returns {string} HTML文字列
+     */
+    formatReplyAndToTargetsHtml(node) {
+      let html = '';
+      
+      // 返信先（Re:）の表示（parentAidとparentUserNameがある場合）
+      if (node.parentUserName || node.parentAid) {
+        const name = node.parentUserName || '';
+        const avatarUrl = node.parentAvatarUrl || '';
+        
+        let avatarHtml = '';
+        if (avatarUrl) {
+          avatarHtml = `<img src="${this.escapeHtml(avatarUrl)}" class="cw-threader-to-avatar" alt="">`;
+        } else {
+          avatarHtml = '<span class="cw-threader-to-default-avatar"></span>';
+        }
+        
+        html += `<div class="cw-threader-to-targets"><span class="cw-threader-to-label cw-threader-re-label">Re:</span><span class="cw-threader-to-tag cw-threader-re-tag">${avatarHtml}<span class="cw-threader-to-name">${this.escapeHtml(name)}</span></span></div>`;
+      }
+      
+      // To先の表示
+      html += this.formatToTargetsHtml(node.toTargets);
+      
+      return html;
     }
 
     /**

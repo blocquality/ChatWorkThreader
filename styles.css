@@ -784,9 +784,45 @@ kbd {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #c0c0c0;
+  background: #b0bec5;
   flex-shrink: 0;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* デフォルトアバターのユーザーアイコン（SVGシルエット） */
+.cw-threader-to-default-avatar::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+}
+
+.cw-threader-to-default-avatar::before {
+  content: '';
+  width: 14px;
+  height: 7px;
+  background: white;
+  border-radius: 0 0 7px 7px;
+  position: absolute;
+  bottom: 0;
+}
+
+/* Re:ラベル */
+.cw-threader-re-label {
+  color: #e67e22;
+}
+
+/* Re:タグ */
+.cw-threader-re-tag {
+  background: #fef3e8;
+  border-color: #f0d4b0;
+  color: #d35400;
 }
 
 .cw-threader-to-all-icon {
@@ -1951,6 +1987,16 @@ kbd {
 
 .cw-threader-dark .cw-threader-to-default-avatar {
   background: #555;
+}
+
+.cw-threader-dark .cw-threader-re-label {
+  color: #e67e22;
+}
+
+.cw-threader-dark .cw-threader-re-tag {
+  background: #3d2e1a;
+  border-color: #5a3e1f;
+  color: #e67e22;
 }
 
 /* ダークテーマ - 引用メッセージ */
