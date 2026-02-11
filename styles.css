@@ -750,6 +750,14 @@ kbd {
   font-size: 12px;
 }
 
+/* インライン表示用 To/Re タグ（改行を生まない） */
+.cw-threader-to-inline {
+  display: inline-flex;
+  margin-bottom: 0;
+  margin-right: 2px;
+  vertical-align: middle;
+}
+
 .cw-threader-to-label {
   color: #888;
   font-weight: 500;

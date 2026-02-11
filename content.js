@@ -3404,13 +3404,25 @@
         // 最初のテキストセグメントのインデックスを見つける（外部リンク等の適用先）
         const firstTextIdx = node.messageSegments.findIndex(s => s.type === 'text');
         
-        // 連続するtoセグメントをグループ化するため、前処理
+        // 非引用セグメントをバッファに蓄積し、引用またはセグメント末で1つのdivにまとめる
+        // これにより、To/Reタグが不要な改行を生まない
         const segments = node.messageSegments;
         let i = 0;
+        let bodyBuffer = ''; // 非引用セグメントのHTMLバッファ
+        
+        const flushBodyBuffer = () => {
+          if (bodyBuffer) {
+            messageContentHtml += `<div class="cw-threader-message-body">${bodyBuffer}</div>`;
+            bodyBuffer = '';
+          }
+        };
+        
         while (i < segments.length) {
           const segment = segments[i];
           
           if (segment.type === 'quote') {
+            // 引用の前にバッファをフラッシュ
+            flushBodyBuffer();
             const quoteLinks = segment.externalLinks || [];
             messageContentHtml += this.formatQuoteWithPreviews(
               segment.content, 
@@ -3421,7 +3433,7 @@
             quoteIndex++;
             i++;
           } else if (segment.type === 'text') {
-            // 空のテキストセグメントはスキップ
+            // テキストはバッファに追加（インラインで連続する）
             if (segment.content && segment.content.trim()) {
               const textHtml = this.formatMessageTextWithPreviews(
                 segment.content,
@@ -3429,7 +3441,7 @@
                 i === firstTextIdx ? (node.externalLinks || []) : [],
                 i === firstTextIdx ? (node.filePreviewInfo || []) : []
               );
-              messageContentHtml += `<div class="cw-threader-message-body">${textHtml}</div>`;
+              bodyBuffer += textHtml;
             }
             i++;
           } else if (segment.type === 'reply') {
@@ -3439,7 +3451,7 @@
             let avatarHtml = rpAvatarUrl
               ? `<img src="${this.escapeHtml(rpAvatarUrl)}" class="cw-threader-to-avatar" alt="">`
               : '<span class="cw-threader-to-default-avatar"></span>';
-            messageContentHtml += `<div class="cw-threader-to-targets"><span class="cw-threader-to-label cw-threader-re-label">Re:</span><span class="cw-threader-to-tag cw-threader-re-tag">${avatarHtml}<span class="cw-threader-to-name">${this.escapeHtml(rpName)}</span></span></div>`;
+            bodyBuffer += `<span class="cw-threader-to-targets cw-threader-to-inline"><span class="cw-threader-to-label cw-threader-re-label">Re:</span><span class="cw-threader-to-tag cw-threader-re-tag">${avatarHtml}<span class="cw-threader-to-name">${this.escapeHtml(rpName)}</span></span></span>`;
             i++;
           } else if (segment.type === 'to') {
             // 連続するtoセグメントを1つにまとめる
@@ -3450,12 +3462,14 @@
               mergedTargets.push(...(segments[j].targets || []));
               j++;
             }
-            messageContentHtml += this.formatToTargetsHtml(mergedTargets);
+            bodyBuffer += this.formatToTargetsHtmlInline(mergedTargets);
             i = j;
           } else {
             i++;
           }
         }
+        // 残りのバッファをフラッシュ
+        flushBodyBuffer();
       } else {
         // 後方互換性: messageSegmentsがない場合は旧形式で表示
         const quotedHtml = node.quotedMessage 
@@ -3802,6 +3816,37 @@
       if (!tagsHtml) return '';
       
       return `<div class="cw-threader-to-targets"><span class="cw-threader-to-label">To:</span>${tagsHtml}</div>`;
+    }
+
+    /**
+     * To先ユーザーをインライン（span）でフォーマット（改行を生まない）
+     * @param {Array} toTargets
+     * @returns {string} HTML文字列
+     */
+    formatToTargetsHtmlInline(toTargets) {
+      if (!toTargets || toTargets.length === 0) return '';
+      
+      const tagsHtml = toTargets.map(target => {
+        const name = typeof target === 'string' ? target : (target.name || '');
+        const avatarUrl = typeof target === 'string' ? '' : (target.avatarUrl || '');
+        
+        if (!name) return '';
+        
+        let avatarHtml = '';
+        if (name === 'ALL') {
+          avatarHtml = '<span class="cw-threader-to-all-icon">👥</span>';
+        } else if (avatarUrl) {
+          avatarHtml = `<img src="${this.escapeHtml(avatarUrl)}" class="cw-threader-to-avatar" alt="">`;
+        } else {
+          avatarHtml = '<span class="cw-threader-to-default-avatar"></span>';
+        }
+        
+        return `<span class="cw-threader-to-tag">${avatarHtml}<span class="cw-threader-to-name">${this.escapeHtml(name)}</span></span>`;
+      }).filter(h => h).join('');
+      
+      if (!tagsHtml) return '';
+      
+      return `<span class="cw-threader-to-targets cw-threader-to-inline"><span class="cw-threader-to-label">To:</span>${tagsHtml}</span>`;
     }
 
     /**
