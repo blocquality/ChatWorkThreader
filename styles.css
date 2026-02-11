@@ -1552,25 +1552,23 @@ kbd {
 
 /* コピーボタン */
 .cw-threader-copy-btn {
-  display: inline-flex;
+  position: absolute;
+  top: 8px;
+  right: 4px;
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 22px;
   height: 22px;
   padding: 0;
-  margin-left: 4px;
   background: transparent;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   color: #909090;
-  opacity: 0;
-  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
-}
-
-/* メッセージホバー時にコピーボタンを表示 */
-.cw-threader-message:hover .cw-threader-copy-btn {
   opacity: 1;
+  transition: background 0.15s ease, color 0.15s ease;
+  z-index: 5;
 }
 
 .cw-threader-copy-btn:hover {

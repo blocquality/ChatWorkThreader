@@ -3508,12 +3508,6 @@
           <div class="cw-threader-message-header">
             <span class="cw-threader-username">${this.escapeHtml(node.userName)}</span>
             ${node.timestamp ? `<span class="cw-threader-time">· ${this.formatDateTime(node.timestamp)}</span>` : ''}
-            <button class="cw-threader-copy-btn" title="${t('copy_message')}" data-message-text="${this.escapeHtml(node.messageText || '')}">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
-            </button>
             ${isRootWithReplies ? `
               <div class="cw-threader-toggle-wrap">
                 <span class="cw-threader-reply-label">${replyCount}${t('reply_count_suffix')}</span>
@@ -3526,6 +3520,12 @@
           ${hasInlineToRe ? '' : this.formatReplyAndToTargetsHtml(node)}
           ${messageContentHtml}
         </div>
+        <button class="cw-threader-copy-btn" title="${t('copy_message')}" data-message-text="${this.escapeHtml(node.messageText || '')}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </button>
       `;
 
       // ファイルプレビューボタンのクリックイベントを設定
