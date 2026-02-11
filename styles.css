@@ -1123,16 +1123,18 @@ kbd {
 
 /* 返信トグルラッパー */
 .cw-threader-toggle-wrap {
+  position: absolute;
+  top: 4px;
+  right: 60px;
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-left: auto;
-  margin-right: 54px;
 }
 
 .cw-threader-reply-label {
   font-size: 11px;
   color: #606060;
+  line-height: 24px;
 }
 
 /* スレッド開閉アイコンボタン */
@@ -1141,8 +1143,8 @@ kbd {
   border: none;
   cursor: pointer;
   padding: 2px;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 4px;
   display: flex;
   align-items: center;
