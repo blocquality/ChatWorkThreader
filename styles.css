@@ -759,7 +759,7 @@ kbd {
 }
 
 .cw-threader-to-label {
-  color: #888;
+  color: #1976d2;
   font-weight: 500;
   font-size: 11px;
   margin-right: 2px;
@@ -1984,7 +1984,7 @@ kbd {
 
 /* ダークテーマ - To先ユーザー表示 */
 .cw-threader-dark .cw-threader-to-label {
-  color: #888;
+  color: #64b5f6;
 }
 
 .cw-threader-dark .cw-threader-to-tag {
