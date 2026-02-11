@@ -2332,7 +2332,7 @@
           settingsIconUrl = chrome.runtime.getURL('icons/settings-svgrepo-com.svg');
           helpIconUrl = chrome.runtime.getURL('icons/book-minimalistic-svgrepo-com.svg');
           participationIconUrl = chrome.runtime.getURL('icons/user-participation-svgrepo-com.svg');
-          flatListIconUrl = chrome.runtime.getURL('icons/flat-list-svgrepo-com.svg');
+          flatListIconUrl = chrome.runtime.getURL('icons/layers-minimalistic-svgrepo-com.svg');
           maximizeIconUrl = chrome.runtime.getURL('icons/maximize-square-minimalistic-svgrepo-com.svg');
           minimizeIconUrl = chrome.runtime.getURL('icons/minimize-square-minimalistic-svgrepo-com.svg');
         } catch (e) {
