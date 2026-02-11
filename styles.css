@@ -320,9 +320,12 @@
 .cw-threader-settings-label {
   font-size: 13px;
   color: #555;
+  min-width: 72px;
+  flex-shrink: 0;
 }
 
 .cw-threader-settings-select {
+  flex: 1;
   min-width: 145px;
   padding: 6px 24px 6px 10px;
   font-size: 13px;
