@@ -38,7 +38,9 @@
 				"icons/user-svgrepo-com.svg",
 				"icons/layers-minimalistic-svgrepo-com.svg",
 				"icons/maximize-square-minimalistic-svgrepo-com.svg",
-				"icons/minimize-square-minimalistic-svgrepo-com.svg"
+				"icons/minimize-square-minimalistic-svgrepo-com.svg",
+				"icons/add-square-svgrepo-com.svg",
+				"icons/minus-square-svgrepo-com.svg"
 			],
 			"matches": ["https://www.chatwork.com/*"]
 		}
