@@ -168,24 +168,55 @@
   filter: brightness(0) saturate(100%) invert(36%) sepia(93%) saturate(1352%) hue-rotate(196deg) brightness(97%) contrast(91%);
 }
 
-/* フィルタートグル */
-.cw-threader-filter-toggle {
+/* アイコントグルボタン */
+.cw-threader-icon-toggle {
+  background: transparent;
+  border: 1px solid #d0d0d0;
+  color: #999;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  outline: none;
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-shrink: 1;
-  /* 幅が足りない時は縮む */
-  overflow: hidden;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 4px;
+  opacity: 0.4;
 }
 
-.cw-threader-filter-label {
-  font-size: 11px;
-  color: #606060;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex-shrink: 1;
-  /* ラベルだけが縮む */
+.cw-threader-icon-toggle img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  opacity: 0.4;
+  filter: grayscale(100%);
+  transition: all 0.2s ease;
+}
+
+.cw-threader-icon-toggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: #aaa;
+  opacity: 0.7;
+}
+
+.cw-threader-icon-toggle:hover img {
+  opacity: 0.7;
+}
+
+.cw-threader-icon-toggle.active {
+  background: rgba(25, 118, 210, 0.1);
+  border-color: #1976d2;
+  color: #1976d2;
+  opacity: 1;
+}
+
+.cw-threader-icon-toggle.active img {
+  opacity: 1;
+  filter: brightness(0) saturate(100%) invert(36%) sepia(93%) saturate(1352%) hue-rotate(196deg) brightness(97%) contrast(91%);
 }
 
 /* フィルタースイッチはトグルスイッチ共通スタイルを継承 */
@@ -1675,9 +1706,36 @@ kbd {
   color: #fff;
 }
 
-/* ダークテーマ - フィルターラベル */
-.cw-threader-dark .cw-threader-filter-label {
-  color: #aaa;
+/* ダークテーマ - アイコントグルボタン */
+.cw-threader-dark .cw-threader-icon-toggle {
+  border-color: #555;
+  color: #888;
+}
+
+.cw-threader-dark .cw-threader-icon-toggle img {
+  filter: grayscale(100%) invert(1);
+  opacity: 0.3;
+}
+
+.cw-threader-dark .cw-threader-icon-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #777;
+}
+
+.cw-threader-dark .cw-threader-icon-toggle:hover img {
+  opacity: 0.6;
+}
+
+.cw-threader-dark .cw-threader-icon-toggle.active {
+  background: rgba(100, 181, 246, 0.15);
+  border-color: #64b5f6;
+  color: #64b5f6;
+  opacity: 1;
+}
+
+.cw-threader-dark .cw-threader-icon-toggle.active img {
+  opacity: 1;
+  filter: brightness(0) saturate(100%) invert(67%) sepia(67%) saturate(497%) hue-rotate(182deg) brightness(101%) contrast(94%);
 }
 
 /* ダークテーマ - セレクト */
@@ -1826,7 +1884,7 @@ kbd {
   color: #fbd38d;
 }
 
-/* ダークテーマ - トグルスイッチ */
+/* ダークテーマ - トグルスイッチ (レガシー) */
 .cw-threader-dark .cw-threader-toggle-switch {
   background: #444;
 }

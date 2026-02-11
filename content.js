@@ -2196,18 +2196,18 @@
       // フラット表示モード
       if (settings.flatIndentMode !== undefined) {
         this.flatIndentMode = settings.flatIndentMode;
-        const flatModeCheckbox = document.getElementById('cw-threader-flat-mode');
-        if (flatModeCheckbox) {
-          flatModeCheckbox.checked = this.flatIndentMode;
+        const flatModeBtn = document.getElementById('cw-threader-flat-mode');
+        if (flatModeBtn) {
+          flatModeBtn.classList.toggle('active', this.flatIndentMode);
         }
       }
 
       // 自分参加のみフィルター
       if (settings.showOnlyMyThreads !== undefined) {
         this.showOnlyMyThreads = settings.showOnlyMyThreads;
-        const filterCheckbox = document.getElementById('cw-threader-my-filter');
-        if (filterCheckbox) {
-          filterCheckbox.checked = this.showOnlyMyThreads;
+        const filterBtn = document.getElementById('cw-threader-my-filter');
+        if (filterBtn) {
+          filterBtn.classList.toggle('active', this.showOnlyMyThreads);
         }
       }
     }
@@ -2322,11 +2322,15 @@
       let threadsIconUrl = '';
       let settingsIconUrl = '';
       let helpIconUrl = '';
+      let participationIconUrl = '';
+      let flatListIconUrl = '';
       if (isExtensionContextValid()) {
         try {
           threadsIconUrl = chrome.runtime.getURL('icons/chat-round-line-svgrepo-com.svg');
           settingsIconUrl = chrome.runtime.getURL('icons/settings-svgrepo-com.svg');
           helpIconUrl = chrome.runtime.getURL('icons/book-minimalistic-svgrepo-com.svg');
+          participationIconUrl = chrome.runtime.getURL('icons/user-participation-svgrepo-com.svg');
+          flatListIconUrl = chrome.runtime.getURL('icons/flat-list-svgrepo-com.svg');
         } catch (e) {
           // 拡張機能のコンテキストが無効な場合
         }
@@ -2357,20 +2361,12 @@
             <select id="cw-threader-speaker-filter" class="cw-threader-speaker-select" data-ct-i18n-title="filter_by_speaker" title="${t('filter_by_speaker')}">
               <option value="" data-ct-i18n="filter_all">${t('filter_all')}</option>
             </select>
-            <div class="cw-threader-filter-toggle">
-              <span class="cw-threader-filter-label" data-ct-i18n="my_participation" data-ct-i18n-title="my_participation_tooltip" title="${t('my_participation_tooltip')}">${t('my_participation')} </span>
-              <label class="cw-threader-toggle-switch cw-threader-filter-switch">
-                <input type="checkbox" id="cw-threader-my-filter">
-                <span class="cw-threader-toggle-slider"></span>
-              </label>
-            </div>
-            <div class="cw-threader-filter-toggle">
-              <span class="cw-threader-filter-label" data-ct-i18n="flat_mode">${t('flat_mode')}</span>
-              <label class="cw-threader-toggle-switch cw-threader-filter-switch">
-                <input type="checkbox" id="cw-threader-flat-mode">
-                <span class="cw-threader-toggle-slider"></span>
-              </label>
-            </div>
+            <button id="cw-threader-my-filter" class="cw-threader-icon-toggle" data-ct-i18n-title="my_participation_tooltip" title="${t('my_participation_tooltip')}">
+              ${participationIconUrl ? `<img src="${participationIconUrl}" data-ct-i18n-alt="my_participation" alt="${t('my_participation')}">` : '👤'}
+            </button>
+            <button id="cw-threader-flat-mode" class="cw-threader-icon-toggle" data-ct-i18n-title="flat_mode" title="${t('flat_mode')}">
+              ${flatListIconUrl ? `<img src="${flatListIconUrl}" data-ct-i18n-alt="flat_mode" alt="${t('flat_mode')}">` : '☰'}
+            </button>
             <button id="cw-threader-refresh" class="cw-threader-refresh-btn" data-ct-i18n-title="refresh" title="${t('refresh')}">↻</button>
           </div>
           <div class="cw-threader-search-bar">
@@ -2473,11 +2469,12 @@
         this.refresh();
       });
 
-      // フラット表示モードのトグルのイベントリスナー
-      const flatModeCheckbox = document.getElementById('cw-threader-flat-mode');
-      if (flatModeCheckbox) {
-        flatModeCheckbox.addEventListener('change', () => {
-          this.flatIndentMode = flatModeCheckbox.checked;
+      // フラット表示モードのアイコンボタンのイベントリスナー
+      const flatModeBtn = document.getElementById('cw-threader-flat-mode');
+      if (flatModeBtn) {
+        flatModeBtn.addEventListener('click', () => {
+          this.flatIndentMode = !this.flatIndentMode;
+          flatModeBtn.classList.toggle('active', this.flatIndentMode);
           this.saveRoomSettings(); // 設定を保存
           // フラットモード切り替え時にパネル幅を再計算
           let panelWidth;
@@ -2495,11 +2492,12 @@
         });
       }
 
-      // フィルタートグルのイベントリスナー
-      const filterCheckbox = document.getElementById('cw-threader-my-filter');
-      if (filterCheckbox) {
-        filterCheckbox.addEventListener('change', () => {
-          this.showOnlyMyThreads = filterCheckbox.checked;
+      // フィルタートグル（自分の参加のみ）のアイコンボタンのイベントリスナー
+      const filterBtn = document.getElementById('cw-threader-my-filter');
+      if (filterBtn) {
+        filterBtn.addEventListener('click', () => {
+          this.showOnlyMyThreads = !this.showOnlyMyThreads;
+          filterBtn.classList.toggle('active', this.showOnlyMyThreads);
           this.saveRoomSettings(); // 設定を保存
           this.refresh();
         });
