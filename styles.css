@@ -740,6 +740,67 @@ kbd {
   word-break: break-word;
 }
 
+/* To先ユーザー表示 */
+.cw-threader-to-targets {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.cw-threader-to-label {
+  color: #888;
+  font-weight: 500;
+  font-size: 11px;
+  margin-right: 2px;
+  flex-shrink: 0;
+}
+
+.cw-threader-to-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #e8f4fd;
+  border: 1px solid #c4dff0;
+  border-radius: 12px;
+  padding: 1px 8px 1px 2px;
+  font-size: 11px;
+  color: #1976d2;
+  line-height: 1.4;
+  max-width: 160px;
+}
+
+.cw-threader-to-avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.cw-threader-to-default-avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #c0c0c0;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.cw-threader-to-all-icon {
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.cw-threader-to-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* 本文中のURLリンク */
 .cw-threader-link {
   color: #0b8ec4;
@@ -1875,6 +1936,21 @@ kbd {
 
 .cw-threader-dark .cw-threader-link:hover {
   color: #90caf9;
+}
+
+/* ダークテーマ - To先ユーザー表示 */
+.cw-threader-dark .cw-threader-to-label {
+  color: #888;
+}
+
+.cw-threader-dark .cw-threader-to-tag {
+  background: #1e3a4f;
+  border-color: #2c5570;
+  color: #64b5f6;
+}
+
+.cw-threader-dark .cw-threader-to-default-avatar {
+  background: #555;
 }
 
 /* ダークテーマ - 引用メッセージ */

@@ -1235,19 +1235,79 @@
             externalLinks.push({ url: href, title, hasPreviewButton });
           });
           
-          // To宛先を取得
-          const toTags = preEl.querySelectorAll('[data-cwtag^="[to"]');
+          // To宛先を取得（名前・アバターURL・AIDをオブジェクトとして保持）
+          // [toall] は別途処理するため除外
+          const toTags = preEl.querySelectorAll('[data-cwtag^="[to"]:not([data-cwtag="[toall]"])');
           toTags.forEach(toTag => {
-            const toName = toTag.textContent?.trim() || '';
-            if (toName && !toTargets.includes(toName)) {
-              toTargets.push(toName);
+            const cwtag = toTag.getAttribute('data-cwtag') || '';
+            // AIDを取得
+            const aidMatch = cwtag.match(/aid=(\d+)/);
+            const aid = aidMatch ? aidMatch[1] : null;
+            
+            // アバターURLを取得（複数のセレクタパターンに対応）
+            let toAvatarUrl = '';
+            const toAvatarImg = toTag.querySelector('img[data-testid="user-icon"], img.userIconImage, img[src*="avatar"], img[src*="ico_default"]');
+            if (toAvatarImg) {
+              toAvatarUrl = toAvatarImg.src || '';
+            }
+            // ボタン内のアバターも確認
+            if (!toAvatarUrl) {
+              const btnImg = toTag.querySelector('button img[src*="avatar"], button img[src*="ico_default"], button img[data-testid="user-icon"]');
+              if (btnImg) {
+                toAvatarUrl = btnImg.src || '';
+              }
+            }
+            // data-aidからアバターURLを推測（ChatWorkのアバターURLパターン）
+            if (!toAvatarUrl && aid) {
+              // ページ内の同じAIDのアバターを探す
+              const existingAvatar = document.querySelector(`img[data-aid="${aid}"][src*="avatar"], img[data-aid="${aid}"][src*="ico_default"], [data-aid="${aid}"] img.userIconImage`);
+              if (existingAvatar) {
+                toAvatarUrl = existingAvatar.src || '';
+              }
+            }
+            
+            // ユーザー名を取得（To要素のテキストコンテンツから）
+            let toName = toTag.textContent?.trim() || '';
+            
+            // To要素の次のsiblingから「〇〇さん」形式の名前を取得
+            if (!toName) {
+              let nextNode = toTag.nextSibling;
+              while (nextNode) {
+                if (nextNode.nodeType === Node.TEXT_NODE) {
+                  const text = nextNode.textContent.trim();
+                  if (text) {
+                    const nameMatch = text.match(/^(.+?)さん/);
+                    toName = nameMatch ? nameMatch[1] : text;
+                    break;
+                  }
+                } else if (nextNode.nodeType === Node.ELEMENT_NODE && nextNode.tagName === 'SPAN') {
+                  const text = nextNode.textContent.trim();
+                  if (text) {
+                    const nameMatch = text.match(/^(.+?)さん/);
+                    toName = nameMatch ? nameMatch[1] : text;
+                    break;
+                  }
+                }
+                nextNode = nextNode.nextSibling;
+              }
+            }
+            
+            if (toName || aid) {
+              // 重複チェック（AIDまたは名前で）
+              const isDuplicate = toTargets.some(t => (aid && t.aid === aid) || (!aid && t.name === toName));
+              if (!isDuplicate) {
+                toTargets.push({ name: toName, avatarUrl: toAvatarUrl, aid });
+              }
             }
           });
           
           // ToAllも確認
           const toAllTag = preEl.querySelector('[data-cwtag="[toall]"]');
-          if (toAllTag && !toTargets.includes('ALL')) {
-            toTargets.push('ALL');
+          if (toAllTag) {
+            const isDuplicate = toTargets.some(t => t.name === 'ALL');
+            if (!isDuplicate) {
+              toTargets.push({ name: 'ALL', avatarUrl: '', aid: null });
+            }
           }
           
           // メッセージ本文を取得（DOM順序を保持してセグメント化）
@@ -1572,15 +1632,49 @@
           if (textSegments.length > 0) {
             let rawText = textSegments.map(seg => seg.content).join('\n').trim();
             
-            // 「〇〇さん」の行を抽出してから除去（返信先ユーザー名）
+            // To先・返信先の「〇〇さん」の行をすべて除去
+            // toTargetsに名前がある場合、それらに対応する「〇〇さん」パターンを除去
+            const toNames = toTargets.map(t => t.name).filter(n => n && n !== 'ALL');
+            
+            // まず最初の「〇〇さん」を返信先ユーザー名として取得
             const userNameMatch = rawText.match(/^(.+?)さん[\r\n\s]+/);
             if (userNameMatch) {
               replyTargetUserName = userNameMatch[1];
-              rawText = rawText.replace(/^.+?さん[\r\n\s]+/, '');
-              // 最初のセグメントも更新
-              if (messageSegments.length > 0 && messageSegments[0].type === 'text') {
-                messageSegments[0].content = messageSegments[0].content.replace(/^.+?さん[\r\n\s]+/, '').trim();
+            }
+            
+            // To先の名前に一致する「〇〇さん」パターンをすべて除去
+            if (toNames.length > 0) {
+              for (const name of toNames) {
+                const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const pattern = new RegExp(escapedName + 'さん[\\r\\n\\s]*', 'g');
+                rawText = rawText.replace(pattern, '');
               }
+            }
+            // 返信先の「〇〇さん」も除去（toTargetsに含まれない場合）
+            if (replyTargetUserName) {
+              const escapedName = replyTargetUserName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const pattern = new RegExp('^' + escapedName + 'さん[\\r\\n\\s]*');
+              rawText = rawText.replace(pattern, '');
+            }
+            // 先頭・末尾の空白行を除去
+            rawText = rawText.replace(/^[\r\n\s]+/, '').replace(/[\r\n\s]+$/, '');
+            
+            // セグメントも更新
+            if (messageSegments.length > 0 && messageSegments[0].type === 'text') {
+              let segText = messageSegments[0].content;
+              if (toNames.length > 0) {
+                for (const name of toNames) {
+                  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                  const pattern = new RegExp(escapedName + 'さん[\\r\\n\\s]*', 'g');
+                  segText = segText.replace(pattern, '');
+                }
+              }
+              if (replyTargetUserName) {
+                const escapedName = replyTargetUserName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const pattern = new RegExp('^' + escapedName + 'さん[\\r\\n\\s]*');
+                segText = segText.replace(pattern, '');
+              }
+              messageSegments[0].content = segText.trim();
             }
             
             messageText = rawText.trim();
@@ -1596,6 +1690,7 @@
         const replyTag = el.querySelector('[data-cwtag^="[rp"]');
         let parentMid = null;
         let parentAid = null;
+        let parentAvatarUrl = '';
         if (replyTag) {
           const cwtag = replyTag.getAttribute('data-cwtag');
           // [rp aid=XXXX to=ROOMID-MESSAGEID] 形式をパース
@@ -1607,6 +1702,17 @@
           const aidMatch = cwtag.match(/aid=(\d+)/);
           if (aidMatch) {
             parentAid = aidMatch[1];
+          }
+          // 返信先アバターURLを取得
+          const rpAvatarImg = replyTag.querySelector('img[data-testid="user-icon"], img.userIconImage, img[src*="avatar"], img[src*="ico_default"]');
+          if (rpAvatarImg) {
+            parentAvatarUrl = rpAvatarImg.src || '';
+          }
+          if (!parentAvatarUrl) {
+            const rpBtnImg = replyTag.querySelector('button img[src*="avatar"], button img[src*="ico_default"], button img[data-testid="user-icon"]');
+            if (rpBtnImg) {
+              parentAvatarUrl = rpBtnImg.src || '';
+            }
           }
         }
 
@@ -1620,6 +1726,7 @@
           parentMid,
           parentUserName: replyTargetUserName, // 本文から取得したユーザー名を使用
           parentAid,
+          parentAvatarUrl, // 返信先アバターURL
           avatarUrl,
           element: el,
           quotedMessage,   // 引用メッセージ（後方互換用）
@@ -1752,6 +1859,7 @@
         parentMid: null,
         parentUserName: null,
         parentAid: null,
+        parentAvatarUrl: '',
         avatarUrl: '',
         element: null,
         isPlaceholder: true,
@@ -2538,7 +2646,7 @@
         node.messageText || '',
         node.userName || '',
         node.quotedMessage || '',
-        (node.toTargets || []).join(' ')
+        (node.toTargets || []).map(t => typeof t === 'string' ? t : t.name).join(' ')
       ].join(' ').toLowerCase();
       
       return searchTarget.includes(query);
@@ -3205,6 +3313,7 @@
               </div>
             ` : ''}
           </div>
+          ${this.formatToTargetsHtml(node.toTargets)}
           ${messageContentHtml}
         </div>
       `;
@@ -3474,6 +3583,40 @@
       });
       
       return `<div class="cw-threader-quote">${authorHtml}<div class="cw-threader-quote-body"><span class="cw-threader-quote-icon">❝</span>${contentHtml}</div></div>`;
+    }
+
+    /**
+     * To先ユーザーをアバター付きでフォーマット
+     * @param {Array} toTargets - To先ユーザー配列 [{ name, avatarUrl, aid }] or string[]
+     * @returns {string} HTML文字列
+     */
+    formatToTargetsHtml(toTargets) {
+      if (!toTargets || toTargets.length === 0) return '';
+      
+      const tagsHtml = toTargets.map(target => {
+        // 後方互換性: 文字列の場合はオブジェクトに変換
+        const name = typeof target === 'string' ? target : (target.name || '');
+        const avatarUrl = typeof target === 'string' ? '' : (target.avatarUrl || '');
+        
+        if (!name) return '';
+        
+        let avatarHtml = '';
+        if (name === 'ALL') {
+          // ALL の場合はアイコンなしで特別表示
+          avatarHtml = '<span class="cw-threader-to-all-icon">👥</span>';
+        } else if (avatarUrl) {
+          avatarHtml = `<img src="${this.escapeHtml(avatarUrl)}" class="cw-threader-to-avatar" alt="">`;
+        } else {
+          // デフォルトアバター（アバターURLがない場合）
+          avatarHtml = '<span class="cw-threader-to-default-avatar"></span>';
+        }
+        
+        return `<span class="cw-threader-to-tag">${avatarHtml}<span class="cw-threader-to-name">${this.escapeHtml(name)}</span></span>`;
+      }).filter(h => h).join('');
+      
+      if (!tagsHtml) return '';
+      
+      return `<div class="cw-threader-to-targets"><span class="cw-threader-to-label">To:</span>${tagsHtml}</div>`;
     }
 
     /**
