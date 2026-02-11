@@ -823,7 +823,7 @@
           // 引用要素内・返信バッジ内・To宛先内にないか確認
           const isInQuote = aidEl.closest('.chatQuote, .dev_quote, [data-cwopen="[qt]"], [data-cwtag^="[qt"]');
           const isInReply = aidEl.closest('[data-cwtag^="[rp"]');
-          const isInTo = aidEl.closest('[data-cwtag^="[to"]');
+          const isInTo = aidEl.closest('[data-cwtag^="[to" i]');
           if (!isInQuote && !isInReply && !isInTo) {
             senderAid = aidEl.getAttribute('data-aid');
             break;
@@ -1261,7 +1261,7 @@
           
           // To宛先を取得（名前・アバターURL・AIDをオブジェクトとして保持）
           // [toall] は別途処理するため除外
-          const toTags = preEl.querySelectorAll('[data-cwtag^="[to"]:not([data-cwtag="[toall]"])');
+          const toTags = preEl.querySelectorAll('[data-cwtag^="[to" i]:not([data-cwtag="[toall]" i])');
           toTags.forEach(toTag => {
             const cwtag = toTag.getAttribute('data-cwtag') || '';
             // AIDを取得（[to:XXXX] 形式と [to aid=XXXX] 形式の両方に対応）
@@ -1271,7 +1271,7 @@
               aid = aidFormatMatch[1];
             } else {
               // [to:XXXX] 形式（コロン区切り）
-              const colonFormatMatch = cwtag.match(/\[to:(\d+)\]/);
+              const colonFormatMatch = cwtag.match(/\[to:(\d+)\]/i);
               if (colonFormatMatch) {
                 aid = colonFormatMatch[1];
               }
@@ -1346,7 +1346,7 @@
           });
           
           // ToAllも確認
-          const toAllTag = preEl.querySelector('[data-cwtag="[toall]"]');
+          const toAllTag = preEl.querySelector('[data-cwtag="[toall]" i]');
           if (toAllTag) {
             const isDuplicate = toTargets.some(t => t.name === 'ALL');
             if (!isDuplicate) {
@@ -1361,8 +1361,8 @@
           // 除外するセレクタ（引用以外）
           const nonQuoteExcludeSelectors = [
             '[data-cwtag^="[rp"]',   // Reply バッジ
-            '[data-cwtag^="[to"]',   // To
-            '[data-cwtag="[toall]"]', // ToAll
+            '[data-cwtag^="[to" i]',   // To（大文字小文字両対応）
+            '[data-cwtag="[toall]" i]', // ToAll（大文字小文字両対応）
             '.chatTimeLineReply',    // 返信バッジ表示部分
             '._replyMessage',        // 返信メッセージバッジ
             '._filePreview',         // プレビューボタン
@@ -1681,9 +1681,17 @@
             const toNames = toTargets.map(t => t.name).filter(n => n && n !== 'ALL');
             
             // まず最初の「〇〇さん」を返信先ユーザー名として取得
+            // ただし、返信タグ [rp] がある場合のみ返信先として扱う
+            const replyTagExists = preEl.querySelector('[data-cwtag^="[rp"]');
             const userNameMatch = rawText.match(/^(.+?)さん[\r\n\s]+/);
-            if (userNameMatch) {
+            if (userNameMatch && replyTagExists) {
               replyTargetUserName = userNameMatch[1];
+              // replyTargetUserNameがTo先名前と同じ場合は返信先としては扱わない
+              // （To先の名前がテキスト先頭に来ているだけの可能性）
+              const isAlsoToTarget = toTargets.some(t => t.name === replyTargetUserName);
+              if (isAlsoToTarget && !preEl.querySelector('[data-cwtag^="[rp"]')?.getAttribute('data-cwtag')?.includes('aid=')) {
+                replyTargetUserName = null;
+              }
             }
             
             // To先の名前に一致する「〇〇さん」パターンをすべて除去
@@ -3704,19 +3712,34 @@
     formatReplyAndToTargetsHtml(node) {
       let html = '';
       
-      // 返信先（Re:）の表示（parentAidとparentUserNameがある場合）
-      if (node.parentUserName || node.parentAid) {
-        const name = node.parentUserName || '';
-        const avatarUrl = node.parentAvatarUrl || '';
+      // To先ユーザーのAIDリストを取得（Re:との重複チェック用）
+      const toAids = new Set((node.toTargets || [])
+        .filter(t => typeof t !== 'string' && t.aid)
+        .map(t => t.aid));
+      const toNames = new Set((node.toTargets || [])
+        .map(t => typeof t === 'string' ? t : t.name)
+        .filter(n => n));
+      
+      // 返信先（Re:）の表示（parentMidがある＝実際に返信タグがある場合のみ）
+      // To先と重複する場合はRe:を表示しない（To:側で表示される）
+      if (node.parentMid && (node.parentUserName || node.parentAid)) {
+        const replyAid = node.parentAid;
+        const replyName = node.parentUserName || '';
+        const isDuplicateWithTo = (replyAid && toAids.has(replyAid)) || 
+                                   (replyName && toNames.has(replyName));
         
-        let avatarHtml = '';
-        if (avatarUrl) {
-          avatarHtml = `<img src="${this.escapeHtml(avatarUrl)}" class="cw-threader-to-avatar" alt="">`;
-        } else {
-          avatarHtml = '<span class="cw-threader-to-default-avatar"></span>';
+        if (!isDuplicateWithTo) {
+          const avatarUrl = node.parentAvatarUrl || '';
+          
+          let avatarHtml = '';
+          if (avatarUrl) {
+            avatarHtml = `<img src="${this.escapeHtml(avatarUrl)}" class="cw-threader-to-avatar" alt="">`;
+          } else {
+            avatarHtml = '<span class="cw-threader-to-default-avatar"></span>';
+          }
+          
+          html += `<div class="cw-threader-to-targets"><span class="cw-threader-to-label cw-threader-re-label">Re:</span><span class="cw-threader-to-tag cw-threader-re-tag">${avatarHtml}<span class="cw-threader-to-name">${this.escapeHtml(replyName)}</span></span></div>`;
         }
-        
-        html += `<div class="cw-threader-to-targets"><span class="cw-threader-to-label cw-threader-re-label">Re:</span><span class="cw-threader-to-tag cw-threader-re-tag">${avatarHtml}<span class="cw-threader-to-name">${this.escapeHtml(name)}</span></span></div>`;
       }
       
       // To先の表示
