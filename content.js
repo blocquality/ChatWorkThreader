@@ -23,6 +23,203 @@
   // Current settings cache
   let currentSettings = { ...defaultSettings };
 
+  // Content script i18n translations
+  const contentI18n = {
+    en: {
+      // Tab titles
+      tab_threads: 'Threads',
+      tab_settings: 'Settings',
+      tab_help: 'Help',
+      // Controls
+      close: 'Close',
+      refresh: 'Refresh',
+      filter_all: 'All',
+      filter_by_speaker: 'Filter by Speaker',
+      my_participation: 'My Participation Only',
+      my_participation_tooltip: 'Show only threads where you replied or were replied to',
+      flat_mode: 'Flat',
+      search_placeholder: 'Search messages...',
+      search_clear: 'Clear',
+      search_prev: 'Previous Result',
+      search_next: 'Next Result',
+      // Settings
+      language_label: 'Language',
+      theme_label: 'Theme',
+      theme_system: 'System default',
+      theme_light: 'Light',
+      theme_dark: 'Dark',
+      settings_auto_save: 'Settings are saved automatically',
+      // Help
+      help_how_to_use: '📖 How to Use',
+      help_step1: 'Open a ChatWork chat room',
+      help_step2: 'Press <kbd>Shift</kbd>+<kbd>S</kbd> or click the button at the bottom right',
+      help_step3: 'Thread list will be displayed',
+      help_step4: 'Click a thread to jump to that message',
+      help_features: '🔍 Features',
+      feature_thread_view: 'Thread View:',
+      feature_thread_view_desc: 'Display messages as a threaded conversation',
+      feature_search: 'Search:',
+      feature_search_desc: 'Search messages within threads',
+      feature_filter: 'Filter by Speaker:',
+      feature_filter_desc: 'Show only messages from a specific person',
+      feature_participation: 'My Participation:',
+      feature_participation_desc: 'Show only threads you participated in',
+      feature_flat: 'Flat Mode:',
+      feature_flat_desc: 'Toggle between tree view and flat list',
+      feature_preview: 'Preview:',
+      feature_preview_desc: 'Hover over links to preview content',
+      feature_jump: 'Jump to Message:',
+      feature_jump_desc: 'Click a message to scroll to it in ChatWork',
+      help_badge_legend: '🏷️ Badge Legend',
+      badge_root: 'Root',
+      badge_root_desc: 'Message that has replies',
+      badge_reply: 'Reply',
+      badge_reply_desc: 'Reply to another message',
+      badge_both: 'Root+Reply',
+      badge_both_desc: 'A reply that also has replies',
+      help_shortcuts: '⌨️ Keyboard Shortcuts',
+      shortcut_toggle: 'Toggle thread panel',
+      shortcut_close: 'Close panel / Clear search',
+      // Dynamic text
+      no_threads: 'No threads found',
+      no_matching_threads: 'No matching threads',
+      pin_thread: 'Pin thread',
+      unpin_thread: 'Unpin thread',
+      track_origin: 'Track origin message',
+      reply_count_suffix: ' Reply',
+      matches_suffix: ' matches',
+      no_matches: 'No matches',
+      preview_btn: 'Preview',
+      copy_message: 'Copy message',
+      toggle_title: 'Toggle thread view (Shift+S)',
+      display_in_thread: 'Display in Thread List',
+    },
+    ja: {
+      // Tab titles
+      tab_threads: 'スレッド',
+      tab_settings: '設定',
+      tab_help: 'ヘルプ',
+      // Controls
+      close: '閉じる',
+      refresh: '更新',
+      filter_all: 'すべて',
+      filter_by_speaker: '発言者でフィルター',
+      my_participation: '自分の参加のみ',
+      my_participation_tooltip: '自分が返信した、または返信を受けたスレッドのみ表示',
+      flat_mode: 'フラット',
+      search_placeholder: 'メッセージを検索...',
+      search_clear: 'クリア',
+      search_prev: '前の結果',
+      search_next: '次の結果',
+      // Settings
+      language_label: '言語',
+      theme_label: 'テーマ',
+      theme_system: 'システム設定に従う',
+      theme_light: 'ライト',
+      theme_dark: 'ダーク',
+      settings_auto_save: '設定は自動的に保存されます',
+      // Help
+      help_how_to_use: '📖 使い方',
+      help_step1: 'ChatWorkのチャットルームを開く',
+      help_step2: '<kbd>Shift</kbd>+<kbd>S</kbd>を押すか、右下のボタンをクリック',
+      help_step3: 'スレッド一覧が表示されます',
+      help_step4: 'スレッドをクリックでメッセージにジャンプ',
+      help_features: '🔍 機能一覧',
+      feature_thread_view: 'スレッド表示:',
+      feature_thread_view_desc: 'メッセージをスレッド形式で表示',
+      feature_search: '検索:',
+      feature_search_desc: 'スレッド内のメッセージを検索',
+      feature_filter: '発言者フィルター:',
+      feature_filter_desc: '特定の人のメッセージのみ表示',
+      feature_participation: '自分の参加:',
+      feature_participation_desc: '自分が参加したスレッドのみ表示',
+      feature_flat: 'フラットモード:',
+      feature_flat_desc: 'ツリー表示とフラットリストの切り替え',
+      feature_preview: 'プレビュー:',
+      feature_preview_desc: 'リンクをホバーしてコンテンツをプレビュー',
+      feature_jump: 'メッセージにジャンプ:',
+      feature_jump_desc: 'メッセージをクリックでChatWork上でスクロール',
+      help_badge_legend: '🏷️ バッジの説明',
+      badge_root: 'ルート',
+      badge_root_desc: '返信があるメッセージ',
+      badge_reply: '返信',
+      badge_reply_desc: '他のメッセージへの返信',
+      badge_both: 'ルート+返信',
+      badge_both_desc: '返信かつ返信を持つメッセージ',
+      help_shortcuts: '⌨️ キーボードショートカット',
+      shortcut_toggle: 'スレッドパネルの切り替え',
+      shortcut_close: 'パネルを閉じる / 検索をクリア',
+      // Dynamic text
+      no_threads: 'スレッドが見つかりません',
+      no_matching_threads: '一致するスレッドがありません',
+      pin_thread: 'スレッドをピン止め',
+      unpin_thread: 'ピン止めを解除',
+      track_origin: '元のメッセージを辿る',
+      reply_count_suffix: ' 件の返信',
+      matches_suffix: ' 件一致',
+      no_matches: '一致なし',
+      preview_btn: 'プレビュー',
+      copy_message: 'メッセージをコピー',
+      toggle_title: 'スレッド表示の切り替え (Shift+S)',
+      display_in_thread: 'スレッド一覧に表示',
+    }
+  };
+
+  /**
+   * Get translated text for the given key
+   */
+  function t(key) {
+    const lang = currentSettings.language || 'en';
+    const translations = contentI18n[lang] || contentI18n.en;
+    return translations[key] || contentI18n.en[key] || key;
+  }
+
+  /**
+   * Apply translations to all elements with data-ct-i18n attributes
+   */
+  function applyContentTranslations() {
+    // Translate textContent
+    document.querySelectorAll('[data-ct-i18n]').forEach(el => {
+      const key = el.getAttribute('data-ct-i18n');
+      const translated = t(key);
+      if (translated) el.textContent = translated;
+    });
+
+    // Translate innerHTML (for elements with HTML content like kbd tags)
+    document.querySelectorAll('[data-ct-i18n-html]').forEach(el => {
+      const key = el.getAttribute('data-ct-i18n-html');
+      const translated = t(key);
+      if (translated) el.innerHTML = translated;
+    });
+
+    // Translate title attributes
+    document.querySelectorAll('[data-ct-i18n-title]').forEach(el => {
+      const key = el.getAttribute('data-ct-i18n-title');
+      const translated = t(key);
+      if (translated) el.title = translated;
+    });
+
+    // Translate placeholder attributes
+    document.querySelectorAll('[data-ct-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-ct-i18n-placeholder');
+      const translated = t(key);
+      if (translated) el.placeholder = translated;
+    });
+
+    // Translate alt attributes
+    document.querySelectorAll('[data-ct-i18n-alt]').forEach(el => {
+      const key = el.getAttribute('data-ct-i18n-alt');
+      const translated = t(key);
+      if (translated) el.alt = translated;
+    });
+
+    // Update language select value
+    const langSelect = document.getElementById('cw-threader-language-select');
+    if (langSelect) {
+      langSelect.value = currentSettings.language || 'en';
+    }
+  }
+
   /**
    * Load settings from chrome.storage.sync
    */
@@ -78,6 +275,10 @@
         if (message.type === 'CW_THREADER_SETTINGS_CHANGED') {
           currentSettings = message.settings;
           applyTheme(currentSettings.theme);
+          applyContentTranslations();
+          // Update language select if open
+          const langSelect = document.getElementById('cw-threader-language-select');
+          if (langSelect) langSelect.value = currentSettings.language || 'en';
         }
       });
     }
@@ -1876,49 +2077,49 @@
         <div class="cw-threader-resize-handle"></div>
         <div class="cw-threader-header">
           <div class="cw-threader-header-tabs">
-            <button class="cw-threader-tab-icon active" data-tab="threads" title="Threads">
-              ${threadsIconUrl ? `<img src="${threadsIconUrl}" alt="Threads">` : '💬'}
+            <button class="cw-threader-tab-icon active" data-tab="threads" data-ct-i18n-title="tab_threads" title="${t('tab_threads')}">
+              ${threadsIconUrl ? `<img src="${threadsIconUrl}" data-ct-i18n-alt="tab_threads" alt="${t('tab_threads')}">` : '💬'}
             </button>
-            <button class="cw-threader-tab-icon" data-tab="settings" title="Settings">
-              ${settingsIconUrl ? `<img src="${settingsIconUrl}" alt="Settings">` : '⚙️'}
+            <button class="cw-threader-tab-icon" data-tab="settings" data-ct-i18n-title="tab_settings" title="${t('tab_settings')}">
+              ${settingsIconUrl ? `<img src="${settingsIconUrl}" data-ct-i18n-alt="tab_settings" alt="${t('tab_settings')}">` : '⚙️'}
             </button>
-            <button class="cw-threader-tab-icon" data-tab="help" title="Help">
-              ${helpIconUrl ? `<img src="${helpIconUrl}" alt="Help">` : '📖'}
+            <button class="cw-threader-tab-icon" data-tab="help" data-ct-i18n-title="tab_help" title="${t('tab_help')}">
+              ${helpIconUrl ? `<img src="${helpIconUrl}" data-ct-i18n-alt="tab_help" alt="${t('tab_help')}">` : '📖'}
             </button>
           </div>
           <div class="cw-threader-controls">
-            <button id="cw-threader-close" title="Close">×</button>
+            <button id="cw-threader-close" data-ct-i18n-title="close" title="${t('close')}">×</button>
           </div>
         </div>
         <div class="cw-threader-tab-content" data-tab-content="threads">
           <div class="cw-threader-thread-filters">
-            <select id="cw-threader-speaker-filter" class="cw-threader-speaker-select" title="Filter by Speaker">
-              <option value="">All</option>
+            <select id="cw-threader-speaker-filter" class="cw-threader-speaker-select" data-ct-i18n-title="filter_by_speaker" title="${t('filter_by_speaker')}">
+              <option value="" data-ct-i18n="filter_all">${t('filter_all')}</option>
             </select>
             <div class="cw-threader-filter-toggle">
-              <span class="cw-threader-filter-label" title="Show only threads where you replied or were replied to">My Participation Only </span>
+              <span class="cw-threader-filter-label" data-ct-i18n="my_participation" data-ct-i18n-title="my_participation_tooltip" title="${t('my_participation_tooltip')}">${t('my_participation')} </span>
               <label class="cw-threader-toggle-switch cw-threader-filter-switch">
                 <input type="checkbox" id="cw-threader-my-filter">
                 <span class="cw-threader-toggle-slider"></span>
               </label>
             </div>
             <div class="cw-threader-filter-toggle">
-              <span class="cw-threader-filter-label">Flat</span>
+              <span class="cw-threader-filter-label" data-ct-i18n="flat_mode">${t('flat_mode')}</span>
               <label class="cw-threader-toggle-switch cw-threader-filter-switch">
                 <input type="checkbox" id="cw-threader-flat-mode">
                 <span class="cw-threader-toggle-slider"></span>
               </label>
             </div>
-            <button id="cw-threader-refresh" class="cw-threader-refresh-btn" title="Refresh">↻</button>
+            <button id="cw-threader-refresh" class="cw-threader-refresh-btn" data-ct-i18n-title="refresh" title="${t('refresh')}">↻</button>
           </div>
           <div class="cw-threader-search-bar">
             <div class="cw-threader-search-input-wrapper">
-              <input type="text" id="cw-threader-search" class="cw-threader-search-input" placeholder="Search messages...">
-              <button id="cw-threader-search-clear" class="cw-threader-search-clear" title="Clear">×</button>
+              <input type="text" id="cw-threader-search" class="cw-threader-search-input" data-ct-i18n-placeholder="search_placeholder" placeholder="${t('search_placeholder')}">
+              <button id="cw-threader-search-clear" class="cw-threader-search-clear" data-ct-i18n-title="search_clear" title="${t('search_clear')}">×</button>
             </div>
             <div id="cw-threader-search-nav" class="cw-threader-search-nav">
-              <button id="cw-threader-search-prev" class="cw-threader-search-nav-btn" title="Previous Result">▲</button>
-              <button id="cw-threader-search-next" class="cw-threader-search-nav-btn" title="Next Result">▼</button>
+              <button id="cw-threader-search-prev" class="cw-threader-search-nav-btn" data-ct-i18n-title="search_prev" title="${t('search_prev')}">▲</button>
+              <button id="cw-threader-search-next" class="cw-threader-search-nav-btn" data-ct-i18n-title="search_next" title="${t('search_next')}">▼</button>
             </div>
             <span id="cw-threader-search-count" class="cw-threader-search-count"></span>
           </div>
@@ -1929,61 +2130,68 @@
         <div class="cw-threader-tab-content" data-tab-content="settings" style="display: none;">
           <div class="cw-threader-settings-content">
             <div class="cw-threader-settings-item">
-              <label class="cw-threader-settings-label">Theme</label>
-              <select id="cw-threader-theme-select" class="cw-threader-settings-select">
-                <option value="system">System default</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
+              <label class="cw-threader-settings-label" data-ct-i18n="language_label">${t('language_label')}</label>
+              <select id="cw-threader-language-select" class="cw-threader-settings-select">
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
               </select>
             </div>
-            <p class="cw-threader-settings-note">Settings are saved automatically</p>
+            <div class="cw-threader-settings-item">
+              <label class="cw-threader-settings-label" data-ct-i18n="theme_label">${t('theme_label')}</label>
+              <select id="cw-threader-theme-select" class="cw-threader-settings-select">
+                <option value="system" data-ct-i18n="theme_system">${t('theme_system')}</option>
+                <option value="light" data-ct-i18n="theme_light">${t('theme_light')}</option>
+                <option value="dark" data-ct-i18n="theme_dark">${t('theme_dark')}</option>
+              </select>
+            </div>
+            <p class="cw-threader-settings-note" data-ct-i18n="settings_auto_save">${t('settings_auto_save')}</p>
           </div>
         </div>
         <div class="cw-threader-tab-content" data-tab-content="help" style="display: none;">
           <div class="cw-threader-help-content">
             <div class="cw-threader-help-section">
-              <h3 class="cw-threader-help-title">📖 How to Use</h3>
+              <h3 class="cw-threader-help-title" data-ct-i18n="help_how_to_use">${t('help_how_to_use')}</h3>
               <ol class="cw-threader-help-steps">
-                <li>Open a ChatWork chat room</li>
-                <li>Press <kbd>Shift</kbd>+<kbd>S</kbd> or click the button at the bottom right</li>
-                <li>Thread list will be displayed</li>
-                <li>Click a thread to jump to that message</li>
+                <li data-ct-i18n="help_step1">${t('help_step1')}</li>
+                <li data-ct-i18n-html="help_step2">${t('help_step2')}</li>
+                <li data-ct-i18n="help_step3">${t('help_step3')}</li>
+                <li data-ct-i18n="help_step4">${t('help_step4')}</li>
               </ol>
             </div>
             <div class="cw-threader-help-section">
-              <h3 class="cw-threader-help-title">🔍 Features</h3>
+              <h3 class="cw-threader-help-title" data-ct-i18n="help_features">${t('help_features')}</h3>
               <ul class="cw-threader-help-features">
-                <li><strong>Thread View:</strong> Display messages as a threaded conversation</li>
-                <li><strong>Search:</strong> Search messages within threads</li>
-                <li><strong>Filter by Speaker:</strong> Show only messages from a specific person</li>
-                <li><strong>My Participation:</strong> Show only threads you participated in</li>
-                <li><strong>Flat Mode:</strong> Toggle between tree view and flat list</li>
-                <li><strong>Preview:</strong> Hover over links to preview content</li>
-                <li><strong>Jump to Message:</strong> Click a message to scroll to it in ChatWork</li>
+                <li><strong data-ct-i18n="feature_thread_view">${t('feature_thread_view')}</strong> <span data-ct-i18n="feature_thread_view_desc">${t('feature_thread_view_desc')}</span></li>
+                <li><strong data-ct-i18n="feature_search">${t('feature_search')}</strong> <span data-ct-i18n="feature_search_desc">${t('feature_search_desc')}</span></li>
+                <li><strong data-ct-i18n="feature_filter">${t('feature_filter')}</strong> <span data-ct-i18n="feature_filter_desc">${t('feature_filter_desc')}</span></li>
+                <li><strong data-ct-i18n="feature_participation">${t('feature_participation')}</strong> <span data-ct-i18n="feature_participation_desc">${t('feature_participation_desc')}</span></li>
+                <li><strong data-ct-i18n="feature_flat">${t('feature_flat')}</strong> <span data-ct-i18n="feature_flat_desc">${t('feature_flat_desc')}</span></li>
+                <li><strong data-ct-i18n="feature_preview">${t('feature_preview')}</strong> <span data-ct-i18n="feature_preview_desc">${t('feature_preview_desc')}</span></li>
+                <li><strong data-ct-i18n="feature_jump">${t('feature_jump')}</strong> <span data-ct-i18n="feature_jump_desc">${t('feature_jump_desc')}</span></li>
               </ul>
             </div>
             <div class="cw-threader-help-section">
-              <h3 class="cw-threader-help-title">🏷️ Badge Legend</h3>
+              <h3 class="cw-threader-help-title" data-ct-i18n="help_badge_legend">${t('help_badge_legend')}</h3>
               <div class="cw-threader-badge-legend">
                 <div class="cw-threader-badge-item">
-                  <span class="cw-threader-badge cw-threader-badge-root">Root</span>
-                  <span>Message that has replies</span>
+                  <span class="cw-threader-badge cw-threader-badge-root" data-ct-i18n="badge_root">${t('badge_root')}</span>
+                  <span data-ct-i18n="badge_root_desc">${t('badge_root_desc')}</span>
                 </div>
                 <div class="cw-threader-badge-item">
-                  <span class="cw-threader-badge cw-threader-badge-reply">Reply</span>
-                  <span>Reply to another message</span>
+                  <span class="cw-threader-badge cw-threader-badge-reply" data-ct-i18n="badge_reply">${t('badge_reply')}</span>
+                  <span data-ct-i18n="badge_reply_desc">${t('badge_reply_desc')}</span>
                 </div>
                 <div class="cw-threader-badge-item">
-                  <span class="cw-threader-badge cw-threader-badge-both">Root+Reply</span>
-                  <span>A reply that also has replies</span>
+                  <span class="cw-threader-badge cw-threader-badge-both" data-ct-i18n="badge_both">${t('badge_both')}</span>
+                  <span data-ct-i18n="badge_both_desc">${t('badge_both_desc')}</span>
                 </div>
               </div>
             </div>
             <div class="cw-threader-help-section">
-              <h3 class="cw-threader-help-title">⌨️ Keyboard Shortcuts</h3>
+              <h3 class="cw-threader-help-title" data-ct-i18n="help_shortcuts">${t('help_shortcuts')}</h3>
               <ul class="cw-threader-help-shortcuts">
-                <li><kbd>Shift</kbd>+<kbd>S</kbd> - Toggle thread panel</li>
-                <li><kbd>Esc</kbd> - Close panel / Clear search</li>
+                <li><kbd>Shift</kbd>+<kbd>S</kbd> - <span data-ct-i18n="shortcut_toggle">${t('shortcut_toggle')}</span></li>
+                <li><kbd>Esc</kbd> - <span data-ct-i18n="shortcut_close">${t('shortcut_close')}</span></li>
               </ul>
             </div>
           </div>
@@ -2111,8 +2319,11 @@
       // タブ切り替えのイベントリスナー
       this.setupTabListeners();
 
-      // テーマ設定のイベントリスナー
+      // テーマ・言語設定のイベントリスナー
       this.setupSettingsListeners();
+
+      // 初期翻訳を適用
+      applyContentTranslations();
     }
 
     /**
@@ -2143,6 +2354,34 @@
      * 設定タブのイベントリスナーを設定
      */
     setupSettingsListeners() {
+      // Language select
+      const languageSelect = document.getElementById('cw-threader-language-select');
+      
+      if (languageSelect) {
+        // 現在の言語設定を反映
+        languageSelect.value = currentSettings.language || 'en';
+
+        languageSelect.addEventListener('change', async () => {
+          const newLang = languageSelect.value;
+          currentSettings.language = newLang;
+          
+          // 翻訳を適用
+          applyContentTranslations();
+          // スレッド再描画（動的テキストの翻訳のため）
+          this.renderThreads();
+          
+          // 設定を保存
+          if (isExtensionContextValid()) {
+            try {
+              await chrome.storage.sync.set({ [SETTINGS_KEY]: currentSettings });
+            } catch (error) {
+              console.error('[ChatWorkThreader] Failed to save language setting:', error);
+            }
+          }
+        });
+      }
+
+      // Theme select
       const themeSelect = document.getElementById('cw-threader-theme-select');
       
       if (themeSelect) {
@@ -2254,7 +2493,7 @@
       }
 
       // オプションを再構築
-      speakerSelect.innerHTML = '<option value="">All</option>';
+      speakerSelect.innerHTML = `<option value="" data-ct-i18n="filter_all">${t('filter_all')}</option>`;
       speakers.forEach(speaker => {
         const option = document.createElement('option');
         option.value = speaker;
@@ -2461,9 +2700,9 @@
       const matchCount = this.searchMatches.length;
       if (countEl) {
         if (matchCount > 0) {
-          countEl.textContent = `${matchCount} matches`;
+          countEl.textContent = `${matchCount}${t('matches_suffix')}`;
         } else {
-          countEl.textContent = 'No matches';
+          countEl.textContent = t('no_matches');
         }
       }
       
@@ -2613,7 +2852,7 @@
 
       if (threads.size === 0) {
         this.updateSpeakerDropdown();
-        container.innerHTML = '<div class="cw-threader-empty">No threads found</div>';
+        container.innerHTML = `<div class="cw-threader-empty">${t('no_threads')}</div>`;
         return;
       }
 
@@ -2658,7 +2897,7 @@
       }
 
       if (sortedThreads.length === 0) {
-        container.innerHTML = '<div class="cw-threader-empty">No matching threads</div>';
+        container.innerHTML = `<div class="cw-threader-empty">${t('no_matching_threads')}</div>`;
         return;
       }
 
@@ -2680,7 +2919,7 @@
           pinBtn.classList.add('pinned');
         }
         pinBtn.setAttribute('data-pin-mid', thread.mid);
-        pinBtn.title = isPinned ? 'Unpin thread' : 'Pin thread';
+        pinBtn.title = isPinned ? t('unpin_thread') : t('pin_thread');
         pinBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 17V22M12 17L7 15L8 9L6 7V6H18V7L16 9L17 15L12 17Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>`;
@@ -2700,7 +2939,7 @@
           const trackingBtn = document.createElement('button');
           trackingBtn.className = 'cw-threader-tracking-btn';
           trackingBtn.setAttribute('data-tracking-mid', thread.mid);
-          trackingBtn.title = 'Track origin message';
+          trackingBtn.title = t('track_origin');
           trackingBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12Z" stroke="currentColor" stroke-width="1.5"/>
             <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="1.5"/>
@@ -2950,7 +3189,7 @@
           <div class="cw-threader-message-header">
             <span class="cw-threader-username">${this.escapeHtml(node.userName)}</span>
             ${node.timestamp ? `<span class="cw-threader-time">· ${this.formatDateTime(node.timestamp)}</span>` : ''}
-            <button class="cw-threader-copy-btn" title="メッセージをコピー" data-message-text="${this.escapeHtml(node.messageText || '')}">
+            <button class="cw-threader-copy-btn" title="${t('copy_message')}" data-message-text="${this.escapeHtml(node.messageText || '')}">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -2958,7 +3197,7 @@
             </button>
             ${isRootWithReplies ? `
               <div class="cw-threader-toggle-wrap">
-                <span class="cw-threader-reply-label">${replyCount} Reply</span>
+                <span class="cw-threader-reply-label">${replyCount}${t('reply_count_suffix')}</span>
                 <label class="cw-threader-toggle-switch">
                   <input type="checkbox" checked>
                   <span class="cw-threader-toggle-slider"></span>
@@ -3213,7 +3452,7 @@
           if (linkIndex !== undefined) {
             const linkInfo = quoteExternalLinks[linkIndex];
             if (linkInfo && linkInfo.hasPreviewButton) {
-              contentHtml += `<a class="cw-threader-external-link-btn cw-threader-inline-preview cw-threader-quote-preview-btn" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}" data-in-quote="true">Preview</a>`;
+              contentHtml += `<a class="cw-threader-external-link-btn cw-threader-inline-preview cw-threader-quote-preview-btn" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}" data-in-quote="true">${t('preview_btn')}</a>`;
             }
             // このリンクは処理済みとしてマーク
             externalLinkMap.delete(url);
@@ -3229,7 +3468,7 @@
           const title = this.escapeHtml(link.title || url);
           contentHtml += `<div class="cw-threader-external-link-item">
             <a href="${escapedUrl}" class="cw-threader-link" target="_blank" rel="noopener noreferrer">🔗 ${title}</a>
-            <a class="cw-threader-external-link-btn cw-threader-inline-preview cw-threader-quote-preview-btn" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}" data-in-quote="true">Preview</a>
+            <a class="cw-threader-external-link-btn cw-threader-inline-preview cw-threader-quote-preview-btn" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}" data-in-quote="true">${t('preview_btn')}</a>
           </div>`;
         }
       });
@@ -3333,7 +3572,7 @@
             const fileId = fileIdMatch[1];
             const fileInfo = fileUrlMap.get(fileId);
             if (fileInfo) {
-              html += `<a class="cw-threader-preview-btn cw-threader-inline-preview" data-file-id="${this.escapeHtml(fileId)}" data-mid="${this.escapeHtml(mid)}">Preview</a>`;
+              html += `<a class="cw-threader-preview-btn cw-threader-inline-preview" data-file-id="${this.escapeHtml(fileId)}" data-mid="${this.escapeHtml(mid)}">${t('preview_btn')}</a>`;
               // このファイルは処理済みとしてマーク
               fileUrlMap.delete(fileId);
             }
@@ -3344,7 +3583,7 @@
           if (linkIndex !== undefined) {
             const linkInfo = externalLinks[linkIndex];
             if (linkInfo && linkInfo.hasPreviewButton) {
-              html += `<a class="cw-threader-external-link-btn cw-threader-inline-preview" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}">Preview</a>`;
+              html += `<a class="cw-threader-external-link-btn cw-threader-inline-preview" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}">${t('preview_btn')}</a>`;
             }
             // このリンクは処理済みとしてマーク
             externalLinkMap.delete(url);
@@ -3359,7 +3598,7 @@
         const sizeDisplay = file.fileSize ? ` (${this.escapeHtml(file.fileSize)})` : '';
         html += `<div class="cw-threader-file-preview-item">
           <span class="cw-threader-file-info">📎 ${displayName}${sizeDisplay}</span>
-          <a class="cw-threader-preview-btn cw-threader-inline-preview" data-file-id="${this.escapeHtml(fileId)}" data-mid="${this.escapeHtml(mid)}">Preview</a>
+          <a class="cw-threader-preview-btn cw-threader-inline-preview" data-file-id="${this.escapeHtml(fileId)}" data-mid="${this.escapeHtml(mid)}">${t('preview_btn')}</a>
         </div>`;
       });
       
@@ -3371,7 +3610,7 @@
           const title = this.escapeHtml(link.title || url);
           html += `<div class="cw-threader-external-link-item">
             <a href="${escapedUrl}" class="cw-threader-link" target="_blank" rel="noopener noreferrer">🔗 ${title}</a>
-            <a class="cw-threader-external-link-btn cw-threader-inline-preview" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}">Preview</a>
+            <a class="cw-threader-external-link-btn cw-threader-inline-preview" data-link-index="${linkIndex}" data-url="${escapedUrl}" data-mid="${this.escapeHtml(mid)}">${t('preview_btn')}</a>
           </div>`;
         }
       });
@@ -4246,7 +4485,7 @@
     } else {
       button.innerHTML = `<span class="cw-threader-icon">💬</span><span class="cw-threader-shortcut">Shift+S</span>`;
     }
-    button.title = 'Toggle thread view (Shift+S)';
+    button.title = t('toggle_title');
     
     button.addEventListener('click', () => {
       threadUI.toggle();
@@ -4302,7 +4541,7 @@
       const button = document.createElement('button');
       button.className = 'cw-threader-show-in-thread-btn';
       button.innerHTML = `<svg class="cw-threader-sit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="13" y2="14"/></svg>`;
-      button.title = 'Display in Thread List';
+      button.title = t('display_in_thread');
       button.setAttribute('data-mid', mid);
       
       button.addEventListener('click', (e) => {
