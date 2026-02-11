@@ -2324,6 +2324,8 @@
       let helpIconUrl = '';
       let participationIconUrl = '';
       let flatListIconUrl = '';
+      let maximizeIconUrl = '';
+      let minimizeIconUrl = '';
       if (isExtensionContextValid()) {
         try {
           threadsIconUrl = chrome.runtime.getURL('icons/chat-round-line-svgrepo-com.svg');
@@ -2331,10 +2333,16 @@
           helpIconUrl = chrome.runtime.getURL('icons/book-minimalistic-svgrepo-com.svg');
           participationIconUrl = chrome.runtime.getURL('icons/user-participation-svgrepo-com.svg');
           flatListIconUrl = chrome.runtime.getURL('icons/flat-list-svgrepo-com.svg');
+          maximizeIconUrl = chrome.runtime.getURL('icons/maximize-square-minimalistic-svgrepo-com.svg');
+          minimizeIconUrl = chrome.runtime.getURL('icons/minimize-square-minimalistic-svgrepo-com.svg');
         } catch (e) {
           // 拡張機能のコンテキストが無効な場合
         }
       }
+
+      // アイコンURLをインスタンスに保存（createThreadElementで使用）
+      this.maximizeIconUrl = maximizeIconUrl;
+      this.minimizeIconUrl = minimizeIconUrl;
 
       this.panel = document.createElement('div');
       this.panel.id = 'cw-threader-panel';
@@ -3509,10 +3517,9 @@
             ${isRootWithReplies ? `
               <div class="cw-threader-toggle-wrap">
                 <span class="cw-threader-reply-label">${replyCount}${t('reply_count_suffix')}</span>
-                <label class="cw-threader-toggle-switch">
-                  <input type="checkbox" checked>
-                  <span class="cw-threader-toggle-slider"></span>
-                </label>
+                <button class="cw-threader-thread-toggle-btn active" data-open="true">
+                  ${this.minimizeIconUrl ? `<img src="${this.minimizeIconUrl}" class="cw-threader-toggle-icon-img" alt="collapse">` : '▼'}
+                </button>
               </div>
             ` : ''}
           </div>
@@ -3610,29 +3617,46 @@
         
         container.appendChild(childrenContainer);
 
-        // ルートメッセージの場合、トグルスイッチのイベントを設定
+        // ルートメッセージの場合、トグルボタンのイベントを設定
         if (isRootWithReplies) {
-          const toggleCheckbox = messageEl.querySelector('.cw-threader-toggle-switch input');
-          if (toggleCheckbox) {
+          const toggleBtn = messageEl.querySelector('.cw-threader-thread-toggle-btn');
+          if (toggleBtn) {
             const mid = node.mid;
 
             // 保存された状態を同期的に復元（事前にloadToggleStatesで読み込み済み）
             const isOpen = this.getToggleState(mid);
-            toggleCheckbox.checked = isOpen;
+            this.updateToggleBtnState(toggleBtn, isOpen);
             childrenContainer.style.display = isOpen ? '' : 'none';
 
-            toggleCheckbox.addEventListener('change', (e) => {
+            toggleBtn.addEventListener('click', (e) => {
               e.stopPropagation();
-              const isOpen = toggleCheckbox.checked;
-              childrenContainer.style.display = isOpen ? '' : 'none';
+              const currentOpen = toggleBtn.getAttribute('data-open') === 'true';
+              const newOpen = !currentOpen;
+              this.updateToggleBtnState(toggleBtn, newOpen);
+              childrenContainer.style.display = newOpen ? '' : 'none';
               // 状態をストレージに保存
-              this.saveToggleState(mid, isOpen);
+              this.saveToggleState(mid, newOpen);
             });
           }
         }
       }
 
       return container;
+    }
+
+    /**
+     * スレッド開閉ボタンの状態を更新
+     */
+    updateToggleBtnState(btn, isOpen) {
+      btn.setAttribute('data-open', isOpen ? 'true' : 'false');
+      btn.classList.toggle('active', isOpen);
+      const img = btn.querySelector('img');
+      if (img) {
+        img.src = isOpen ? (this.minimizeIconUrl || '') : (this.maximizeIconUrl || '');
+        img.alt = isOpen ? 'collapse' : 'expand';
+      } else {
+        btn.textContent = isOpen ? '▼' : '▶';
+      }
     }
 
     /**
@@ -5072,10 +5096,9 @@
       if (targetEl) {
         // 親スレッドのトグルが閉じている場合は開く
         if (parentThread) {
-          const toggleCheckbox = parentThread.querySelector('.cw-threader-toggle-switch input');
-          if (toggleCheckbox && !toggleCheckbox.checked) {
-            toggleCheckbox.checked = true;
-            toggleCheckbox.dispatchEvent(new Event('change'));
+          const toggleBtn = parentThread.querySelector('.cw-threader-thread-toggle-btn');
+          if (toggleBtn && toggleBtn.getAttribute('data-open') !== 'true') {
+            toggleBtn.click();
           }
         }
         

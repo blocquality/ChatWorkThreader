@@ -36,7 +36,9 @@
 				"icons/settings-svgrepo-com.svg",
 				"icons/book-minimalistic-svgrepo-com.svg",
 				"icons/user-participation-svgrepo-com.svg",
-				"icons/flat-list-svgrepo-com.svg"
+				"icons/flat-list-svgrepo-com.svg",
+				"icons/maximize-square-minimalistic-svgrepo-com.svg",
+				"icons/minimize-square-minimalistic-svgrepo-com.svg"
 			],
 			"matches": ["https://www.chatwork.com/*"]
 		}
