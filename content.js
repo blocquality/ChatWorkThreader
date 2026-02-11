@@ -1792,7 +1792,8 @@
                 const pattern = new RegExp('^' + escapedName + 'さん[\\r\\n\\s]*');
                 segText = segText.replace(pattern, '');
               }
-              seg.content = segText.trim();
+              // 名前除去のみ行い、改行は保持する（trimしない）
+              seg.content = segText;
             });
             
             messageText = rawText.trim();
@@ -3412,7 +3413,11 @@
         
         const flushBodyBuffer = () => {
           if (bodyBuffer) {
-            messageContentHtml += `<div class="cw-threader-message-body">${bodyBuffer}</div>`;
+            // バッファ全体の先頭・末尾の<br>を除去
+            let cleaned = bodyBuffer.replace(/^(<br\s*\/?>[\s]*)+/i, '').replace(/(<br\s*\/?>[\s]*)+$/i, '');
+            if (cleaned) {
+              messageContentHtml += `<div class="cw-threader-message-body">${cleaned}</div>`;
+            }
             bodyBuffer = '';
           }
         };
