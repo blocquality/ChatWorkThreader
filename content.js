@@ -1359,10 +1359,14 @@
           const quoteSelectors = '[data-cwtag^="[qt"], [data-cwopen="[qt]"], .chatQuote, .dev_quote';
           
           // 除外するセレクタ（引用以外）
-          const nonQuoteExcludeSelectors = [
+          // To/Re/ToAllはセグメントとして挙入するため、別管理
+          const toReSelectors = [
             '[data-cwtag^="[rp"]',   // Reply バッジ
             '[data-cwtag^="[to" i]',   // To（大文字小文字両対応）
             '[data-cwtag="[toall]" i]', // ToAll（大文字小文字両対応）
+          ];
+          const nonQuoteExcludeSelectors = [
+            ...toReSelectors,
             '.chatTimeLineReply',    // 返信バッジ表示部分
             '._replyMessage',        // 返信メッセージバッジ
             '._filePreview',         // プレビューボタン
@@ -1468,6 +1472,67 @@
                     });
                   }
                   return; // 引用の子ノードはすでに処理済み
+                }
+                
+                // To/Re/ToAll要素の場合、セグメントとして挿入
+                const isToReElement = toReSelectors.some(sel => node.matches && node.matches(sel));
+                if (isToReElement) {
+                  // 現在のテキストバッファを先にセグメントに追加
+                  if (currentTextBuffer.length > 0) {
+                    const textContent = currentTextBuffer.join('').trim();
+                    if (textContent) {
+                      segments.push({ type: 'text', content: textContent });
+                    }
+                    currentTextBuffer = [];
+                  }
+                  
+                  const cwtag = node.getAttribute('data-cwtag') || '';
+                  
+                  // [rp] 返信バッジ
+                  if (cwtag.match(/^\[rp\s/i)) {
+                    const aidMatch = cwtag.match(/aid=(\d+)/i);
+                    const rpAid = aidMatch ? aidMatch[1] : null;
+                    let rpAvatarUrl = '';
+                    const rpAvImg = node.querySelector('img[data-testid="user-icon"], img.userIconImage, img[src*="avatar"], img[src*="ico_default"]');
+                    if (rpAvImg) rpAvatarUrl = rpAvImg.src || '';
+                    if (!rpAvatarUrl) {
+                      const rpBtnImg = node.querySelector('button img[src*="avatar"], button img[src*="ico_default"], button img[data-testid="user-icon"]');
+                      if (rpBtnImg) rpAvatarUrl = rpBtnImg.src || '';
+                    }
+                    if (!rpAvatarUrl && rpAid && this.aidAvatarMap && this.aidAvatarMap.has(rpAid)) {
+                      rpAvatarUrl = this.aidAvatarMap.get(rpAid);
+                    }
+                    segments.push({ type: 'reply', aid: rpAid, avatarUrl: rpAvatarUrl });
+                  }
+                  // [toall]
+                  else if (cwtag.match(/^\[toall\]/i)) {
+                    segments.push({ type: 'to', targets: [{ name: 'ALL', avatarUrl: '', aid: null }] });
+                  }
+                  // [to] / [To]
+                  else if (cwtag.match(/^\[to/i)) {
+                    let toAid = null;
+                    const aidFmt = cwtag.match(/aid=(\d+)/i);
+                    if (aidFmt) {
+                      toAid = aidFmt[1];
+                    } else {
+                      const colonFmt = cwtag.match(/\[to:(\d+)\]/i);
+                      if (colonFmt) toAid = colonFmt[1];
+                    }
+                    const matchingTarget = toTargets.find(t => toAid && t.aid === toAid);
+                    if (matchingTarget) {
+                      segments.push({ type: 'to', targets: [matchingTarget] });
+                    } else {
+                      const name = node.textContent?.trim() || '';
+                      let avUrl = '';
+                      if (toAid && this.aidAvatarMap && this.aidAvatarMap.has(toAid)) {
+                        avUrl = this.aidAvatarMap.get(toAid);
+                      }
+                      if (name || toAid) {
+                        segments.push({ type: 'to', targets: [{ name, avatarUrl: avUrl, aid: toAid }] });
+                      }
+                    }
+                  }
+                  return; // To/Reの子ノードはスキップ
                 }
                 
                 // 除外セレクタに一致する要素はスキップ
@@ -1711,9 +1776,10 @@
             // 先頭・末尾の空白行を除去
             rawText = rawText.replace(/^[\r\n\s]+/, '').replace(/[\r\n\s]+$/, '');
             
-            // セグメントも更新
-            if (messageSegments.length > 0 && messageSegments[0].type === 'text') {
-              let segText = messageSegments[0].content;
+            // セグメントも更新（全てのテキストセグメントをクリーンアップ）
+            messageSegments.forEach(seg => {
+              if (seg.type !== 'text') return;
+              let segText = seg.content;
               if (toNames.length > 0) {
                 for (const name of toNames) {
                   const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -1726,8 +1792,8 @@
                 const pattern = new RegExp('^' + escapedName + 'さん[\\r\\n\\s]*');
                 segText = segText.replace(pattern, '');
               }
-              messageSegments[0].content = segText.trim();
-            }
+              seg.content = segText.trim();
+            });
             
             messageText = rawText.trim();
           }
@@ -3331,12 +3397,20 @@
       // メッセージ本文をセグメント順序で構築
       // messageSegmentsがある場合はセグメント順序で表示、ない場合は後方互換性のため旧形式
       let messageContentHtml = '';
+      let hasInlineToRe = false; // セグメント内にTo/Reがあるか
       if (node.messageSegments && node.messageSegments.length > 0) {
         // セグメント順序でHTMLを生成
         let quoteIndex = 0;
-        node.messageSegments.forEach((segment, idx) => {
+        // 最初のテキストセグメントのインデックスを見つける（外部リンク等の適用先）
+        const firstTextIdx = node.messageSegments.findIndex(s => s.type === 'text');
+        
+        // 連続するtoセグメントをグループ化するため、前処理
+        const segments = node.messageSegments;
+        let i = 0;
+        while (i < segments.length) {
+          const segment = segments[i];
+          
           if (segment.type === 'quote') {
-            // 引用セグメント
             const quoteLinks = segment.externalLinks || [];
             messageContentHtml += this.formatQuoteWithPreviews(
               segment.content, 
@@ -3345,17 +3419,43 @@
               segment.author
             );
             quoteIndex++;
+            i++;
           } else if (segment.type === 'text') {
-            // テキストセグメント
-            const textHtml = this.formatMessageTextWithPreviews(
-              segment.content,
-              node.mid,
-              idx === 0 ? (node.externalLinks || []) : [], // 外部リンクは最初のテキストセグメントにのみ適用
-              idx === 0 ? (node.filePreviewInfo || []) : [] // ファイルプレビューも同様
-            );
-            messageContentHtml += `<div class="cw-threader-message-body">${textHtml}</div>`;
+            // 空のテキストセグメントはスキップ
+            if (segment.content && segment.content.trim()) {
+              const textHtml = this.formatMessageTextWithPreviews(
+                segment.content,
+                node.mid,
+                i === firstTextIdx ? (node.externalLinks || []) : [],
+                i === firstTextIdx ? (node.filePreviewInfo || []) : []
+              );
+              messageContentHtml += `<div class="cw-threader-message-body">${textHtml}</div>`;
+            }
+            i++;
+          } else if (segment.type === 'reply') {
+            hasInlineToRe = true;
+            const rpName = node.parentUserName || '';
+            const rpAvatarUrl = segment.avatarUrl || node.parentAvatarUrl || '';
+            let avatarHtml = rpAvatarUrl
+              ? `<img src="${this.escapeHtml(rpAvatarUrl)}" class="cw-threader-to-avatar" alt="">`
+              : '<span class="cw-threader-to-default-avatar"></span>';
+            messageContentHtml += `<div class="cw-threader-to-targets"><span class="cw-threader-to-label cw-threader-re-label">Re:</span><span class="cw-threader-to-tag cw-threader-re-tag">${avatarHtml}<span class="cw-threader-to-name">${this.escapeHtml(rpName)}</span></span></div>`;
+            i++;
+          } else if (segment.type === 'to') {
+            // 連続するtoセグメントを1つにまとめる
+            hasInlineToRe = true;
+            const mergedTargets = [...(segment.targets || [])];
+            let j = i + 1;
+            while (j < segments.length && segments[j].type === 'to') {
+              mergedTargets.push(...(segments[j].targets || []));
+              j++;
+            }
+            messageContentHtml += this.formatToTargetsHtml(mergedTargets);
+            i = j;
+          } else {
+            i++;
           }
-        });
+        }
       } else {
         // 後方互換性: messageSegmentsがない場合は旧形式で表示
         const quotedHtml = node.quotedMessage 
@@ -3398,7 +3498,7 @@
               </div>
             ` : ''}
           </div>
-          ${this.formatReplyAndToTargetsHtml(node)}
+          ${hasInlineToRe ? '' : this.formatReplyAndToTargetsHtml(node)}
           ${messageContentHtml}
         </div>
       `;
