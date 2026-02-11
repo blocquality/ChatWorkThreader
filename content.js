@@ -1427,7 +1427,7 @@
               // テキストノードの場合
               if (node.nodeType === Node.TEXT_NODE) {
                 const text = node.textContent;
-                if (text && text.trim()) {
+                if (text && text.length > 0) {
                   // 親が除外セレクタに一致するか確認
                   const parent = node.parentElement;
                   if (parent) {
@@ -1454,7 +1454,7 @@
                 if (isQuote) {
                   // 現在のテキストバッファを先にセグメントに追加
                   if (currentTextBuffer.length > 0) {
-                    const textContent = currentTextBuffer.join('').trim();
+                    const textContent = currentTextBuffer.join('');
                     if (textContent) {
                       segments.push({ type: 'text', content: textContent });
                     }
@@ -1479,7 +1479,7 @@
                 if (isToReElement) {
                   // 現在のテキストバッファを先にセグメントに追加
                   if (currentTextBuffer.length > 0) {
-                    const textContent = currentTextBuffer.join('').trim();
+                    const textContent = currentTextBuffer.join('');
                     if (textContent) {
                       segments.push({ type: 'text', content: textContent });
                     }
@@ -1712,7 +1712,7 @@
             
             // 残りのテキストバッファをセグメントに追加
             if (currentTextBuffer.length > 0) {
-              const textContent = currentTextBuffer.join('').trim();
+              const textContent = currentTextBuffer.join('');
               if (textContent) {
                 segments.push({ type: 'text', content: textContent });
               }
@@ -1783,16 +1783,17 @@
               if (toNames.length > 0) {
                 for (const name of toNames) {
                   const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                  const pattern = new RegExp(escapedName + 'さん[\\r\\n\\s]*', 'g');
+                  // 名前+さん の後のスペース・タブのみ除去（改行は保持）
+                  const pattern = new RegExp(escapedName + 'さん[ \\t]*', 'g');
                   segText = segText.replace(pattern, '');
                 }
               }
               if (replyTargetUserName) {
                 const escapedName = replyTargetUserName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const pattern = new RegExp('^' + escapedName + 'さん[\\r\\n\\s]*');
+                const pattern = new RegExp('^' + escapedName + 'さん[ \\t]*');
                 segText = segText.replace(pattern, '');
               }
-              // 名前除去のみ行い、改行は保持する（trimしない）
+              // 名前除去のみ行い、改行は保持する
               seg.content = segText;
             });
             
