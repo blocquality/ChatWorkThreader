@@ -326,8 +326,20 @@
   justify-content: center;
 }
 
+.cw-threader-refresh-btn img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(36%);
+  transition: transform 0.3s ease;
+}
+
 .cw-threader-refresh-btn:hover {
   background: rgba(0, 0, 0, 0.08);
+}
+
+.cw-threader-refresh-btn:hover img {
+  transform: rotate(90deg);
 }
 
 /* 設定タブコンテンツ */
@@ -1160,7 +1172,7 @@ kbd {
   object-fit: contain;
   filter: brightness(0) saturate(100%) invert(36%) sepia(93%) saturate(1352%) hue-rotate(196deg) brightness(97%) contrast(91%);
   opacity: 1;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease, transform 0.2s ease;
 }
 
 .cw-threader-thread-toggle-btn:hover {
@@ -1178,6 +1190,11 @@ kbd {
 .cw-threader-thread-toggle-btn.active img {
   opacity: 0.55;
   filter: grayscale(100%);
+  transform: rotate(0deg);
+}
+
+.cw-threader-thread-toggle-btn:not(.active) img {
+  transform: rotate(-90deg);
 }
 
 /* 返信数バッジ */
@@ -1892,6 +1909,11 @@ kbd {
 .cw-threader-dark .cw-threader-thread-toggle-btn.active img {
   opacity: 0.5;
   filter: grayscale(100%) invert(1);
+  transform: rotate(0deg);
+}
+
+.cw-threader-dark .cw-threader-thread-toggle-btn:not(.active) img {
+  transform: rotate(-90deg);
 }
 
 /* ダークテーマ - スクロールバー */
@@ -1941,8 +1963,16 @@ kbd {
   color: #aaa;
 }
 
+.cw-threader-dark .cw-threader-refresh-btn img {
+  filter: brightness(0) saturate(100%) invert(70%);
+}
+
 .cw-threader-dark .cw-threader-refresh-btn:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.cw-threader-dark .cw-threader-refresh-btn:hover img {
+  filter: brightness(0) saturate(100%) invert(85%);
 }
 
 /* ダークテーマ - 設定タブ */

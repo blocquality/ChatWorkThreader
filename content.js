@@ -2324,8 +2324,8 @@
       let helpIconUrl = '';
       let participationIconUrl = '';
       let flatListIconUrl = '';
-      let maximizeIconUrl = '';
-      let minimizeIconUrl = '';
+      let toggleIconUrl = '';
+      let refreshIconUrl = '';
       if (isExtensionContextValid()) {
         try {
           threadsIconUrl = chrome.runtime.getURL('icons/chat-round-line-svgrepo-com.svg');
@@ -2333,16 +2333,15 @@
           helpIconUrl = chrome.runtime.getURL('icons/book-minimalistic-svgrepo-com.svg');
           participationIconUrl = chrome.runtime.getURL('icons/user-svgrepo-com.svg');
           flatListIconUrl = chrome.runtime.getURL('icons/layers-minimalistic-svgrepo-com.svg');
-          maximizeIconUrl = chrome.runtime.getURL('icons/add-square-svgrepo-com.svg');
-          minimizeIconUrl = chrome.runtime.getURL('icons/minus-square-svgrepo-com.svg');
+          toggleIconUrl = chrome.runtime.getURL('icons/align-left-svgrepo-com.svg');
+          refreshIconUrl = chrome.runtime.getURL('icons/refresh-svgrepo-com.svg');
         } catch (e) {
           // 拡張機能のコンテキストが無効な場合
         }
       }
 
       // アイコンURLをインスタンスに保存（createThreadElementで使用）
-      this.maximizeIconUrl = maximizeIconUrl;
-      this.minimizeIconUrl = minimizeIconUrl;
+      this.toggleIconUrl = toggleIconUrl;
 
       this.panel = document.createElement('div');
       this.panel.id = 'cw-threader-panel';
@@ -2375,7 +2374,9 @@
             <button id="cw-threader-flat-mode" class="cw-threader-icon-toggle" data-ct-i18n-title="flat_mode" title="${t('flat_mode')}">
               ${flatListIconUrl ? `<img src="${flatListIconUrl}" data-ct-i18n-alt="flat_mode" alt="${t('flat_mode')}">` : '☰'}
             </button>
-            <button id="cw-threader-refresh" class="cw-threader-refresh-btn" data-ct-i18n-title="refresh" title="${t('refresh')}">↻</button>
+            <button id="cw-threader-refresh" class="cw-threader-refresh-btn" data-ct-i18n-title="refresh" title="${t('refresh')}">
+              ${refreshIconUrl ? `<img src="${refreshIconUrl}" data-ct-i18n-alt="refresh" alt="${t('refresh')}">` : '↻'}
+            </button>
           </div>
           <div class="cw-threader-search-bar">
             <div class="cw-threader-search-input-wrapper">
@@ -3512,7 +3513,7 @@
               <div class="cw-threader-toggle-wrap">
                 <span class="cw-threader-reply-label">${replyCount}${t('reply_count_suffix')}</span>
                 <button class="cw-threader-thread-toggle-btn active" data-open="true">
-                  ${this.minimizeIconUrl ? `<img src="${this.minimizeIconUrl}" class="cw-threader-toggle-icon-img" alt="collapse">` : '▼'}
+                  ${this.toggleIconUrl ? `<img src="${this.toggleIconUrl}" class="cw-threader-toggle-icon-img" alt="collapse">` : '▼'}
                 </button>
               </div>
             ` : ''}
@@ -3652,7 +3653,7 @@
       btn.classList.toggle('active', isOpen);
       const img = btn.querySelector('img');
       if (img) {
-        img.src = isOpen ? (this.minimizeIconUrl || '') : (this.maximizeIconUrl || '');
+        // 同一アイコンでCSS回転により開閉を表現
         img.alt = isOpen ? 'collapse' : 'expand';
       } else {
         btn.textContent = isOpen ? '▼' : '▶';

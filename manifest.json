@@ -40,7 +40,9 @@
 				"icons/maximize-square-minimalistic-svgrepo-com.svg",
 				"icons/minimize-square-minimalistic-svgrepo-com.svg",
 				"icons/add-square-svgrepo-com.svg",
-				"icons/minus-square-svgrepo-com.svg"
+				"icons/minus-square-svgrepo-com.svg",
+				"icons/align-left-svgrepo-com.svg",
+				"icons/refresh-svgrepo-com.svg"
 			],
 			"matches": ["https://www.chatwork.com/*"]
 		}
