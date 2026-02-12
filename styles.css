@@ -690,6 +690,14 @@ kbd {
   min-width: 0;
 }
 
+/* 折り畳み時の行数制限 */
+.cw-threader-msg-content.cw-threader-line-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: var(--collapsed-max-lines, none);
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .cw-threader-message-header {
   display: flex;
   align-items: center;

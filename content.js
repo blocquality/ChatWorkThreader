@@ -17,7 +17,8 @@
   // Default settings
   const defaultSettings = {
     language: 'en',
-    theme: 'system'
+    theme: 'system',
+    collapsedMaxLines: null
   };
 
   // Current settings cache
@@ -93,6 +94,8 @@
       copy_message: 'Copy message',
       toggle_title: 'Toggle thread view (Shift+S)',
       display_in_thread: 'Display in Thread List',
+      collapsed_lines_label: 'Max lines when collapsed',
+      collapsed_lines_placeholder: 'Blank = show all',
     },
     ja: {
       // Tab titles
@@ -162,6 +165,8 @@
       copy_message: 'メッセージをコピー',
       toggle_title: 'スレッド表示の切り替え (Shift+S)',
       display_in_thread: 'スレッド一覧に表示',
+      collapsed_lines_label: '折り畳み時の最大表示行数',
+      collapsed_lines_placeholder: '未設定 = 全行表示',
     }
   };
 
@@ -279,6 +284,9 @@
           // Update language select if open
           const langSelect = document.getElementById('cw-threader-language-select');
           if (langSelect) langSelect.value = currentSettings.language || 'en';
+          // Update collapsed lines input if open
+          const collapsedInput = document.getElementById('cw-threader-collapsed-lines');
+          if (collapsedInput) collapsedInput.value = currentSettings.collapsedMaxLines || '';
         }
       });
     }
@@ -2410,6 +2418,10 @@
                 <option value="dark" data-ct-i18n="theme_dark">${t('theme_dark')}</option>
               </select>
             </div>
+            <div class="cw-threader-settings-item">
+              <label class="cw-threader-settings-label" data-ct-i18n="collapsed_lines_label">${t('collapsed_lines_label')}</label>
+              <input type="number" id="cw-threader-collapsed-lines" class="cw-threader-settings-select" min="1" max="100" data-ct-i18n-placeholder="collapsed_lines_placeholder" placeholder="${t('collapsed_lines_placeholder')}" value="${currentSettings.collapsedMaxLines || ''}">
+            </div>
             <p class="cw-threader-settings-note" data-ct-i18n="settings_auto_save">${t('settings_auto_save')}</p>
           </div>
         </div>
@@ -2669,6 +2681,32 @@
               await chrome.storage.sync.set({ [SETTINGS_KEY]: currentSettings });
             } catch (error) {
               console.error('[ChatWorkThreader] Failed to save theme setting:', error);
+            }
+          }
+        });
+      }
+
+      // Collapsed max lines input
+      const collapsedLinesInput = document.getElementById('cw-threader-collapsed-lines');
+      if (collapsedLinesInput) {
+        collapsedLinesInput.value = currentSettings.collapsedMaxLines || '';
+
+        collapsedLinesInput.addEventListener('input', async () => {
+          const val = collapsedLinesInput.value.trim();
+          currentSettings.collapsedMaxLines = val === '' ? null : Math.max(1, parseInt(val, 10) || 1);
+          if (currentSettings.collapsedMaxLines !== null) {
+            collapsedLinesInput.value = currentSettings.collapsedMaxLines;
+          }
+
+          // 既存の折り畳み中のスレッドに即座に反映
+          this.applyCollapsedLineClamp();
+
+          // 設定を保存
+          if (isExtensionContextValid()) {
+            try {
+              await chrome.storage.sync.set({ [SETTINGS_KEY]: currentSettings });
+            } catch (error) {
+              console.error('[ChatWorkThreader] Failed to save collapsed lines setting:', error);
             }
           }
         });
@@ -3628,6 +3666,8 @@
             const isOpen = this.getToggleState(mid);
             this.updateToggleBtnState(toggleBtn, isOpen);
             childrenContainer.style.display = isOpen ? '' : 'none';
+            // 折り畳み時の行数制限を適用
+            this.applyLineClampToMessage(messageEl, isOpen);
 
             toggleBtn.addEventListener('click', (e) => {
               e.stopPropagation();
@@ -3635,6 +3675,8 @@
               const newOpen = !currentOpen;
               this.updateToggleBtnState(toggleBtn, newOpen);
               childrenContainer.style.display = newOpen ? '' : 'none';
+              // 折り畳み時の行数制限を適用
+              this.applyLineClampToMessage(messageEl, newOpen);
               // 状態をストレージに保存
               this.saveToggleState(mid, newOpen);
             });
@@ -3658,6 +3700,38 @@
       } else {
         btn.textContent = isOpen ? '▼' : '▶';
       }
+    }
+
+    /**
+     * メッセージ要素に折り畳み時の行数制限を適用/解除
+     */
+    applyLineClampToMessage(messageEl, isOpen) {
+      const maxLines = currentSettings.collapsedMaxLines;
+      const msgBody = messageEl.querySelector('.cw-threader-msg-content');
+      if (!msgBody) return;
+
+      if (!isOpen && maxLines) {
+        msgBody.classList.add('cw-threader-line-clamped');
+        msgBody.style.setProperty('--collapsed-max-lines', maxLines);
+      } else {
+        msgBody.classList.remove('cw-threader-line-clamped');
+        msgBody.style.removeProperty('--collapsed-max-lines');
+      }
+    }
+
+    /**
+     * 現在表示中の全スレッドに折り畳み行数制限を再適用（設定変更時用）
+     */
+    applyCollapsedLineClamp() {
+      if (!this.panel) return;
+      const toggleBtns = this.panel.querySelectorAll('.cw-threader-thread-toggle-btn');
+      toggleBtns.forEach(btn => {
+        const isOpen = btn.getAttribute('data-open') === 'true';
+        const messageEl = btn.closest('.cw-threader-message');
+        if (messageEl) {
+          this.applyLineClampToMessage(messageEl, isOpen);
+        }
+      });
     }
 
     /**

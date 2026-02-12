@@ -28,6 +28,9 @@ const i18n = {
     theme_system: 'System default',
     theme_light: 'Light',
     theme_dark: 'Dark',
+    collapsed_lines_setting: 'Thread Display',
+    collapsed_lines_label: 'Max lines when collapsed',
+    collapsed_lines_placeholder: 'Blank = show all',
     auto_save_notice: 'Settings are saved automatically'
   },
   ja: {
@@ -53,6 +56,9 @@ const i18n = {
     theme_system: 'システム設定に従う',
     theme_light: 'ライト',
     theme_dark: 'ダーク',
+    collapsed_lines_setting: 'スレッド表示',
+    collapsed_lines_label: '折り畳み時の最大表示行数',
+    collapsed_lines_placeholder: '未設定 = 全行表示',
     auto_save_notice: '設定は自動的に保存されます'
   }
 };
@@ -60,7 +66,8 @@ const i18n = {
 // Default settings
 const defaultSettings = {
   language: 'en',
-  theme: 'system'
+  theme: 'system',
+  collapsedMaxLines: null
 };
 
 // Storage key
@@ -125,6 +132,14 @@ function applyTranslations(lang) {
       }
     });
   }
+
+  // Update placeholder translations
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (translations[key]) {
+      el.placeholder = translations[key];
+    }
+  });
 
   // Update HTML lang attribute
   document.documentElement.lang = lang;
@@ -196,6 +211,20 @@ async function initSettings() {
       settings.theme = e.target.value;
       await saveSettings(settings);
       applyTheme(settings.theme);
+    });
+  }
+
+  // Collapsed max lines input
+  const collapsedLinesInput = document.getElementById('collapsed-lines-input');
+  if (collapsedLinesInput) {
+    collapsedLinesInput.value = settings.collapsedMaxLines || '';
+    collapsedLinesInput.addEventListener('input', async (e) => {
+      const val = e.target.value.trim();
+      settings.collapsedMaxLines = val === '' ? null : Math.max(1, parseInt(val, 10) || 1);
+      if (settings.collapsedMaxLines !== null) {
+        collapsedLinesInput.value = settings.collapsedMaxLines;
+      }
+      await saveSettings(settings);
     });
   }
 
