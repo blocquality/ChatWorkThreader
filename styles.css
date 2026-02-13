@@ -363,8 +363,8 @@
 .cw-threader-settings-label {
   font-size: 13px;
   color: #555;
-  min-width: 72px;
-  flex-shrink: 0;
+  min-width: 48px;
+  flex-shrink: 1;
 }
 
 .cw-threader-settings-select {
@@ -412,8 +412,18 @@
 
 /* 数値入力フィールド */
 .cw-threader-settings-number {
-  background-image: none;
+  width: 64px;
+  min-width: 64px;
+  flex: 0 0 auto;
   padding: 6px 10px;
+  font-size: 13px;
+  line-height: 1;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #333;
+  outline: none;
+  text-align: center;
   -moz-appearance: textfield;
 }
 
@@ -421,6 +431,15 @@
 .cw-threader-settings-number::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+.cw-threader-settings-number:hover {
+  border-color: #a0a0a0;
+}
+
+.cw-threader-settings-number:focus {
+  border-color: #2196F3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
 }
 
 .cw-threader-settings-note {
