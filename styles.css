@@ -376,6 +376,7 @@
 
 .cw-threader-settings-select {
   width: 100%;
+  box-sizing: border-box;
   padding: 6px 24px 6px 10px;
   font-size: 13px;
   line-height: 1;
@@ -414,6 +415,7 @@
 /* 数値入力フィールド */
 .cw-threader-settings-number {
   width: 100%;
+  box-sizing: border-box;
   padding: 6px 10px;
   font-size: 13px;
   line-height: 1;
