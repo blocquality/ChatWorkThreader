@@ -203,6 +203,34 @@
       box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
     }
 
+    .setting-input-number {
+      width: 100%;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #333;
+      font-size: 13px;
+      outline: none;
+      transition: background 0.2s ease;
+      -moz-appearance: textfield;
+    }
+
+    .setting-input-number::-webkit-outer-spin-button,
+    .setting-input-number::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .setting-input-number:hover {
+      background: white;
+    }
+
+    .setting-input-number:focus {
+      background: white;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+    }
+
     .save-notice {
       font-size: 11px;
       opacity: 0.8;
@@ -289,7 +317,7 @@
         <h2>📏 <span data-i18n="collapsed_lines_setting">Thread Display</span></h2>
         <div class="setting-item">
           <label class="setting-label" data-i18n="collapsed_lines_label">Max lines when collapsed</label>
-          <input type="number" id="collapsed-lines-input" class="setting-select" min="1" max="100" data-i18n-placeholder="collapsed_lines_placeholder" placeholder="Blank = show all">
+          <input type="number" id="collapsed-lines-input" class="setting-input-number" min="1" max="100" data-i18n-placeholder="collapsed_lines_placeholder" placeholder="Blank = show all">
         </div>
       </div>
 

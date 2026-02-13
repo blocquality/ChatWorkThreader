@@ -2418,9 +2418,9 @@
                 <option value="dark" data-ct-i18n="theme_dark">${t('theme_dark')}</option>
               </select>
             </div>
-            <div class="cw-threader-settings-item">
+            <div class="cw-threader-settings-item cw-threader-settings-item-vertical">
               <label class="cw-threader-settings-label" data-ct-i18n="collapsed_lines_label">${t('collapsed_lines_label')}</label>
-              <input type="number" id="cw-threader-collapsed-lines" class="cw-threader-settings-select" min="1" max="100" data-ct-i18n-placeholder="collapsed_lines_placeholder" placeholder="${t('collapsed_lines_placeholder')}" value="${currentSettings.collapsedMaxLines || ''}">
+              <input type="number" id="cw-threader-collapsed-lines" class="cw-threader-settings-select cw-threader-settings-number" min="1" max="100" data-ct-i18n-placeholder="collapsed_lines_placeholder" placeholder="${t('collapsed_lines_placeholder')}" value="${currentSettings.collapsedMaxLines || ''}">
             </div>
             <p class="cw-threader-settings-note" data-ct-i18n="settings_auto_save">${t('settings_auto_save')}</p>
           </div>
