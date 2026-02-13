@@ -1180,7 +1180,7 @@ kbd {
   object-fit: contain;
   filter: brightness(0) saturate(100%) invert(36%) sepia(93%) saturate(1352%) hue-rotate(196deg) brightness(97%) contrast(91%);
   opacity: 1;
-  transition: all 0.2s ease, transform 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .cw-threader-thread-toggle-btn:hover {
@@ -1198,11 +1198,9 @@ kbd {
 .cw-threader-thread-toggle-btn.active img {
   opacity: 0.55;
   filter: grayscale(100%);
-  transform: rotate(0deg);
 }
 
 .cw-threader-thread-toggle-btn:not(.active) img {
-  transform: rotate(-90deg);
 }
 
 /* 返信数バッジ */
@@ -1635,7 +1633,7 @@ kbd {
   cursor: pointer;
   color: #909090;
   opacity: 1;
-  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
   z-index: 10;
 }
 
@@ -1657,7 +1655,6 @@ kbd {
 .cw-threader-pin-btn.pinned {
   opacity: 1;
   color: #1976d2;
-  transform: rotate(45deg);
 }
 
 .cw-threader-pin-btn.pinned:hover {
@@ -1917,11 +1914,9 @@ kbd {
 .cw-threader-dark .cw-threader-thread-toggle-btn.active img {
   opacity: 0.5;
   filter: grayscale(100%) invert(1);
-  transform: rotate(0deg);
 }
 
 .cw-threader-dark .cw-threader-thread-toggle-btn:not(.active) img {
-  transform: rotate(-90deg);
 }
 
 /* ダークテーマ - スクロールバー */
