@@ -2403,25 +2403,33 @@
         </div>
         <div class="cw-threader-tab-content" data-tab-content="settings" style="display: none;">
           <div class="cw-threader-settings-content">
-            <div class="cw-threader-settings-item">
-              <label class="cw-threader-settings-label" data-ct-i18n="language_label">${t('language_label')}</label>
-              <select id="cw-threader-language-select" class="cw-threader-settings-select">
-                <option value="en">English</option>
-                <option value="ja">日本語</option>
-              </select>
-            </div>
-            <div class="cw-threader-settings-item">
-              <label class="cw-threader-settings-label" data-ct-i18n="theme_label">${t('theme_label')}</label>
-              <select id="cw-threader-theme-select" class="cw-threader-settings-select">
-                <option value="system" data-ct-i18n="theme_system">${t('theme_system')}</option>
-                <option value="light" data-ct-i18n="theme_light">${t('theme_light')}</option>
-                <option value="dark" data-ct-i18n="theme_dark">${t('theme_dark')}</option>
-              </select>
-            </div>
-            <div class="cw-threader-settings-item">
-              <label class="cw-threader-settings-label" data-ct-i18n="collapsed_lines_label">${t('collapsed_lines_label')}</label>
-              <input type="number" id="cw-threader-collapsed-lines" class="cw-threader-settings-number" min="1" max="100" data-ct-i18n-placeholder="collapsed_lines_placeholder" placeholder="${t('collapsed_lines_placeholder')}" value="${currentSettings.collapsedMaxLines || ''}">
-            </div>
+            <table class="cw-threader-settings-table">
+              <tr class="cw-threader-settings-item">
+                <td class="cw-threader-settings-label" data-ct-i18n="language_label">${t('language_label')}</td>
+                <td>
+                  <select id="cw-threader-language-select" class="cw-threader-settings-select">
+                    <option value="en">English</option>
+                    <option value="ja">日本語</option>
+                  </select>
+                </td>
+              </tr>
+              <tr class="cw-threader-settings-item">
+                <td class="cw-threader-settings-label" data-ct-i18n="theme_label">${t('theme_label')}</td>
+                <td>
+                  <select id="cw-threader-theme-select" class="cw-threader-settings-select">
+                    <option value="system" data-ct-i18n="theme_system">${t('theme_system')}</option>
+                    <option value="light" data-ct-i18n="theme_light">${t('theme_light')}</option>
+                    <option value="dark" data-ct-i18n="theme_dark">${t('theme_dark')}</option>
+                  </select>
+                </td>
+              </tr>
+              <tr class="cw-threader-settings-item">
+                <td class="cw-threader-settings-label" data-ct-i18n="collapsed_lines_label">${t('collapsed_lines_label')}</td>
+                <td>
+                  <input type="number" id="cw-threader-collapsed-lines" class="cw-threader-settings-number" min="1" max="100" data-ct-i18n-placeholder="collapsed_lines_placeholder" placeholder="${t('collapsed_lines_placeholder')}" value="${currentSettings.collapsedMaxLines || ''}">
+                </td>
+              </tr>
+            </table>
             <p class="cw-threader-settings-note" data-ct-i18n="settings_auto_save">${t('settings_auto_save')}</p>
           </div>
         </div>

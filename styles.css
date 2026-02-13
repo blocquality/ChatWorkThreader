@@ -353,18 +353,25 @@
   margin-bottom: 24px;
 }
 
-.cw-threader-settings-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+/* 設定テーブルレイアウト */
+.cw-threader-settings-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cw-threader-settings-item td {
   padding: 8px 0;
+  vertical-align: middle;
+}
+
+.cw-threader-settings-item td:first-child {
+  padding-right: 16px;
+  white-space: nowrap;
 }
 
 .cw-threader-settings-label {
   font-size: 13px;
   color: #555;
-  min-width: 48px;
-  flex-shrink: 1;
 }
 
 .cw-threader-settings-select {
@@ -404,11 +411,6 @@
 }
 
 /* 縦並びレイアウト（長いラベル用） */
-.cw-threader-settings-item.cw-threader-settings-item-vertical {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-}
 
 /* 数値入力フィールド */
 .cw-threader-settings-number {

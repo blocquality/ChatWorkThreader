@@ -158,26 +158,23 @@
       margin-bottom: 15px;
     }
 
-    .settings-section h2 {
-      font-size: 14px;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .settings-table {
+      width: 100%;
+      border-collapse: collapse;
     }
 
-    .setting-item {
-      margin-bottom: 12px;
+    .settings-table td {
+      padding: 6px 0;
+      vertical-align: middle;
     }
 
-    .setting-item:last-child {
-      margin-bottom: 0;
+    .settings-table td:first-child {
+      padding-right: 12px;
+      white-space: nowrap;
     }
 
     .setting-label {
-      display: block;
       font-size: 12px;
-      margin-bottom: 6px;
       opacity: 0.9;
     }
 
@@ -292,34 +289,33 @@
     <!-- Settings Tab -->
     <div class="tab-pane" id="tab-settings">
       <div class="settings-section">
-        <h2>🌐 <span data-i18n="language_setting">Language</span></h2>
-        <div class="setting-item">
-          <label class="setting-label" data-i18n="display_language">Display Language</label>
-          <select id="language-select" class="setting-select">
-            <option value="en">English</option>
-            <option value="ja">日本語</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <h2>🎨 <span data-i18n="theme_setting">Theme</span></h2>
-        <div class="setting-item">
-          <label class="setting-label" data-i18n="color_theme">Color Theme</label>
-          <select id="theme-select" class="setting-select">
-            <option value="system" data-i18n="theme_system">System default</option>
-            <option value="light" data-i18n="theme_light">Light</option>
-            <option value="dark" data-i18n="theme_dark">Dark</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <h2>📏 <span data-i18n="collapsed_lines_setting">Thread Display</span></h2>
-        <div class="setting-item">
-          <label class="setting-label" data-i18n="collapsed_lines_label">Max lines when collapsed</label>
-          <input type="number" id="collapsed-lines-input" class="setting-input-number" min="1" max="100" data-i18n-placeholder="collapsed_lines_placeholder" placeholder="Blank = show all">
-        </div>
+        <table class="settings-table">
+          <tr>
+            <td class="setting-label" data-i18n="display_language">Display Language</td>
+            <td>
+              <select id="language-select" class="setting-select">
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td class="setting-label" data-i18n="color_theme">Color Theme</td>
+            <td>
+              <select id="theme-select" class="setting-select">
+                <option value="system" data-i18n="theme_system">System default</option>
+                <option value="light" data-i18n="theme_light">Light</option>
+                <option value="dark" data-i18n="theme_dark">Dark</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td class="setting-label" data-i18n="collapsed_lines_label">Max lines when collapsed</td>
+            <td>
+              <input type="number" id="collapsed-lines-input" class="setting-input-number" min="1" max="100" data-i18n-placeholder="collapsed_lines_placeholder" placeholder="Blank = show all">
+            </td>
+          </tr>
+        </table>
       </div>
 
       <div class="save-notice" data-i18n="auto_save_notice">Settings are saved automatically</div>
