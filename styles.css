@@ -413,9 +413,7 @@
 
 /* 数値入力フィールド */
 .cw-threader-settings-number {
-  width: 64px;
-  min-width: 64px;
-  flex: 0 0 auto;
+  width: 100%;
   padding: 6px 10px;
   font-size: 13px;
   line-height: 1;
@@ -424,7 +422,6 @@
   background-color: #fff;
   color: #333;
   outline: none;
-  text-align: center;
   -moz-appearance: textfield;
 }
 
