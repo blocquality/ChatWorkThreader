@@ -2110,6 +2110,8 @@
       this.trackingMid = null; // トラッキング中のメッセージID
       this.showInThreadManager = null; // ShowInThreadButtonManagerへの参照
       this.pinnedThreads = new Set(); // ピン止めされたスレッドのmidセット
+      this._pendingRefreshTimer = null; // Observerのデバウンスタイマー（レース条件防止用）
+      this._refreshRetryTimer = null; // リフレッシュリトライ用タイマー
     }
 
     /**
@@ -2495,7 +2497,18 @@
       });
 
       document.getElementById('cw-threader-refresh').addEventListener('click', () => {
-        this.refresh();
+        // 手動リフレッシュ時は、Observerのデバウンスタイマーをキャンセルして
+        // レース条件（Observer更新が手動更新の結果を上書き）を防ぐ
+        clearTimeout(this._pendingRefreshTimer);
+        this._pendingRefreshTimer = null;
+        clearTimeout(this._refreshRetryTimer);
+        this._refreshRetryTimer = null;
+        // DOMが安定するのを待ってからリフレッシュ（2回のrAFで描画完了を保証）
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            this.refresh();
+          });
+        });
       });
 
       // フラット表示モードのアイコンボタンのイベントリスナー
@@ -4884,9 +4897,45 @@
     }
 
     /**
-     * スレッドを更新
+     * 収集したメッセージデータに不完全なものがないかチェック
+     * ChatWorkがまだDOMの内容を描画中の場合、テキストやユーザー名が空のメッセージが存在しうる
+     * @returns {boolean} 不完全なデータがある場合 true
      */
-    async refresh() {
+    _hasIncompleteData() {
+      const messages = this.threadBuilder.messages;
+      if (messages.size === 0) return false;
+      
+      for (const [mid, msg] of messages) {
+        // メッセージテキストが空で、引用もファイルもリンクもない場合は不完全の可能性
+        const hasNoContent = !msg.messageText && !msg.quotedMessage && 
+          (!msg.filePreviewInfo || msg.filePreviewInfo.length === 0) &&
+          (!msg.externalLinks || msg.externalLinks.length === 0);
+        
+        if (hasNoContent) {
+          // DOMに該当要素が存在し、実際にコンテンツがあるか確認
+          const el = document.querySelector(`[data-mid="${CSS.escape(mid)}"]._message`);
+          if (el) {
+            const preEl = el.querySelector('pre');
+            // DOM上にpreタグがあり中身がある場合、collectMessagesが読み損ねている
+            if (preEl && preEl.textContent.trim().length > 0) {
+              return true;
+            }
+          }
+        }
+      }
+      
+      return false;
+    }
+
+    /**
+     * スレッドを更新
+     * @param {number} _retryCount - 内部リトライカウント（外部から指定しない）
+     */
+    async refresh(_retryCount = 0) {
+      // Observerのデバウンスタイマーをキャンセル（レース条件防止）
+      clearTimeout(this._pendingRefreshTimer);
+      this._pendingRefreshTimer = null;
+      
       // ルームが変わっている可能性があるので再読み込み
       const newRoomId = this.getCurrentRoomId();
       if (newRoomId !== this.currentRoomId) {
@@ -4906,6 +4955,22 @@
       
       this.threadBuilder.collectMessages();
       this.threadBuilder.buildThreads();
+      
+      // データ検証: 不完全なデータが検出された場合、DOMの描画完了を待ってリトライ
+      const maxRetries = 3;
+      if (_retryCount < maxRetries && this._hasIncompleteData()) {
+        // console.log(`[ChatWorkThreader] Incomplete data detected, retrying (${_retryCount + 1}/${maxRetries})...`);
+        clearTimeout(this._refreshRetryTimer);
+        this._refreshRetryTimer = setTimeout(() => {
+          // DOMの描画完了を待ってからリトライ
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              this.refresh(_retryCount + 1);
+            });
+          });
+        }, 500);
+        return;
+      }
       
       // 最大階層に応じてパネル幅を再計算
       // フラットモードの場合は最小幅(550px)に設定
@@ -5287,6 +5352,10 @@
 
   /**
    * メッセージ変更を監視
+   * - 新規メッセージの追加を検出
+   * - 既存メッセージの編集（内容変更）を検出
+   * - メッセージの削除を検出
+   * - DOMの安定化を待ってからデータを収集（タイミングずれ防止）
    */
   function observeMessages(threadUI, showInThreadButtonManager) {
     // タイムラインのコンテナを探す
@@ -5306,65 +5375,127 @@
       return document.body;
     };
 
-    let debounceTimer = null;
     let isProcessing = false; // 処理中フラグ
+    
+    /**
+     * DOMが安定するのを待ってからスレッド更新を実行
+     * 2回のrequestAnimationFrameでブラウザの描画完了を保証してからデータ収集する
+     */
+    async function performUpdate() {
+      if (isProcessing) return;
+      isProcessing = true;
+      
+      try {
+        // 「スレッドで表示」ボタンを更新
+        if (showInThreadButtonManager) {
+          showInThreadButtonManager.refresh();
+        }
+        
+        // パネルが開いている場合は更新
+        if (threadUI.isVisible) {
+          await threadUI.refresh();
+        }
+      } catch (e) {
+        console.error('[ChatWorkThreader] Error during update:', e);
+      } finally {
+        // 次のフレームで処理中フラグを解除（async完了後に解除）
+        requestAnimationFrame(() => {
+          isProcessing = false;
+        });
+      }
+    }
+    
+    /**
+     * デバウンス付きでスレッド更新をスケジュール
+     * DOMの安定化を待ってから実行する
+     */
+    function scheduleUpdate() {
+      clearTimeout(threadUI._pendingRefreshTimer);
+      threadUI._pendingRefreshTimer = setTimeout(() => {
+        // DOMが安定するのを待つ（2回のrAFで描画完了を保証）
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            performUpdate();
+          });
+        });
+      }, 1000); // 1000ms: ChatWorkの描画が完了するのに十分な待ち時間
+    }
+    
     const observer = new MutationObserver((mutations) => {
       // 処理中の場合はスキップ（自分自身の変更によるトリガーを防ぐ）
       if (isProcessing) return;
       
-      // data-mid を持つ要素が追加/削除されたかチェック
-      // ただし、拡張機能が追加したボタン等は除外
-      let hasMessageChange = false;
+      // メッセージに関連する変更があったかチェック
+      let hasRelevantChange = false;
       
       for (const mutation of mutations) {
+        // 拡張機能自身の要素内での変更は無視
+        if (mutation.target?.closest?.('#cw-threader-panel') ||
+            mutation.target?.closest?.('.cw-threader-show-in-thread-wrapper') ||
+            mutation.target?.closest?.('.cw-threader-toggle-btn-wrapper')) {
+          continue;
+        }
+        
         if (mutation.type === 'childList') {
+          // 追加されたノードをチェック
           for (const node of mutation.addedNodes) {
             if (node.nodeType === 1) {
               // 拡張機能が追加した要素は除外
               if (node.classList?.contains('cw-threader-show-in-thread-wrapper')) continue;
+              if (node.classList?.contains('cw-threader-toggle-btn-wrapper')) continue;
               if (node.id === 'cw-threader-panel') continue;
               
+              // 新しい [data-mid] 要素が追加された（新規メッセージ）
               if (node.hasAttribute?.('data-mid') || node.querySelector?.('[data-mid]')) {
-                hasMessageChange = true;
+                hasRelevantChange = true;
                 break;
               }
             }
           }
-          if (hasMessageChange) break;
+          if (hasRelevantChange) break;
+          
+          // 削除されたノードもチェック（メッセージ削除）
+          for (const node of mutation.removedNodes) {
+            if (node.nodeType === 1) {
+              if (node.classList?.contains('cw-threader-show-in-thread-wrapper')) continue;
+              if (node.classList?.contains('cw-threader-toggle-btn-wrapper')) continue;
+              if (node.hasAttribute?.('data-mid') || node.querySelector?.('[data-mid]')) {
+                hasRelevantChange = true;
+                break;
+              }
+            }
+          }
+          if (hasRelevantChange) break;
+          
+          // 既存メッセージ内部の変更を検出（メッセージ編集、内容の遅延描画）
+          // mutation.target は子要素の追加/削除が起きた親要素
+          // この親要素が [data-mid]._message の内部にある場合、メッセージ内容が変更された
+          if (mutation.target?.nodeType === 1 && mutation.target?.closest?.('[data-mid]._message')) {
+            hasRelevantChange = true;
+            break;
+          }
+        } else if (mutation.type === 'characterData') {
+          // テキストノードが変更された場合（メッセージ編集でテキストが書き換わった場合）
+          const parentEl = mutation.target?.parentElement;
+          if (parentEl?.closest?.('[data-mid]._message')) {
+            hasRelevantChange = true;
+            break;
+          }
         }
       }
 
-      if (hasMessageChange) {
-        // デバウンス：短時間に大量の更新が来た場合に備える
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-          // console.log('ChatWork Threader: メッセージ変更を検知、更新中...');
-          
-          isProcessing = true;
-          try {
-            // 「スレッドで表示」ボタンを更新
-            if (showInThreadButtonManager) {
-              showInThreadButtonManager.refresh();
-            }
-            
-            // パネルが開いている場合は更新
-            if (threadUI.isVisible) {
-              threadUI.refresh();
-            }
-          } finally {
-            // 次のフレームで処理中フラグを解除
-            requestAnimationFrame(() => {
-              isProcessing = false;
-            });
-          }
-        }, 500);
+      if (hasRelevantChange) {
+        // デバウンス: 短時間に大量の更新が来た場合に備える
+        // 内容の遅延描画にも対応するため、タイマーを都度リセット
+        scheduleUpdate();
       }
     });
 
     const container = findTimelineContainer();
     observer.observe(container, {
       childList: true,
-      subtree: true
+      subtree: true,
+      characterData: true // メッセージ編集（テキスト変更）を検出
     });
 
     // URL（ルーム）変更を監視
