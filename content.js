@@ -4599,8 +4599,8 @@
 
     /**
      * プレースホルダーメッセージの元メッセージを追跡する
-     * ChatWorkのタイムラインを上にスクロールして履歴を読み込む
-     * ユーザーがスクロールして古いメッセージを読み込むのと同じ動作
+     * ChatWorkのURLハッシュナビゲーション（#!rid{roomId}-{messageId}）を利用して
+     * 「返信元を見る」→「このメッセージへ移動」と同じ瞬時ジャンプを実現する
      * @param {string} mid - 探索対象のメッセージID
      * @param {HTMLElement} trackingBtn - trackingボタン要素
      */
@@ -4615,14 +4615,6 @@
 
       // ボタンをアクティブ状態に
       trackingBtn.classList.add('cw-threader-tracking-active');
-      
-      const scrollContainer = this.getTimelineScrollContainer();
-      if (!scrollContainer) {
-        console.error('[ChatWorkThreader] Timeline container not found - cannot track');
-        this.trackingMid = null;
-        trackingBtn.classList.remove('cw-threader-tracking-active');
-        return;
-      }
 
       // 最初にメッセージが既に存在するか確認
       let targetMessage = document.querySelector(`[data-mid="${mid}"]._message`);
@@ -4634,62 +4626,48 @@
         return;
       }
 
-      const maxAttempts = 50; // 最大試行回数
-      const scrollStep = 1000; // 一度にスクロールするピクセル数
-      const waitTime = 500; // スクロール後の待機時間（ms）
-      let attempts = 0;
-      let noChangeCount = 0; // スクロール位置が変わらなかった回数
+      // ルームIDを取得（URLハッシュナビゲーションに必要）
+      const roomId = this.getCurrentRoomId();
+      if (!roomId) {
+        console.error('[ChatWorkThreader] Room ID not found - cannot track');
+        this.trackingMid = null;
+        trackingBtn.classList.remove('cw-threader-tracking-active');
+        return;
+      }
 
-      console.log(`[ChatWorkThreader] Tracking origin message: ${mid}`);
-      console.log(`[ChatWorkThreader] Starting scroll - container scrollTop: ${scrollContainer.scrollTop}, scrollHeight: ${scrollContainer.scrollHeight}`);
+      console.log(`[ChatWorkThreader] Tracking origin message via hash navigation: mid=${mid}, rid=${roomId}`);
 
-      // タイムラインを上にスクロールするだけ（ChatWorkが自動的にメッセージを読み込む）
-      while (attempts < maxAttempts) {
-        attempts++;
-        
-        // メッセージが存在するか確認
+      // ChatWorkのURLハッシュナビゲーションを使用してメッセージに直接ジャンプ
+      // これは「返信元を見る」→「このメッセージへ移動」クリック時と同じメカニズム
+      // ChatWorkのSPAルーターがAPIを通じて対象メッセージ周辺を直接読み込む
+      const targetHash = `#!rid${roomId}-${mid}`;
+      window.location.hash = targetHash;
+
+      // メッセージがDOMに出現するのを待つ（通常1-2秒で完了）
+      const maxWaitMs = 10000; // 最大10秒
+      const pollIntervalMs = 100;
+      let elapsedMs = 0;
+
+      while (elapsedMs < maxWaitMs) {
+        await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+        elapsedMs += pollIntervalMs;
         targetMessage = document.querySelector(`[data-mid="${mid}"]._message`);
         if (targetMessage) {
-          console.log(`[ChatWorkThreader] Found message after ${attempts} scroll attempts`);
+          console.log(`[ChatWorkThreader] Found message via hash navigation after ${elapsedMs}ms`);
           break;
         }
+      }
 
-        // スクロール前の状態を記録
-        const beforeScrollTop = scrollContainer.scrollTop;
-
-        // タイムラインを上にスクロール（古いメッセージを読み込む）
-        const newScrollTop = Math.max(0, scrollContainer.scrollTop - scrollStep);
-        scrollContainer.scrollTop = newScrollTop;
-        
-        console.log(`[ChatWorkThreader] Scroll attempt ${attempts}: ${beforeScrollTop} -> ${scrollContainer.scrollTop}`);
-
-        // スクロールとメッセージ読み込みを待つ
-        await new Promise(resolve => setTimeout(resolve, waitTime));
-
-        // スクロール位置が変わらなかった場合（最上部に到達）
-        if (scrollContainer.scrollTop === beforeScrollTop) {
-          noChangeCount++;
-          console.log(`[ChatWorkThreader] Scroll position unchanged (${noChangeCount}/3)`);
-          
-          // 追加のメッセージ読み込みを待つ
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          if (noChangeCount >= 3) {
-            console.log(`[ChatWorkThreader] Reached scroll limit after ${attempts} attempts`);
-            break;
-          }
-        } else {
-          noChangeCount = 0;
-        }
+      // ハッシュナビゲーションで見つからなかった場合、スクロール方式にフォールバック
+      if (!targetMessage) {
+        console.log(`[ChatWorkThreader] Hash navigation did not find message, falling back to scroll method`);
+        targetMessage = await this._trackByScrolling(mid);
       }
 
       // 完了後にトラッキング状態を解除
       this.trackingMid = null;
       
-      // 最終確認：メッセージが見つかったか
-      targetMessage = document.querySelector(`[data-mid="${mid}"]._message`);
-
-      // スレッド一覧を最新状態に再構築（トラッキングで読み込まれたメッセージを反映）
+      // スレッド一覧を最新状態に再構築（ナビゲーションで読み込まれたメッセージを反映）
       // まずデータをクリアしてから再収集（重複防止）
       this.threadBuilder.messages.clear();
       this.threadBuilder.threads.clear();
@@ -4716,6 +4694,56 @@
           console.log(`[ChatWorkThreader] Could not find message: ${mid} (may be beyond plan limit or deleted)`);
         }
       });
+    }
+
+    /**
+     * スクロール方式でメッセージを追跡する（フォールバック用）
+     * ハッシュナビゲーションが機能しなかった場合に使用
+     * @param {string} mid - 探索対象のメッセージID
+     * @returns {Element|null} 見つかったメッセージ要素、または null
+     */
+    async _trackByScrolling(mid) {
+      const scrollContainer = this.getTimelineScrollContainer();
+      if (!scrollContainer) {
+        console.error('[ChatWorkThreader] Timeline container not found - cannot track by scrolling');
+        return null;
+      }
+
+      const maxAttempts = 50;
+      const scrollStep = 3000; // スクロールステップを大きく（高速化）
+      const waitTime = 300; // 待機時間を短く（高速化）
+      let attempts = 0;
+      let noChangeCount = 0;
+
+      console.log(`[ChatWorkThreader] Fallback: scroll tracking for mid=${mid}`);
+
+      while (attempts < maxAttempts) {
+        attempts++;
+        
+        const targetMessage = document.querySelector(`[data-mid="${mid}"]._message`);
+        if (targetMessage) {
+          console.log(`[ChatWorkThreader] Found message after ${attempts} scroll attempts`);
+          return targetMessage;
+        }
+
+        const beforeScrollTop = scrollContainer.scrollTop;
+        scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop - scrollStep);
+
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+
+        if (scrollContainer.scrollTop === beforeScrollTop) {
+          noChangeCount++;
+          if (noChangeCount >= 3) {
+            console.log(`[ChatWorkThreader] Reached scroll limit after ${attempts} attempts`);
+            break;
+          }
+          await new Promise(resolve => setTimeout(resolve, 300));
+        } else {
+          noChangeCount = 0;
+        }
+      }
+
+      return document.querySelector(`[data-mid="${mid}"]._message`);
     }
 
     /**
