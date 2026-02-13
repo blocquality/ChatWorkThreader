@@ -4598,52 +4598,10 @@
     }
 
     /**
-     * MutationObserverを使ってメッセージがDOMに出現するのを待つ
-     * ポーリングより応答性が高く、メッセージ出現を即座に検出する
-     * @param {string} mid - 待機対象のメッセージID
-     * @param {number} timeoutMs - タイムアウト（ms）
-     * @returns {Promise<Element|null>} 見つかったメッセージ要素、またはタイムアウト時null
-     */
-    _waitForMessageInDOM(mid, timeoutMs = 5000) {
-      return new Promise((resolve) => {
-        // 既に存在するかチェック
-        const existing = document.querySelector(`[data-mid="${mid}"]._message`);
-        if (existing) {
-          resolve(existing);
-          return;
-        }
-
-        let resolved = false;
-        const done = (el) => {
-          if (resolved) return;
-          resolved = true;
-          observer.disconnect();
-          clearTimeout(timer);
-          resolve(el);
-        };
-
-        // MutationObserverでメッセージ出現を監視
-        const observer = new MutationObserver(() => {
-          const el = document.querySelector(`[data-mid="${mid}"]._message`);
-          if (el) done(el);
-        });
-
-        // タイムラインコンテナを監視（広範囲のフォールバック付き）
-        const timeline = document.querySelector('#_timeLine, ._timeLine, [role="log"], #_chatContent, #_mainContent');
-        if (timeline) {
-          observer.observe(timeline, { childList: true, subtree: true });
-        } else {
-          observer.observe(document.body, { childList: true, subtree: true });
-        }
-
-        // タイムアウト
-        const timer = setTimeout(() => done(null), timeoutMs);
-      });
-    }
-
-    /**
      * プレースホルダーメッセージの元メッセージを追跡する
-     * 複数の戦略を順番に試行して最速でメッセージにジャンプする
+     * MutationObserver + scrollTop=0ジャンプでメッセージを高速読み込み
+     * ChatWorkはSPA内でURLハッシュナビゲーションを無視するため、
+     * スクロールによる履歴読み込みが唯一の確実な方法
      * @param {string} mid - 探索対象のメッセージID
      * @param {HTMLElement} trackingBtn - trackingボタン要素
      */
@@ -4669,30 +4627,10 @@
         return;
       }
 
-      // ルームIDを取得
-      const roomId = this.getCurrentRoomId();
-      if (!roomId) {
-        console.error('[ChatWorkThreader] Room ID not found - cannot track');
-        this.trackingMid = null;
-        trackingBtn.classList.remove('cw-threader-tracking-active');
-        return;
-      }
+      console.log(`[ChatWorkThreader] Tracking origin message: mid=${mid}`);
 
-      console.log(`[ChatWorkThreader] Tracking origin message: mid=${mid}, rid=${roomId}`);
-
-      // === Strategy 1: ChatWorkの返信引用リンクをクリックして「このメッセージへ移動」を模擬 ===
-      targetMessage = await this._tryNativeReplyNavigation(mid, roomId);
-
-      // === Strategy 2: 2段階ハッシュナビゲーション ===
-      if (!targetMessage) {
-        targetMessage = await this._tryTwoStepHashNavigation(mid, roomId);
-      }
-
-      // === Strategy 3: 高速スクロールフォールバック ===
-      if (!targetMessage) {
-        console.log(`[ChatWorkThreader] Primary strategies failed, falling back to scroll`);
-        targetMessage = await this._trackByScrolling(mid);
-      }
+      // MutationObserver + scrollTop=0ジャンプで高速トラッキング
+      targetMessage = await this._trackByScrolling(mid);
 
       // 完了後にトラッキング状態を解除
       this.trackingMid = null;
@@ -4724,172 +4662,22 @@
     }
 
     /**
-     * Strategy 1: ChatWorkの返信引用リンクを使った瞬時ナビゲーション
-     * DOM上にある返信引用タグ（[rp ... to=ROOMID-MID]）をクリックし、
-     * 表示されるポップオーバー内の「このメッセージへ移動」リンクをクリックする
-     * @param {string} mid - 探索対象のメッセージID
-     * @param {string} roomId - ルームID
-     * @returns {Element|null} 見つかったメッセージ要素、またはnull
-     */
-    async _tryNativeReplyNavigation(mid, roomId) {
-      console.log(`[ChatWorkThreader] Strategy 1: Trying native reply citation click`);
-
-      // 対象midへの返信引用タグを探す（data-cwtag に to=ROOMID-MID が含まれる要素）
-      const targetTo = `to=${roomId}-${mid}`;
-      const allReplyTags = document.querySelectorAll('[data-cwtag^="[rp"]');
-      let replyTag = null;
-      
-      for (const tag of allReplyTags) {
-        const cwtag = tag.getAttribute('data-cwtag');
-        if (cwtag && cwtag.includes(targetTo)) {
-          replyTag = tag;
-          break;
-        }
-      }
-
-      if (!replyTag) {
-        console.log(`[ChatWorkThreader] Strategy 1: No reply citation found for mid=${mid}`);
-        return null;
-      }
-
-      console.log(`[ChatWorkThreader] Strategy 1: Found reply citation, clicking...`);
-
-      // MutationObserverを先にセットアップ（メッセージ出現を即検出）
-      const messagePromise = this._waitForMessageInDOM(mid, 6000);
-
-      // 返信引用タグをクリック（ポップオーバーが表示される）
-      replyTag.click();
-
-      // ポップオーバー内の「このメッセージへ移動」リンクが出現するのを待つ
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // ポップオーバー内のリンクを探す
-      // ChatWorkでは #!rid{roomId}-{mid} 形式のhrefを持つリンク
-      const jumpLinkHref = `#!rid${roomId}-${mid}`;
-      const jumpSelectors = [
-        `a[href="${jumpLinkHref}"]`,
-        `a[href="#!rid${roomId}-${mid}"]`,
-        // ジャンプリンクの候補を幅広く探す
-        `[data-testid="jump-to-message"]`,
-        `a[href*="rid${roomId}-${mid}"]`
-      ];
-
-      let jumpLink = null;
-      for (const selector of jumpSelectors) {
-        jumpLink = document.querySelector(selector);
-        if (jumpLink) break;
-      }
-
-      if (!jumpLink) {
-        // テキストで「このメッセージへ移動」を探す
-        const allLinks = document.querySelectorAll('a, button');
-        for (const link of allLinks) {
-          const text = link.textContent.trim();
-          if (text === 'このメッセージへ移動' || text === 'Jump to message' || text === 'Go to this message') {
-            jumpLink = link;
-            break;
-          }
-        }
-      }
-
-      if (jumpLink) {
-        console.log(`[ChatWorkThreader] Strategy 1: Found jump link, clicking...`);
-        jumpLink.click();
-        
-        // メッセージの出現を待つ
-        const result = await messagePromise;
-        if (result) {
-          console.log(`[ChatWorkThreader] Strategy 1: SUCCESS - message found via native navigation`);
-          return result;
-        }
-      } else {
-        console.log(`[ChatWorkThreader] Strategy 1: Jump link not found in popover`);
-      }
-
-      // ポップオーバーを閉じる（他の場所をクリック）
-      const closeTarget = document.querySelector('#_chatContent, #_timeLine, ._timeLine');
-      if (closeTarget) {
-        closeTarget.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      }
-
-      return null;
-    }
-
-    /**
-     * Strategy 2: 2段階ハッシュナビゲーション
-     * 同じルーム内でのハッシュ変更がSPAルーターに無視される問題を回避するため、
-     * 一旦別のハッシュに遷移してからターゲットに遷移する
-     * @param {string} mid - 探索対象のメッセージID
-     * @param {string} roomId - ルームID
-     * @returns {Element|null} 見つかったメッセージ要素、またはnull
-     */
-    async _tryTwoStepHashNavigation(mid, roomId) {
-      console.log(`[ChatWorkThreader] Strategy 2: Trying two-step hash navigation`);
-
-      // MutationObserverを先にセットアップ
-      const messagePromise = this._waitForMessageInDOM(mid, 8000);
-
-      const savedHash = window.location.hash;
-      const targetHash = `#!rid${roomId}-${mid}`;
-
-      // Step 1: 一旦ニュートラルなハッシュに遷移（同じルームだがメッセージなし）
-      // まず現在のハッシュと異なるルームハッシュに瞬間的に遷移
-      window.location.hash = '#!';
-      
-      // ChatWorkのルーターに処理させる時間を与える
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Step 2: ターゲットメッセージのハッシュに遷移
-      window.location.hash = targetHash;
-
-      console.log(`[ChatWorkThreader] Strategy 2: Hash changed: ${savedHash} -> #! -> ${targetHash}`);
-
-      // Step 3: hashchangeイベントも手動でディスパッチ（追加保険）
-      const oldURL = window.location.href.replace(targetHash, savedHash);
-      const newURL = window.location.href;
-      try {
-        window.dispatchEvent(new HashChangeEvent('hashchange', { oldURL, newURL }));
-      } catch (e) {
-        // HashChangeEvent constructor not supported in all environments
-        console.log(`[ChatWorkThreader] Strategy 2: HashChangeEvent dispatch failed`, e);
-      }
-
-      // メッセージの出現を待つ
-      const result = await messagePromise;
-      if (result) {
-        console.log(`[ChatWorkThreader] Strategy 2: SUCCESS - message found via hash navigation`);
-        return result;
-      }
-
-      // ハッシュが変わったままなので元のルームビューに戻す
-      if (!document.querySelector(`[data-mid="${mid}"]._message`)) {
-        window.location.hash = `#!rid${roomId}`;
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
-
-      console.log(`[ChatWorkThreader] Strategy 2: Message not found within timeout`);
-      return null;
-    }
-
-    /**
-     * Strategy 3: 高速スクロールフォールバック
-     * 上記の戦略が失敗した場合にスクロールでメッセージを読み込む
-     * MutationObserverで高速検出 + 大きなスクロールステップで高速化
+     * MutationObserver + scrollTop=0ジャンプで高速トラッキング
+     * scrollTop=0で一気に上端にジャンプし、ChatWorkの遅延ロードを発火させる
+     * MutationObserverでメッセージ出現を即座に検出する
      * @param {string} mid - 探索対象のメッセージID
      * @returns {Element|null} 見つかったメッセージ要素、またはnull
      */
     async _trackByScrolling(mid) {
       const scrollContainer = this.getTimelineScrollContainer();
       if (!scrollContainer) {
-        console.error('[ChatWorkThreader] Timeline container not found - cannot track by scrolling');
+        console.error('[ChatWorkThreader] Timeline container not found - cannot track');
         return null;
       }
 
-      console.log(`[ChatWorkThreader] Strategy 3: Scroll tracking for mid=${mid}`);
       const startTime = performance.now();
 
-      // MutationObserverでメッセージ出現を即検出するPromiseを競合させる
-      let messageFound = null;
+      // MutationObserverでメッセージ出現を即検出
       let observerResolved = false;
 
       const observerPromise = new Promise((resolve) => {
@@ -4905,8 +4693,7 @@
           }
         });
 
-        const timeline = scrollContainer;
-        observer.observe(timeline, { childList: true, subtree: true });
+        observer.observe(scrollContainer, { childList: true, subtree: true });
 
         // 最大60秒でタイムアウト
         setTimeout(() => {
@@ -4915,16 +4702,15 @@
         }, 60000);
       });
 
-      // スクロールループ：scrollTopを一気にジャンプして高速読み込み
+      // スクロールループ：scrollTop=0で一気にジャンプ→ChatWorkが古いメッセージを読み込む
       const maxAttempts = 100;
-      const waitTime = 200; // MutationObserverがあるので待機は短くてOK
+      const waitTime = 200;
       let attempts = 0;
       let noChangeCount = 0;
 
       while (attempts < maxAttempts && !observerResolved) {
         attempts++;
 
-        // メッセージが存在するか（MutationObserverのフォールバック）
         if (document.querySelector(`[data-mid="${mid}"]._message`)) {
           break;
         }
@@ -4932,42 +4718,34 @@
         const beforeScrollTop = scrollContainer.scrollTop;
         const beforeScrollHeight = scrollContainer.scrollHeight;
         
-        // できるだけ大きくスクロール（上端にジャンプ）
+        // 上端にジャンプ（ChatWorkが遅延ロードを発火）
         scrollContainer.scrollTop = 0;
 
-        // ChatWorkのメッセージ読み込みを待つ
         await new Promise(resolve => setTimeout(resolve, waitTime));
 
-        // scrollHeightが増えた = 新しいメッセージが読み込まれた
+        // scrollHeightが変わらず、位置も変わらない = これ以上読み込めない
         const heightGrew = scrollContainer.scrollHeight > beforeScrollHeight;
         const posUnchanged = scrollContainer.scrollTop === beforeScrollTop && !heightGrew;
 
         if (posUnchanged) {
           noChangeCount++;
           if (noChangeCount >= 3) {
-            console.log(`[ChatWorkThreader] Strategy 3: Reached scroll limit after ${attempts} attempts`);
+            console.log(`[ChatWorkThreader] Reached scroll limit after ${attempts} attempts`);
             break;
           }
-          // 追加読み込みを待つ
           await new Promise(resolve => setTimeout(resolve, 500));
         } else {
           noChangeCount = 0;
         }
 
         if (attempts % 10 === 0) {
-          console.log(`[ChatWorkThreader] Strategy 3: Attempt ${attempts}, scrollHeight: ${scrollContainer.scrollHeight}`);
+          console.log(`[ChatWorkThreader] Tracking attempt ${attempts}, scrollHeight: ${scrollContainer.scrollHeight}`);
         }
       }
 
-      // MutationObserverの結果を確認（即座に解決される場合もある）
-      messageFound = document.querySelector(`[data-mid="${mid}"]._message`);
-      
+      const messageFound = document.querySelector(`[data-mid="${mid}"]._message`);
       const elapsed = Math.round(performance.now() - startTime);
-      if (messageFound) {
-        console.log(`[ChatWorkThreader] Strategy 3: Found message after ${attempts} attempts (${elapsed}ms)`);
-      } else {
-        console.log(`[ChatWorkThreader] Strategy 3: Message not found after ${attempts} attempts (${elapsed}ms)`);
-      }
+      console.log(`[ChatWorkThreader] Tracking ${messageFound ? 'found' : 'not found'} after ${attempts} attempts (${elapsed}ms)`);
 
       return messageFound;
     }
