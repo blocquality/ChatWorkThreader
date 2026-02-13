@@ -1671,6 +1671,11 @@ kbd {
   margin-left: -11px;
 }
 
+/* ピン止め時のトラッキングボタン位置補正（padding-left分のずれを相殺） */
+.cw-threader-thread.cw-threader-pinned .cw-threader-tracking-btn {
+  left: 16px;
+}
+
 /* ピン止めされたスレッドでpositionをrelativeに変更（ボタン位置用） */
 .cw-threader-thread {
   position: relative;
