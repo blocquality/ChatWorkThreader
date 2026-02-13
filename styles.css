@@ -365,8 +365,8 @@
 }
 
 .cw-threader-settings-item td:first-child {
-  padding-right: 16px;
-  white-space: nowrap;
+  padding-right: 12px;
+  width: 40%;
 }
 
 .cw-threader-settings-label {
@@ -375,8 +375,7 @@
 }
 
 .cw-threader-settings-select {
-  flex: 1;
-  min-width: 145px;
+  width: 100%;
   padding: 6px 24px 6px 10px;
   font-size: 13px;
   line-height: 1;
