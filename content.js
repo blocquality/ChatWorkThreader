@@ -94,7 +94,7 @@
       copy_message: 'Copy message',
       toggle_title: 'Toggle thread view (Shift+S)',
       display_in_thread: 'Display in Thread List',
-      collapsed_lines_label: 'Max lines when collapsed',
+      collapsed_lines_label: 'Max thread head lines when collapsed',
       collapsed_lines_placeholder: 'Blank = show all',
     },
     ja: {
@@ -165,7 +165,7 @@
       copy_message: 'メッセージをコピー',
       toggle_title: 'スレッド表示の切り替え (Shift+S)',
       display_in_thread: 'スレッド一覧に表示',
-      collapsed_lines_label: '折り畳み時の最大表示行数',
+      collapsed_lines_label: 'スレッドヘッド折り畳み時の最大表示行数',
       collapsed_lines_placeholder: '未設定 = 全行表示',
     }
   };

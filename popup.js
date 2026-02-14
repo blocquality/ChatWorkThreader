@@ -29,7 +29,7 @@ const i18n = {
     theme_light: 'Light',
     theme_dark: 'Dark',
     collapsed_lines_setting: 'Thread Display',
-    collapsed_lines_label: 'Max lines when collapsed',
+    collapsed_lines_label: 'Max thread head lines when collapsed',
     collapsed_lines_placeholder: 'Blank = show all',
     auto_save_notice: 'Settings are saved automatically'
   },
@@ -57,7 +57,7 @@ const i18n = {
     theme_light: 'ライト',
     theme_dark: 'ダーク',
     collapsed_lines_setting: 'スレッド表示',
-    collapsed_lines_label: '折り畳み時の最大表示行数',
+    collapsed_lines_label: 'スレッドヘッド折り畳み時の最大表示行数',
     collapsed_lines_placeholder: '未設定 = 全行表示',
     auto_save_notice: '設定は自動的に保存されます'
   }
