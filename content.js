@@ -4662,9 +4662,9 @@
     }
 
     /**
-     * MutationObserver + scrollTop=0ジャンプで高速トラッキング
-     * scrollTop=0で一気に上端にジャンプし、ChatWorkの遅延ロードを発火させる
-     * MutationObserverでメッセージ出現を即座に検出する
+     * MutationObserver + スクロールで高速トラッキング
+     * 上端にジャンプしてChatWorkの遅延ロードを発火させる
+     * 読み込みがスタック（停滞）した場合は一旦下にバウンスして再開する
      * @param {string} mid - 探索対象のメッセージID
      * @returns {Element|null} 見つかったメッセージ要素、またはnull
      */
@@ -4702,11 +4702,13 @@
         }, 60000);
       });
 
-      // スクロールループ：scrollTop=0で一気にジャンプ→ChatWorkが古いメッセージを読み込む
+      // スクロールループ
       const maxAttempts = 100;
       const waitTime = 200;
       let attempts = 0;
-      let noChangeCount = 0;
+      let stallCount = 0; // 読み込み停滞カウント
+      let totalBounces = 0; // バウンス回数
+      const maxBounces = 5; // 最大バウンス回数（無限ループ防止）
 
       while (attempts < maxAttempts && !observerResolved) {
         attempts++;
@@ -4723,29 +4725,53 @@
 
         await new Promise(resolve => setTimeout(resolve, waitTime));
 
-        // scrollHeightが変わらず、位置も変わらない = これ以上読み込めない
+        // scrollHeightが変わったか確認
         const heightGrew = scrollContainer.scrollHeight > beforeScrollHeight;
         const posUnchanged = scrollContainer.scrollTop === beforeScrollTop && !heightGrew;
 
         if (posUnchanged) {
-          noChangeCount++;
-          if (noChangeCount >= 3) {
-            console.log(`[ChatWorkThreader] Reached scroll limit after ${attempts} attempts`);
+          stallCount++;
+          
+          if (stallCount >= 2 && totalBounces < maxBounces) {
+            // 読み込みがスタックした可能性 → 一旦下にバウンスして遅延ロードをリセット
+            totalBounces++;
+            console.log(`[ChatWorkThreader] Stall detected at attempt ${attempts}, bouncing down (bounce ${totalBounces}/${maxBounces})`);
+            
+            // 下方向にスクロール（現在のscrollHeightの半分くらいまで）
+            scrollContainer.scrollTop = scrollContainer.scrollHeight * 0.5;
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // さらに下にスクロール
+            scrollContainer.scrollTop = scrollContainer.scrollHeight * 0.8;
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // 再度上端にジャンプ
+            scrollContainer.scrollTop = 0;
+            await new Promise(resolve => setTimeout(resolve, 400));
+            
+            stallCount = 0; // リセット
+            continue;
+          }
+          
+          if (stallCount >= 3 && totalBounces >= maxBounces) {
+            // バウンスを使い果たし、それでもスタック → 本当にこれ以上読み込めない
+            console.log(`[ChatWorkThreader] Reached scroll limit after ${attempts} attempts (${totalBounces} bounces used)`);
             break;
           }
+          
           await new Promise(resolve => setTimeout(resolve, 500));
         } else {
-          noChangeCount = 0;
+          stallCount = 0;
         }
 
         if (attempts % 10 === 0) {
-          console.log(`[ChatWorkThreader] Tracking attempt ${attempts}, scrollHeight: ${scrollContainer.scrollHeight}`);
+          console.log(`[ChatWorkThreader] Tracking attempt ${attempts}, scrollHeight: ${scrollContainer.scrollHeight}, bounces: ${totalBounces}`);
         }
       }
 
       const messageFound = document.querySelector(`[data-mid="${mid}"]._message`);
       const elapsed = Math.round(performance.now() - startTime);
-      console.log(`[ChatWorkThreader] Tracking ${messageFound ? 'found' : 'not found'} after ${attempts} attempts (${elapsed}ms)`);
+      console.log(`[ChatWorkThreader] Tracking ${messageFound ? 'found' : 'not found'} after ${attempts} attempts, ${totalBounces} bounces (${elapsed}ms)`);
 
       return messageFound;
     }
