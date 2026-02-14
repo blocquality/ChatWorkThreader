@@ -152,12 +152,28 @@ function applyTheme(theme) {
   const body = document.body;
   body.classList.remove('theme-light', 'theme-dark');
 
+  let isDark = false;
   if (theme === 'system') {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    body.classList.add(prefersDark ? 'theme-dark' : 'theme-light');
+    isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    body.classList.add(isDark ? 'theme-dark' : 'theme-light');
   } else {
+    isDark = theme === 'dark';
     body.classList.add(`theme-${theme}`);
   }
+
+  // Force style on input elements (Chrome ignores CSS for native inputs)
+  const inputs = document.querySelectorAll('.setting-input-number');
+  inputs.forEach(input => {
+    if (isDark) {
+      input.style.backgroundColor = '#374151';
+      input.style.color = '#e2e8f0';
+      input.style.borderColor = 'transparent';
+    } else {
+      input.style.backgroundColor = '';
+      input.style.color = '';
+      input.style.borderColor = '';
+    }
+  });
 }
 
 /**
