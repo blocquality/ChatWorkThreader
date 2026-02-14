@@ -23,6 +23,7 @@ ChatWork Threaderは、ChatWorkの返信関係にあるメッセージをReddit/
 | 要素 | 説明 |
 |------|------|
 | **リサイズハンドル** | パネル左端のドラッグ可能なハンドル（三本線アイコン）。パネル幅を550px〜画面幅90%の範囲で調整可能 |
+| **タブUI** | スレッド / 設定 / ヘルプの3タブ構成 |
 | **発言者フィルター** | プルダウンで特定の発言者のスレッドのみ表示（ルームごとに保存） |
 | **My Participation Only** | 自分が参加（返信元/返信先）しているスレッドのみ表示するトグルスイッチ |
 | **Flat** | フラット表示モード切り替え。ONにすると全ての返信を1階層で表示（深いネストを簡略化） |
@@ -45,7 +46,38 @@ Chromeツールバーの拡張機能アイコンをクリックすると表示�
 
 - **使い方ガイド**: 基本的な操作方法を表示
 - **バッジ凡例**: Root / Reply / Root+Reply の意味を説明
-- **バージョン情報**: 現在のバージョン（v1.0.0）を表示
+- **バージョン情報**: 現在のバージョンを表示
+
+### メッセージカードの機能ボタン
+
+各メッセージカードには以下のボタンが表示されます：
+
+| ボタン | 説明 |
+|--------|------|
+| **ピン止め** | スレッドをピン止めしてパネル上部に固定表示。ルームごとに保存 |
+| **コピー** | メッセージ本文をクリップボードにコピー。成功時にチェックマークを表示 |
+| **元メッセージ追跡** | プレースホルダー（返信元が未読み込み）の場合に表示。クリックでChatWork本体を高速スクロールして元メッセージを探索 |
+
+### 設定タブ
+
+パネルの「設定」タブで以下のグローバル設定を変更できます：
+
+| 設定項目 | 説明 |
+|----------|------|
+| **言語** | 日本語 / Englishを切り替え |
+| **テーマ** | ライト / ダーク / システム連動 |
+| **折りたたみ時の最大行数** | スレッドヘッドを折りたたんだ際の表示行数制限（1〜100） |
+
+設定は自動保存され、`chrome.storage.sync` で同期されます。
+
+### ヘルプタブ
+
+パネルの「ヘルプ」タブで以下の情報を確認できます：
+
+- 基本的な使い方
+- 機能一覧
+- バッジの説明
+- ショートカットキー
 
 ### 「スレッドで表示」ボタン
 
@@ -104,10 +136,11 @@ Reddit/YouTubeコメント欄風の視覚的な接続線：
 
 ### スレッドの並び順
 
-スレッドは**新しい順**（降順）でソート：
+スレッドは以下の優先順位でソート：
 
-1. ルートメッセージのタイムスタンプで比較
-2. タイムスタンプがない場合はメッセージID（mid）で比較
+1. **ピン止めスレッドが最上部に固定**
+2. ルートメッセージのタイムスタンプで比較（**新しい順**）
+3. タイムスタンプがない場合はメッセージID（mid）で比較
 
 子メッセージは**古い順**（昇順）でソート。
 
@@ -199,6 +232,15 @@ Chrome Storage API（`chrome.storage.local`）を使用
 |------|------|----------|
 | `cw-threader-toggle-states` | スレッドの折りたたみ状態 | ルームID × スレッドMID |
 | `cw-threader-room-settings` | ルーム設定（発言者フィルター、フラットモード、参加フィルター） | ルームID |
+| `pinned_{roomId}` | ピン止めスレッドのメッセージIDリスト | ルームID |
+
+#### chrome.storage.sync（グローバル設定）
+
+| キー | 内容 |
+|------|------|
+| `cw-threader-settings` | 言語、テーマ、折りたたみ行数 |
+
+保存されるデータが変更された場合、popup.jsからの設定変更もリアルタイムにコンテンツスクリプトに反映されます。
 
 ### 保存タイミング
 
@@ -358,9 +400,10 @@ ChatWorkでは連続投稿時にユーザー名が省略されるため、以下
 ```
 ChatWorkThreader/
 ├── manifest.json      # 拡張機能マニフェスト（Manifest V3）
-├── content.js         # コンテンツスクリプト（約3900行）
-├── styles.css         # スタイルシート（約1075行）
-├── popup.html         # ツールバーアイコンクリック時のポップアップ（約150行）
+│ ├── content.js         # コンテンツスクリプト（約5600行）
+│ ├── styles.css         # スタイルシート
+│ ├── popup.html         # ツールバーアイコンクリック時のポップアップ
+│ ├── popup.js           # ポップアップのスクリプト
 ├── icon128.png        # 拡張機能アイコン（128x128、ルート配置）
 ├── icons/             # アイコン画像ディレクトリ
 │   ├── icon16.png     # ファビコン用（16x16）
@@ -409,7 +452,7 @@ ChatWorkThreader/
 {
   "manifest_version": 3,
   "name": "ChatWork Threader",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Visualize ChatWork reply threads as a tree to track complex conversations at a glance and streamline teamwork.",
   "permissions": ["storage"],
   "host_permissions": ["https://www.chatwork.com/*"],
@@ -426,7 +469,19 @@ ChatWorkThreader/
     "128": "icon128.png"
   },
   "web_accessible_resources": [{
-    "resources": ["icon128.png"],
+    "resources": [
+      "icons/chat-round-line-svgrepo-com.svg",
+      "icons/settings-svgrepo-com.svg",
+      "icons/book-minimalistic-svgrepo-com.svg",
+      "icons/user-svgrepo-com.svg",
+      "icons/layers-minimalistic-svgrepo-com.svg",
+      "icons/maximize-square-minimalistic-svgrepo-com.svg",
+      "icons/minimize-square-minimalistic-svgrepo-com.svg",
+      "icons/add-square-svgrepo-com.svg",
+      "icons/minus-square-svgrepo-com.svg",
+      "icons/align-left-svgrepo-com.svg",
+      "icons/refresh-svgrepo-com.svg"
+    ],
     "matches": ["https://www.chatwork.com/*"]
   }]
 }
@@ -453,6 +508,26 @@ ChatWorkThreader/
 ---
 
 ## 🔄 更新履歴
+
+### v1.0.2
+
+- ピン止め機能（スレッドをピン止めして上部に固定表示）
+- 元メッセージ追跡機能（スクロール範囲外の返信元を高速スクロールで探索）
+- メッセージコピーボタン
+- 設定パネル（言語 / テーマ / 折りたたみ行数）
+- ヘルプパネル（使い方 / 機能一覧 / バッジ説明）
+- タブUI（スレッド / 設定 / ヘルプ）
+- 多言語対応（日本語 / English）
+- テーマ切り替え（ライト / ダーク / システム連動）
+- 折りたたみ時の最大行数制限設定
+- ピン止めスレッド優先ソート
+- 「スレッドで表示」ボタン（ChatWork本体のメッセージ上にホバー表示）
+- プレースホルダーメッセージ（返信元が未読み込み時の仮表示）
+- 引用メッセージのセグメント表示
+- To/Reターゲットのアバター付き表示
+- プレビュー時パネル自動非表示
+- 不完全データ検出・自動リトライ
+- popup.jsからの設定同期
 
 ### v1.0.0
 
@@ -490,6 +565,10 @@ MIT License
 | User | https://www.svgrepo.com/svg/529293/user |
 | Align Left | https://www.svgrepo.com/svg/528841/align-left |
 | Refresh | https://www.svgrepo.com/svg/529799/refresh |
+| Add Square | https://www.svgrepo.com/svg/529372/add-square |
+| Minus Square | https://www.svgrepo.com/svg/529080/minus-square |
+| Maximize Square Minimalistic | https://www.svgrepo.com/svg/529063/maximize-square-minimalistic |
+| Minimize Square Minimalistic | https://www.svgrepo.com/svg/529072/minimize-square-minimalistic |
 
 ---
 

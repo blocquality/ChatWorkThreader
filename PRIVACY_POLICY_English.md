@@ -21,8 +21,16 @@ This information is **read from the page** to build and display the thread tree.
 - "My Participation Only" toggle state (per room)
 - "Flat" display mode state (per room)
 - Thread collapse/expand state (per room)
+- Pinned thread state (per room)
 
 These settings are stored in the browser's local storage (`chrome.storage.local`).
+
+### 1.3 Synced Global Settings
+- Display language (Japanese / English)
+- Theme (Light / Dark / System)
+- Maximum lines when collapsed
+
+These settings are stored in the browser's sync storage (`chrome.storage.sync`).
 
 ## 2. How We Use Information
 
@@ -32,6 +40,11 @@ The collected information is used solely for the following purposes:
 - Filtering to display specific threads
 - Saving and restoring user settings (for convenience on subsequent visits)
 - Highlighting messages addressed to you (mentions)
+- Pinning threads for quick access
+- Copying messages to the clipboard
+- Tracking origin messages (searching for reply sources outside the scroll range)
+- Multi-language support (Japanese / English)
+- Theme switching (Light / Dark / System)
 
 ## 3. Third-Party Sharing and External Transmission
 
@@ -85,6 +98,10 @@ The icons used in this extension are from the **Solar Linear Icons** collection 
 | User | https://www.svgrepo.com/svg/529293/user |
 | Align Left | https://www.svgrepo.com/svg/528841/align-left |
 | Refresh | https://www.svgrepo.com/svg/529799/refresh |
+| Add Square | https://www.svgrepo.com/svg/529372/add-square |
+| Minus Square | https://www.svgrepo.com/svg/529080/minus-square |
+| Maximize Square Minimalistic | https://www.svgrepo.com/svg/529063/maximize-square-minimalistic |
+| Minimize Square Minimalistic | https://www.svgrepo.com/svg/529072/minimize-square-minimalistic |
 
 ## 8. Changes to This Policy
 

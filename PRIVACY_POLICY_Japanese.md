@@ -21,8 +21,16 @@
 - 「My Participation Only」トグルの状態（ルームごと）
 - 「Flat」表示モードの状態（ルームごと）
 - スレッドの折りたたみ状態（ルームごと）
+- ピン止め状態（ルームごと）
 
 これらの設定情報は、ブラウザのローカルストレージ（`chrome.storage.local`）に保存されます。
+
+### 1.3 同期保存されるグローバル設定
+- 表示言誩（日本語 / English）
+- テーマ（ライト / ダーク / システム連動）
+- 折りたたみ時の最大行数
+
+これらの設定情報は、ブラウザの同期ストレージ（`chrome.storage.sync`）に保存されます。
 
 ## 2. 利用目的
 
@@ -32,6 +40,11 @@
 - フィルター機能による特定スレッドの絞り込み表示
 - ユーザー設定の保存と復元（次回アクセス時の利便性向上）
 - 自分宛てメッセージ（メンション）のハイライト表示
+- スレッドのピン止め表示
+- メッセージのクリップボードコピー
+- 元メッセージの追跡（スクロール範囲外の返信元を探索）
+- 多言語対応（日本語 / English）
+- テーマ切り替え（ライト / ダーク / システム連動）
 
 ## 3. 第三者提供・外部送信
 
@@ -85,6 +98,10 @@
 | User | https://www.svgrepo.com/svg/529293/user |
 | Align Left | https://www.svgrepo.com/svg/528841/align-left |
 | Refresh | https://www.svgrepo.com/svg/529799/refresh |
+| Add Square | https://www.svgrepo.com/svg/529372/add-square |
+| Minus Square | https://www.svgrepo.com/svg/529080/minus-square |
+| Maximize Square Minimalistic | https://www.svgrepo.com/svg/529063/maximize-square-minimalistic |
+| Minimize Square Minimalistic | https://www.svgrepo.com/svg/529072/minimize-square-minimalistic |
 
 ## 8. 改定
 

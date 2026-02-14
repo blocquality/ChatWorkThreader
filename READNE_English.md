@@ -23,6 +23,7 @@ A slide-in panel on the right side of the screen, consisting of the following el
 | Element                   | Description                                                                                                                               |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | **Resize Handle**         | A draggable handle (three-line icon) on the left edge of the panel. The panel width can be adjusted from 550px to 90% of the screen width |
+| **Tab UI**                | Three tabs: Threads / Settings / Help                                                                                                     |
 | **Speaker Filter**        | A dropdown to show threads from a specific speaker only (saved per room)                                                                  |
 | **My Participation Only** | A toggle that shows only threads you participate in (as the reply source/target)                                                          |
 | **Flat**                  | Toggles flat view mode. When ON, all replies are displayed in a single level (simplifies deep nesting)                                    |
@@ -45,7 +46,38 @@ A popup shown when you click the extension icon in the Chrome toolbar (popup.htm
 
 * **How-to Guide**: Displays basic usage instructions
 * **Badge Legend**: Explains Root / Reply / Root+Reply
-* **Version Info**: Displays the current version (v1.0.0)
+* **Version Info**: Displays the current version
+
+### Message Card Buttons
+
+Each message card has the following action buttons:
+
+| Button | Description |
+|--------|-------------|
+| **Pin** | Pins the thread to the top of the panel. Saved per room |
+| **Copy** | Copies the message text to the clipboard. Shows a checkmark on success |
+| **Track Origin** | Shown for placeholder messages (reply source not loaded). Clicks trigger high-speed scrolling in ChatWork to find the origin message |
+
+### Settings Tab
+
+The "Settings" tab in the panel allows you to configure global settings:
+
+| Setting | Description |
+|---------|-------------|
+| **Language** | Switch between Japanese / English |
+| **Theme** | Light / Dark / System |
+| **Max collapsed lines** | Limits displayed lines when thread heads are collapsed (1–100) |
+
+Settings are auto-saved and synced via `chrome.storage.sync`.
+
+### Help Tab
+
+The "Help" tab in the panel provides:
+
+* Basic usage instructions
+* Feature list
+* Badge explanations
+* Shortcut key reference
 
 ### “Show in Thread” Button
 
@@ -104,10 +136,11 @@ Panel width = 380px + (max depth × 44px)
 
 ### Thread Ordering
 
-Threads are sorted **newest first** (descending):
+Threads are sorted in the following priority:
 
-1. Compare by the root message timestamp
-2. If no timestamp exists, compare by message ID (mid)
+1. **Pinned threads are shown at the top**
+2. Compare by the root message timestamp (**newest first**)
+3. If no timestamp exists, compare by message ID (mid)
 
 Child messages are sorted **oldest first** (ascending).
 
@@ -199,6 +232,15 @@ Uses the Chrome Storage API (`chrome.storage.local`)
 | --------------------------- | --------------------------------------------------------------- | -------------------- |
 | `cw-threader-toggle-states` | Thread collapse/expand states                                   | Room ID × Thread MID |
 | `cw-threader-room-settings` | Room settings (speaker filter, flat mode, participation filter) | Room ID              |
+| `pinned_{roomId}`           | List of pinned thread message IDs                               | Room ID              |
+
+#### chrome.storage.sync (Global Settings)
+
+| Key                    | Content                                      |
+| ---------------------- | -------------------------------------------- |
+| `cw-threader-settings` | Language, theme, collapsed max lines         |
+
+Settings changes from popup.js are also reflected in the content script in real time.
 
 ### Save Timing
 
@@ -359,9 +401,10 @@ Automatically refreshes by watching these DOM changes:
 ```
 ChatWorkThreader/
 ├── manifest.json      # Extension manifest (Manifest V3)
-├── content.js         # Content script (~3900 lines)
-├── styles.css         # Stylesheet (~1075 lines)
-├── popup.html         # Toolbar popup (~150 lines)
+│ ├── content.js         # Content script (~5600 lines)
+│ ├── styles.css         # Stylesheet
+│ ├── popup.html         # Toolbar popup
+│ ├── popup.js           # Popup script
 ├── icon128.png        # Extension icon (128x128, root)
 ├── icons/             # Icon image directory
 │   ├── icon16.png     # Favicon (16x16)
@@ -410,7 +453,7 @@ ChatWorkThreader/
 {
   "manifest_version": 3,
   "name": "ChatWork Threader",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Visualize ChatWork reply threads as a tree to track complex conversations at a glance and streamline teamwork.",
   "permissions": ["storage"],
   "host_permissions": ["https://www.chatwork.com/*"],
@@ -427,7 +470,19 @@ ChatWorkThreader/
     "128": "icon128.png"
   },
   "web_accessible_resources": [{
-    "resources": ["icon128.png"],
+    "resources": [
+      "icons/chat-round-line-svgrepo-com.svg",
+      "icons/settings-svgrepo-com.svg",
+      "icons/book-minimalistic-svgrepo-com.svg",
+      "icons/user-svgrepo-com.svg",
+      "icons/layers-minimalistic-svgrepo-com.svg",
+      "icons/maximize-square-minimalistic-svgrepo-com.svg",
+      "icons/minimize-square-minimalistic-svgrepo-com.svg",
+      "icons/add-square-svgrepo-com.svg",
+      "icons/minus-square-svgrepo-com.svg",
+      "icons/align-left-svgrepo-com.svg",
+      "icons/refresh-svgrepo-com.svg"
+    ],
     "matches": ["https://www.chatwork.com/*"]
   }]
 }
@@ -454,6 +509,26 @@ ChatWorkThreader/
 ---
 
 ## 🔄 Changelog
+
+### v1.0.2
+
+* Pin/unpin threads (pin threads to the top of the panel)
+* Track origin message (high-speed scroll to find reply sources outside scroll range)
+* Copy message button
+* Settings panel (Language / Theme / Collapsed max lines)
+* Help panel (Usage / Feature list / Badge legend)
+* Tab UI (Threads / Settings / Help)
+* Multi-language support (Japanese / English)
+* Theme switching (Light / Dark / System)
+* Collapsed max lines setting
+* Pinned thread priority sorting
+* "Show in Thread" button (hover on ChatWork messages)
+* Placeholder messages (when reply source is not loaded)
+* Quoted message segment display
+* To/Re target display with avatars
+* Auto-hide panel during preview
+* Incomplete data detection & auto-retry
+* Settings sync from popup.js
 
 ### v1.0.0
 
@@ -491,6 +566,10 @@ The icons used in this extension are from the **Solar Linear Icons** collection 
 | User | https://www.svgrepo.com/svg/529293/user |
 | Align Left | https://www.svgrepo.com/svg/528841/align-left |
 | Refresh | https://www.svgrepo.com/svg/529799/refresh |
+| Add Square | https://www.svgrepo.com/svg/529372/add-square |
+| Minus Square | https://www.svgrepo.com/svg/529080/minus-square |
+| Maximize Square Minimalistic | https://www.svgrepo.com/svg/529063/maximize-square-minimalistic |
+| Minimize Square Minimalistic | https://www.svgrepo.com/svg/529072/minimize-square-minimalistic |
 
 ---
 
