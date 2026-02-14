@@ -1810,19 +1810,21 @@
             
             if (precedingToNames.length === 0 && !hasPrecedingReply) continue;
             
-            // To先名を除去（「名前さん」「名前」の両方に対応、改行またはスペースが後続）
+            // To先名を除去（「名前さん」「名前」の両方に対応）
+            // 名前後のスペース・タブのみ除去し、改行は保持する（本文との区切り）
             for (const tName of precedingToNames) {
               const escapedTName = tName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-              segText = segText.replace(new RegExp('^' + escapedTName + '(?:さん)?[\\r\\n\\s]*'), '');
+              segText = segText.replace(new RegExp('^' + escapedTName + '(?:さん)?[ \\t]*'), '');
             }
             
             // 返信先名を除去
             if (hasPrecedingReply) {
               // まず「名前さん」パターンを試行
-              const sanMatch = segText.match(/^(.+?)さん[\r\n\s]*/);
+              // 名前後のスペース・タブのみ除去し、改行は保持する（本文との区切り）
+              const sanMatch = segText.match(/^(.+?)さん/);
               if (sanMatch) {
                 if (!replyTargetUserName) replyTargetUserName = sanMatch[1];
-                segText = segText.replace(/^.+?さん[\r\n\s]*/, '');
+                segText = segText.replace(/^.+?さん[ \t]*/, '');
               } else {
                 // 「さん」なしの場合、最初の行を返信先名として取得
                 const firstLineMatch = segText.match(/^([^\r\n]+?)[\r\n]/);
@@ -1830,7 +1832,7 @@
                   const potentialName = firstLineMatch[1].trim();
                   if (potentialName) {
                     if (!replyTargetUserName) replyTargetUserName = potentialName;
-                    segText = segText.replace(/^[^\r\n]+?[\r\n]+/, '');
+                    segText = segText.replace(/^[^\r\n]+/, '');
                   }
                 } else if (segText.trim()) {
                   // 改行がない場合（名前のみで本文なし）
