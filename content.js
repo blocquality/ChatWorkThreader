@@ -1833,14 +1833,12 @@
                     segText = segText.replace(/^[^\r\n]+?[\r\n]+/, '');
                   }
                 } else if (segText.trim()) {
-                  // 改行がない場合（名前のみで本文なし）も、To先で既に確認済みなら除去
-                  // ただし返信先名として確定できる場合のみ
+                  // 改行がない場合（名前のみで本文なし）
+                  // ChatWorkの構造上、[rp]タグ直後のテキストは常にRe先名
+                  // （例: 引用付きメッセージで名前と本文がspanで分離されるケース）
                   const trimmedText = segText.trim();
-                  const isKnownName = toTargets.some(t => t.name === trimmedText);
-                  if (isKnownName) {
-                    if (!replyTargetUserName) replyTargetUserName = trimmedText;
-                    segText = '';
-                  }
+                  if (!replyTargetUserName) replyTargetUserName = trimmedText;
+                  segText = '';
                 }
               }
             }
