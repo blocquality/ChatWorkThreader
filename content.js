@@ -1784,6 +1784,70 @@
           // セグメントを収集
           messageSegments = processNodeForSegments(preEl);
           
+          // Post-process: To/Reply先ユーザー名をテキストセグメントから除去
+          // ChatWorkのHTML構造では、[To:XXX]や[rp]タグの後のspanに
+          // 「ターゲット名\nメッセージ本文」（または「ターゲット名さん\nメッセージ本文」）が
+          // 含まれるため、名前部分をテキストセグメントから除去する
+          for (let si = 0; si < messageSegments.length; si++) {
+            if (messageSegments[si].type !== 'text') continue;
+            
+            let segText = messageSegments[si].content;
+            if (!segText) continue;
+            
+            // 直前の連続するto/replyセグメントを全て遡る
+            const precedingToNames = [];
+            let hasPrecedingReply = false;
+            for (let sj = si - 1; sj >= 0; sj--) {
+              if (messageSegments[sj].type === 'to') {
+                const targets = messageSegments[sj].targets || [];
+                targets.forEach(tgt => { if (tgt.name) precedingToNames.push(tgt.name); });
+              } else if (messageSegments[sj].type === 'reply') {
+                hasPrecedingReply = true;
+              } else {
+                break; // to/reply以外のセグメントに到達したら停止
+              }
+            }
+            
+            if (precedingToNames.length === 0 && !hasPrecedingReply) continue;
+            
+            // To先名を除去（「名前さん」「名前」の両方に対応、改行またはスペースが後続）
+            for (const tName of precedingToNames) {
+              const escapedTName = tName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              segText = segText.replace(new RegExp('^' + escapedTName + '(?:さん)?[\\r\\n\\s]*'), '');
+            }
+            
+            // 返信先名を除去
+            if (hasPrecedingReply) {
+              // まず「名前さん」パターンを試行
+              const sanMatch = segText.match(/^(.+?)さん[\r\n\s]*/);
+              if (sanMatch) {
+                if (!replyTargetUserName) replyTargetUserName = sanMatch[1];
+                segText = segText.replace(/^.+?さん[\r\n\s]*/, '');
+              } else {
+                // 「さん」なしの場合、最初の行を返信先名として取得
+                const firstLineMatch = segText.match(/^([^\r\n]+?)[\r\n]/);
+                if (firstLineMatch) {
+                  const potentialName = firstLineMatch[1].trim();
+                  if (potentialName) {
+                    if (!replyTargetUserName) replyTargetUserName = potentialName;
+                    segText = segText.replace(/^[^\r\n]+?[\r\n]+/, '');
+                  }
+                } else if (segText.trim()) {
+                  // 改行がない場合（名前のみで本文なし）も、To先で既に確認済みなら除去
+                  // ただし返信先名として確定できる場合のみ
+                  const trimmedText = segText.trim();
+                  const isKnownName = toTargets.some(t => t.name === trimmedText);
+                  if (isKnownName) {
+                    if (!replyTargetUserName) replyTargetUserName = trimmedText;
+                    segText = '';
+                  }
+                }
+              }
+            }
+            
+            messageSegments[si].content = segText;
+          }
+          
           // 後方互換性のため、quotedMessage と quoteAuthor を設定
           // 引用セグメントから最初の引用を取得
           const firstQuoteSegment = messageSegments.find(seg => seg.type === 'quote');
