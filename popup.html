@@ -296,6 +296,64 @@
       margin-top: 10px;
     }
 
+    .features-section,
+    .shortcuts-section,
+    .settings-info {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+    }
+
+    .features-section h2,
+    .shortcuts-section h2,
+    .settings-info h2 {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .features-list {
+      font-size: 11px;
+      padding-left: 16px;
+      line-height: 1.8;
+      list-style: none;
+    }
+
+    .features-list li {
+      margin-bottom: 4px;
+    }
+
+    .features-list strong {
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .features-list span {
+      opacity: 0.85;
+    }
+
+    .shortcuts-list {
+      font-size: 12px;
+      padding-left: 16px;
+      line-height: 1.8;
+      list-style: none;
+    }
+
+    .shortcuts-list kbd {
+      display: inline-block;
+      padding: 1px 6px;
+      font-size: 11px;
+      font-family: monospace;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+    }
+
+    .settings-info p {
+      font-size: 12px;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+
     .footer {
       text-align: center;
       padding-bottom: 15px;
@@ -343,6 +401,40 @@
           <span class="legend-badge badge-both" data-i18n="badge_both">Root+Reply</span>
           <span data-i18n="badge_both_desc">A reply that also has replies</span>
         </div>
+      </div>
+
+      <div class="features-section">
+        <h2 data-i18n="features_title">🔍 Features</h2>
+        <ul class="features-list">
+          <li><strong data-i18n="feature_thread_view">Thread View:</strong> <span data-i18n="feature_thread_view_desc">Display messages as a threaded conversation</span></li>
+          <li><strong data-i18n="feature_search">Search:</strong> <span data-i18n="feature_search_desc">Search messages within threads</span></li>
+          <li><strong data-i18n="feature_search_nav">Search Navigation:</strong> <span data-i18n="feature_search_nav_desc">Navigate between search results using ▲▼ buttons</span></li>
+          <li><strong data-i18n="feature_filter">Filter by Speaker:</strong> <span data-i18n="feature_filter_desc">Show only messages from a specific person</span></li>
+          <li><strong data-i18n="feature_participation">My Participation:</strong> <span data-i18n="feature_participation_desc">Show only threads you participated in</span></li>
+          <li><strong data-i18n="feature_flat">Flat Mode:</strong> <span data-i18n="feature_flat_desc">Toggle between tree view and flat list</span></li>
+          <li><strong data-i18n="feature_pin">Pin Thread:</strong> <span data-i18n="feature_pin_desc">Pin important threads to the top of the list</span></li>
+          <li><strong data-i18n="feature_collapse">Collapse/Expand:</strong> <span data-i18n="feature_collapse_desc">Toggle thread replies open or closed by clicking the reply count</span></li>
+          <li><strong data-i18n="feature_copy">Copy Message:</strong> <span data-i18n="feature_copy_desc">Copy message text to clipboard with the 📋 button</span></li>
+          <li><strong data-i18n="feature_preview">Preview:</strong> <span data-i18n="feature_preview_desc">Click preview buttons on files and links to view content</span></li>
+          <li><strong data-i18n="feature_jump">Jump to Message:</strong> <span data-i18n="feature_jump_desc">Click a message to scroll to it in ChatWork</span></li>
+          <li><strong data-i18n="feature_track_origin">Track Origin:</strong> <span data-i18n="feature_track_origin_desc">Auto-load and trace back to the original parent message</span></li>
+          <li><strong data-i18n="feature_display_in_thread">Display in Thread:</strong> <span data-i18n="feature_display_in_thread_desc">Jump from ChatWork messages to the thread panel via the button</span></li>
+          <li><strong data-i18n="feature_resize">Panel Resize:</strong> <span data-i18n="feature_resize_desc">Drag the left edge of the panel to adjust its width</span></li>
+          <li><strong data-i18n="feature_highlight">Mention Highlight:</strong> <span data-i18n="feature_highlight_desc">Messages addressed to you are highlighted in green</span></li>
+        </ul>
+      </div>
+
+      <div class="shortcuts-section">
+        <h2 data-i18n="shortcuts_title">⌨️ Keyboard Shortcuts</h2>
+        <ul class="shortcuts-list">
+          <li><kbd>Shift</kbd>+<kbd>S</kbd> - <span data-i18n="shortcut_toggle">Toggle thread panel</span></li>
+          <li><kbd>Esc</kbd> - <span data-i18n="shortcut_close">Close panel / Clear search</span></li>
+        </ul>
+      </div>
+
+      <div class="settings-info">
+        <h2 data-i18n="settings_info_title">⚙️ Settings</h2>
+        <p data-i18n="settings_info_desc">Configure language, theme, and collapsed line count in the Settings tab</p>
       </div>
     </div>
 

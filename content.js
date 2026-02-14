@@ -68,9 +68,27 @@
       feature_flat: 'Flat Mode:',
       feature_flat_desc: 'Toggle between tree view and flat list',
       feature_preview: 'Preview:',
-      feature_preview_desc: 'Hover over links to preview content',
+      feature_preview_desc: 'Click preview buttons on files and links to view content',
       feature_jump: 'Jump to Message:',
       feature_jump_desc: 'Click a message to scroll to it in ChatWork',
+      feature_pin: 'Pin Thread:',
+      feature_pin_desc: 'Pin important threads to the top of the list',
+      feature_copy: 'Copy Message:',
+      feature_copy_desc: 'Copy message text to clipboard with the 📋 button',
+      feature_track_origin: 'Track Origin:',
+      feature_track_origin_desc: 'Auto-load and trace back to the original parent message',
+      feature_collapse: 'Collapse/Expand:',
+      feature_collapse_desc: 'Toggle thread replies open or closed by clicking the reply count',
+      feature_display_in_thread: 'Display in Thread:',
+      feature_display_in_thread_desc: 'Jump from ChatWork messages to the thread panel via the button',
+      feature_resize: 'Panel Resize:',
+      feature_resize_desc: 'Drag the left edge of the panel to adjust its width',
+      feature_highlight: 'Mention Highlight:',
+      feature_highlight_desc: 'Messages addressed to you are highlighted in green',
+      feature_search_nav: 'Search Navigation:',
+      feature_search_nav_desc: 'Navigate between search results using ▲▼ buttons',
+      help_settings: '⚙️ Settings',
+      help_settings_desc: 'Configure language, theme, and collapsed line count in the Settings tab',
       help_badge_legend: '🏷️ Badge Legend',
       badge_root: 'Root',
       badge_root_desc: 'Message that has replies',
@@ -139,9 +157,27 @@
       feature_flat: 'フラットモード:',
       feature_flat_desc: 'ツリー表示とフラットリストの切り替え',
       feature_preview: 'プレビュー:',
-      feature_preview_desc: 'リンクをホバーしてコンテンツをプレビュー',
+      feature_preview_desc: 'ファイルやリンクのプレビューボタンをクリックして内容を表示',
       feature_jump: 'メッセージにジャンプ:',
       feature_jump_desc: 'メッセージをクリックでChatWork上でスクロール',
+      feature_pin: 'ピン止め:',
+      feature_pin_desc: '重要なスレッドをリスト上部に固定表示',
+      feature_copy: 'メッセージコピー:',
+      feature_copy_desc: '📋ボタンでメッセージ本文をクリップボードにコピー',
+      feature_track_origin: '元メッセージ追跡:',
+      feature_track_origin_desc: '未読み込みの親メッセージを自動ロードして辿る',
+      feature_collapse: '折り畳み/展開:',
+      feature_collapse_desc: '返信数クリックでスレッドの返信を開閉',
+      feature_display_in_thread: 'スレッドで表示:',
+      feature_display_in_thread_desc: 'ChatWork本体のメッセージからスレッドパネルへジャンプ',
+      feature_resize: 'パネルリサイズ:',
+      feature_resize_desc: 'パネル左端をドラッグして幅を調整',
+      feature_highlight: 'メンションハイライト:',
+      feature_highlight_desc: '自分宛てのメッセージが緑色でハイライト表示',
+      feature_search_nav: '検索ナビゲーション:',
+      feature_search_nav_desc: '▲▼ボタンで検索結果間を移動',
+      help_settings: '⚙️ 設定',
+      help_settings_desc: '設定タブで言語・テーマ・折り畳み行数を変更できます',
       help_badge_legend: '🏷️ バッジの説明',
       badge_root: 'ルート',
       badge_root_desc: '返信があるメッセージ',
@@ -2451,11 +2487,19 @@
               <ul class="cw-threader-help-features">
                 <li><strong data-ct-i18n="feature_thread_view">${t('feature_thread_view')}</strong> <span data-ct-i18n="feature_thread_view_desc">${t('feature_thread_view_desc')}</span></li>
                 <li><strong data-ct-i18n="feature_search">${t('feature_search')}</strong> <span data-ct-i18n="feature_search_desc">${t('feature_search_desc')}</span></li>
+                <li><strong data-ct-i18n="feature_search_nav">${t('feature_search_nav')}</strong> <span data-ct-i18n="feature_search_nav_desc">${t('feature_search_nav_desc')}</span></li>
                 <li><strong data-ct-i18n="feature_filter">${t('feature_filter')}</strong> <span data-ct-i18n="feature_filter_desc">${t('feature_filter_desc')}</span></li>
                 <li><strong data-ct-i18n="feature_participation">${t('feature_participation')}</strong> <span data-ct-i18n="feature_participation_desc">${t('feature_participation_desc')}</span></li>
                 <li><strong data-ct-i18n="feature_flat">${t('feature_flat')}</strong> <span data-ct-i18n="feature_flat_desc">${t('feature_flat_desc')}</span></li>
+                <li><strong data-ct-i18n="feature_pin">${t('feature_pin')}</strong> <span data-ct-i18n="feature_pin_desc">${t('feature_pin_desc')}</span></li>
+                <li><strong data-ct-i18n="feature_collapse">${t('feature_collapse')}</strong> <span data-ct-i18n="feature_collapse_desc">${t('feature_collapse_desc')}</span></li>
+                <li><strong data-ct-i18n="feature_copy">${t('feature_copy')}</strong> <span data-ct-i18n="feature_copy_desc">${t('feature_copy_desc')}</span></li>
                 <li><strong data-ct-i18n="feature_preview">${t('feature_preview')}</strong> <span data-ct-i18n="feature_preview_desc">${t('feature_preview_desc')}</span></li>
                 <li><strong data-ct-i18n="feature_jump">${t('feature_jump')}</strong> <span data-ct-i18n="feature_jump_desc">${t('feature_jump_desc')}</span></li>
+                <li><strong data-ct-i18n="feature_track_origin">${t('feature_track_origin')}</strong> <span data-ct-i18n="feature_track_origin_desc">${t('feature_track_origin_desc')}</span></li>
+                <li><strong data-ct-i18n="feature_display_in_thread">${t('feature_display_in_thread')}</strong> <span data-ct-i18n="feature_display_in_thread_desc">${t('feature_display_in_thread_desc')}</span></li>
+                <li><strong data-ct-i18n="feature_resize">${t('feature_resize')}</strong> <span data-ct-i18n="feature_resize_desc">${t('feature_resize_desc')}</span></li>
+                <li><strong data-ct-i18n="feature_highlight">${t('feature_highlight')}</strong> <span data-ct-i18n="feature_highlight_desc">${t('feature_highlight_desc')}</span></li>
               </ul>
             </div>
             <div class="cw-threader-help-section">
@@ -2481,6 +2525,10 @@
                 <li><kbd>Shift</kbd>+<kbd>S</kbd> - <span data-ct-i18n="shortcut_toggle">${t('shortcut_toggle')}</span></li>
                 <li><kbd>Esc</kbd> - <span data-ct-i18n="shortcut_close">${t('shortcut_close')}</span></li>
               </ul>
+            </div>
+            <div class="cw-threader-help-section">
+              <h3 class="cw-threader-help-title" data-ct-i18n="help_settings">${t('help_settings')}</h3>
+              <p class="cw-threader-help-settings-desc" data-ct-i18n="help_settings_desc">${t('help_settings_desc')}</p>
             </div>
           </div>
         </div>
