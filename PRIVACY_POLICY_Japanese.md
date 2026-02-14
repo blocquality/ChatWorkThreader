@@ -1,6 +1,6 @@
 # プライバシーポリシー（ChatWork Threader）
 
-最終更新日：2026/01/21
+最終更新日：2026/02/14
 
 ## 1. 収集する情報
 
@@ -63,6 +63,29 @@
 
 - **Email**: support_chrome_extensions@blocquality.com
 
-## 7. 改定
+## 7. サードパーティ素材
+
+本拡張機能では、以下のサードパーティ素材を使用しています。
+
+### アイコン
+
+本拡張機能で使用しているアイコンは、[SVG Repo](https://www.svgrepo.com/) で公開されている **Solar Linear Icons** コレクション（by [480 Design](https://www.svgrepo.com/author/480%20Design/)）を使用しています。
+
+- **ライセンス**: [CC Attribution License (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)
+
+| アイコン名 | ソース |
+|-----------|--------|
+| Chat Round Line | https://www.svgrepo.com/svg/529480/chat-round-line |
+| GPS | https://www.svgrepo.com/svg/524610/gps |
+| Copy | https://www.svgrepo.com/svg/528917/copy |
+| Pin | https://www.svgrepo.com/svg/529135/pin |
+| Settings | https://www.svgrepo.com/svg/529867/settings |
+| Book Minimalistic | https://www.svgrepo.com/svg/529408/book-minimalistic |
+| Layers Minimalistic | https://www.svgrepo.com/svg/529043/layers-minimalistic |
+| User | https://www.svgrepo.com/svg/529293/user |
+| Align Left | https://www.svgrepo.com/svg/528841/align-left |
+| Refresh | https://www.svgrepo.com/svg/529799/refresh |
+
+## 8. 改定
 
 本プライバシーポリシーの内容を変更した場合、このページを更新します。重要な変更がある場合は、拡張機能のアップデート時に通知する場合があります。

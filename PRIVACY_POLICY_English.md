@@ -1,6 +1,6 @@
 # Privacy Policy (ChatWork Threader)
 
-Last Updated: January 21, 2026
+Last Updated: February 14, 2026
 
 ## 1. Information We Collect
 
@@ -63,6 +63,29 @@ For questions about this Privacy Policy, please contact us through:
 
 - **Email**: support_chrome_extensions@blocquality.com
 
-## 7. Changes to This Policy
+## 7. Third-Party Assets
+
+This extension uses the following third-party assets:
+
+### Icons
+
+The icons used in this extension are from the **Solar Linear Icons** collection (by [480 Design](https://www.svgrepo.com/author/480%20Design/)), available on [SVG Repo](https://www.svgrepo.com/).
+
+- **License**: [CC Attribution License (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)
+
+| Icon Name | Source |
+|-----------|--------|
+| Chat Round Line | https://www.svgrepo.com/svg/529480/chat-round-line |
+| GPS | https://www.svgrepo.com/svg/524610/gps |
+| Copy | https://www.svgrepo.com/svg/528917/copy |
+| Pin | https://www.svgrepo.com/svg/529135/pin |
+| Settings | https://www.svgrepo.com/svg/529867/settings |
+| Book Minimalistic | https://www.svgrepo.com/svg/529408/book-minimalistic |
+| Layers Minimalistic | https://www.svgrepo.com/svg/529043/layers-minimalistic |
+| User | https://www.svgrepo.com/svg/529293/user |
+| Align Left | https://www.svgrepo.com/svg/528841/align-left |
+| Refresh | https://www.svgrepo.com/svg/529799/refresh |
+
+## 8. Changes to This Policy
 
 If we make changes to this Privacy Policy, we will update this page. For significant changes, we may notify users when updating the extension.
