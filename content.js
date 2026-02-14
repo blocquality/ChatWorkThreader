@@ -1365,14 +1365,30 @@
                   const text = nextNode.textContent.trim();
                   if (text) {
                     const nameMatch = text.match(/^(.+?)さん/);
-                    toName = nameMatch ? nameMatch[1] : text;
+                    if (nameMatch) {
+                      toName = nameMatch[1];
+                    } else {
+                      // 自分が送信したメッセージ（_speaker要素なし）の場合、
+                      // spanに「To先ユーザー名\nメッセージ本文」が含まれるため、
+                      // 最初の行のみをTo先名として取得する
+                      const firstLine = text.split(/[\r\n]/)[0].trim();
+                      toName = firstLine || text;
+                    }
                     break;
                   }
                 } else if (nextNode.nodeType === Node.ELEMENT_NODE && nextNode.tagName === 'SPAN') {
                   const text = nextNode.textContent.trim();
                   if (text) {
                     const nameMatch = text.match(/^(.+?)さん/);
-                    toName = nameMatch ? nameMatch[1] : text;
+                    if (nameMatch) {
+                      toName = nameMatch[1];
+                    } else {
+                      // 自分が送信したメッセージ（_speaker要素なし）の場合、
+                      // spanに「To先ユーザー名\nメッセージ本文」が含まれるため、
+                      // 最初の行のみをTo先名として取得する
+                      const firstLine = text.split(/[\r\n]/)[0].trim();
+                      toName = firstLine || text;
+                    }
                     break;
                   }
                 }
