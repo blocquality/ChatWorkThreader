@@ -2056,6 +2056,25 @@ kbd {
   box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.15);
 }
 
+.cw-threader-dark .cw-threader-settings-number {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+.cw-threader-dark .cw-threader-settings-number::placeholder {
+  color: #777;
+}
+
+.cw-threader-dark .cw-threader-settings-number:hover {
+  border-color: #555;
+}
+
+.cw-threader-dark .cw-threader-settings-number:focus {
+  border-color: #64b5f6;
+  box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.15);
+}
+
 .cw-threader-dark .cw-threader-settings-note {
   color: #666;
 }
