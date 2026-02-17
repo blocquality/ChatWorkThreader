@@ -114,6 +114,8 @@
       display_in_thread: 'Display in Thread List',
       collapsed_lines_label: 'Max thread head lines when collapsed',
       collapsed_lines_placeholder: 'Blank = show all',
+      unknown_user: 'Unknown user',
+      message_load_failed: '(Failed to load message)',
     },
     ja: {
       // Tab titles
@@ -203,6 +205,8 @@
       display_in_thread: 'スレッド一覧に表示',
       collapsed_lines_label: 'スレッドヘッド折り畳み時の最大表示行数',
       collapsed_lines_placeholder: '未設定 = 全行表示',
+      unknown_user: '不明なユーザー',
+      message_load_failed: '（メッセージを読み込めませんでした）',
     }
   };
 
@@ -2123,13 +2127,13 @@
      */
     createPlaceholderMessage(mid, firstChild) {
       // 子メッセージに保存された返信先情報を使用
-      const parentUserName = firstChild.parentUserName || '不明なユーザー';
+      const parentUserName = firstChild.parentUserName || t('unknown_user');
       
       return {
         mid,
         rid: firstChild.rid,
         userName: parentUserName,
-        messageText: '（メッセージを読み込めませんでした）',
+        messageText: t('message_load_failed'),
         // ソート用に子メッセージのタイムスタンプを使用（推定値）
         timestamp: firstChild.timestamp || '',
         timeText: '',
