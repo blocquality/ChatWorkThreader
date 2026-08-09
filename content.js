@@ -621,6 +621,23 @@
   }
 
   /**
+   * ブラウザの描画完了を待つ（2回のrequestAnimationFrame）
+   * タブが非表示のときはrequestAnimationFrameが発火しないため、待たずに解決する
+   * @returns {Promise<void>}
+   */
+  function waitForRender() {
+    return new Promise(resolve => {
+      if (document.hidden) {
+        resolve();
+        return;
+      }
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve());
+      });
+    });
+  }
+
+  /**
    * メッセージデータを解析してスレッド構造を構築
    */
   class ThreadBuilder {
@@ -630,6 +647,20 @@
       this.replyMap = new Map(); // mid -> parent mid
       this.childrenMap = new Map(); // mid -> [child mids]
       this.allMessages = []; // すべてのメッセージを時系列で保持
+    }
+
+    /**
+     * 収集済みデータを破棄し、DOMからメッセージを再収集してスレッド構造を再構築
+     * （収集は重い処理なので、1回の更新につき1度だけ呼ぶこと）
+     */
+    rebuildModel() {
+      this.messages.clear();
+      this.threads.clear();
+      this.replyMap.clear();
+      this.childrenMap.clear();
+      this.allMessages = [];
+      this.collectMessages();
+      this.buildThreads();
     }
 
     /**
@@ -2230,8 +2261,6 @@
       this.trackingMid = null; // トラッキング中のメッセージID
       this.showInThreadManager = null; // ShowInThreadButtonManagerへの参照
       this.pinnedThreads = new Set(); // ピン止めされたスレッドのmidセット
-      this._pendingRefreshTimer = null; // Observerのデバウンスタイマー（レース条件防止用）
-      this._refreshRetryTimer = null; // リフレッシュリトライ用タイマー
     }
 
     /**
@@ -2629,17 +2658,9 @@
       });
 
       document.getElementById('cw-threader-refresh').addEventListener('click', () => {
-        // 手動リフレッシュ時は、Observerのデバウンスタイマーをキャンセルして
-        // レース条件（Observer更新が手動更新の結果を上書き）を防ぐ
-        clearTimeout(this._pendingRefreshTimer);
-        this._pendingRefreshTimer = null;
-        clearTimeout(this._refreshRetryTimer);
-        this._refreshRetryTimer = null;
         // DOMが安定するのを待ってからリフレッシュ（2回のrAFで描画完了を保証）
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            this.refresh();
-          });
+        waitForRender().then(() => {
+          this.refresh();
         });
       });
 
@@ -4768,13 +4789,7 @@
       this.trackingMid = null;
       
       // スレッド一覧を最新状態に再構築（読み込まれたメッセージを反映）
-      this.threadBuilder.messages.clear();
-      this.threadBuilder.threads.clear();
-      this.threadBuilder.replyMap.clear();
-      this.threadBuilder.childrenMap.clear();
-      this.threadBuilder.allMessages = [];
-      this.threadBuilder.collectMessages();
-      this.threadBuilder.buildThreads();
+      this.threadBuilder.rebuildModel();
       this.renderThreads();
 
       // DOM更新を確実に反映させてからスクロール処理
@@ -5028,13 +5043,7 @@
       this.applyRoomSettings(roomSettings);
       
       // 先にメッセージを収集してスレッドを構築（幅計算のため）
-      this.threadBuilder.messages.clear();
-      this.threadBuilder.threads.clear();
-      this.threadBuilder.replyMap.clear();
-      this.threadBuilder.childrenMap.clear();
-      this.threadBuilder.allMessages = [];
-      this.threadBuilder.collectMessages();
-      this.threadBuilder.buildThreads();
+      this.threadBuilder.rebuildModel();
       
       // 最大階層に応じてパネル幅を設定
       // フラットモードの場合は最小幅(550px)に設定
@@ -5120,48 +5129,40 @@
     /**
      * スレッドを更新
      * @param {number} _retryCount - 内部リトライカウント（外部から指定しない）
+     * @returns {Promise<boolean>} 描画まで完了したら true、ルーム移動により破棄したら false
      */
     async refresh(_retryCount = 0) {
-      // Observerのデバウンスタイマーをキャンセル（レース条件防止）
-      clearTimeout(this._pendingRefreshTimer);
-      this._pendingRefreshTimer = null;
-      
+      // 更新開始時のルームIDを保持（await中に別ルームへ移動した場合はこの回の描画を中止する）
+      const startRoomId = this.getCurrentRoomId();
+
       // ルームが変わっている可能性があるので再読み込み
-      const newRoomId = this.getCurrentRoomId();
-      if (newRoomId !== this.currentRoomId) {
+      if (startRoomId !== this.currentRoomId) {
         await this.loadToggleStates();
         // ピン止め状態を読み込み
         await this.loadPinnedThreads();
         // ルーム設定も読み込んで適用
         const roomSettings = await this.loadRoomSettings();
+        // await中にさらに別ルームへ移動していた場合は、この回の描画は破棄する
+        // （呼び出し元が「未反映」と判断できるよう false を返す）
+        if (this.getCurrentRoomId() !== startRoomId) return false;
         this.applyRoomSettings(roomSettings);
       }
 
-      this.threadBuilder.messages.clear();
-      this.threadBuilder.threads.clear();
-      this.threadBuilder.replyMap.clear();
-      this.threadBuilder.childrenMap.clear();
-      this.threadBuilder.allMessages = [];
-      
-      this.threadBuilder.collectMessages();
-      this.threadBuilder.buildThreads();
-      
+      this.threadBuilder.rebuildModel();
+
       // データ検証: 不完全なデータが検出された場合、DOMの描画完了を待ってリトライ
+      // 呼び出し元が最終結果まで待てるように、awaitでリトライを繋ぐ
       const maxRetries = 3;
       if (_retryCount < maxRetries && this._hasIncompleteData()) {
         // console.log(`[ChatWorkThreader] Incomplete data detected, retrying (${_retryCount + 1}/${maxRetries})...`);
-        clearTimeout(this._refreshRetryTimer);
-        this._refreshRetryTimer = setTimeout(() => {
-          // DOMの描画完了を待ってからリトライ
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              this.refresh(_retryCount + 1);
-            });
-          });
-        }, 500);
-        return;
+        await new Promise(resolve => setTimeout(resolve, 500));
+        // DOMの描画完了を待ってからリトライ
+        await waitForRender();
+        // 待機中に別ルームへ移動していた場合は、この回の描画は破棄する
+        if (this.getCurrentRoomId() !== startRoomId) return false;
+        return await this.refresh(_retryCount + 1);
       }
-      
+
       // 最大階層に応じてパネル幅を再計算
       // フラットモードの場合は最小幅(550px)に設定
       let panelWidth;
@@ -5179,6 +5180,7 @@
       }
       
       this.renderThreads();
+      return true;
     }
 
     /**
@@ -5254,6 +5256,8 @@
   function createToggleButton(threadUI) {
     const button = document.createElement('button');
     button.id = 'cw-threader-toggle';
+    // 拡張機能が生成した要素であることを示すマーカー（MutationObserverの自己変更判定に使用）
+    button.setAttribute('data-cw-threader-owned', 'toggle');
     // 拡張機能のアイコンを使用
     let iconUrl = '';
     if (isExtensionContextValid()) {
@@ -5320,7 +5324,9 @@
       // ラッパーdivでボタンを包む（ホバー安定化）
       const wrapper = document.createElement('div');
       wrapper.className = 'cw-threader-show-in-thread-wrapper';
-      
+      // 拡張機能が生成した要素であることを示すマーカー（MutationObserverの自己変更判定に使用）
+      wrapper.setAttribute('data-cw-threader-owned', 'show-in-thread');
+
       const button = document.createElement('button');
       button.className = 'cw-threader-show-in-thread-btn';
       button.innerHTML = `<svg class="cw-threader-sit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="13" y2="14"/></svg>`;
@@ -5459,41 +5465,67 @@
     }
 
     /**
+     * 構築済みのスレッド情報を使って「スレッドで表示」ボタンを差分更新する
+     * 既に正しく付いているボタンには一切触れない（DOM変更を発生させない＝更新処理を固定点にする）
+     */
+    reconcileButtons() {
+      // 全メッセージ要素をチェック
+      const messageElements = document.querySelectorAll('[data-mid]._message');
+      const currentMids = new Set();
+
+      messageElements.forEach(el => {
+        const mid = el.getAttribute('data-mid');
+        const existing = el.querySelector(':scope > .cw-threader-show-in-thread-wrapper');
+        const needsButton = !!mid && this.isMessageInThread(mid);
+
+        if (needsButton) {
+          const existingBtn = existing ? existing.querySelector('.cw-threader-show-in-thread-btn') : null;
+          const existingMid = existingBtn ? existingBtn.getAttribute('data-mid') : null;
+
+          // 既に正しいボタンが付いている場合は何もしない
+          // （ChatWork側の再描画でクラスだけ失われた場合のみ付け直す）
+          if (existing && existingMid === mid) {
+            if (!el.classList.contains('cw-threader-has-sit-btn')) {
+              el.classList.add('cw-threader-has-sit-btn');
+            }
+            currentMids.add(mid);
+            return;
+          }
+
+          // MIDが食い違う場合（要素の差し替えなど）はボタンを交換する
+          if (existing) {
+            existing.remove();
+          }
+
+          // メッセージ要素を絶対位置の基準にする
+          el.classList.add('cw-threader-has-sit-btn');
+          el.appendChild(this.createShowInThreadButton(mid));
+          currentMids.add(mid);
+        } else {
+          // 不要になったボタンだけを削除する
+          if (existing) {
+            existing.remove();
+          }
+          if (el.classList.contains('cw-threader-has-sit-btn')) {
+            el.classList.remove('cw-threader-has-sit-btn');
+          }
+        }
+      });
+
+      this.addedButtons = currentMids;
+    }
+
+    /**
      * 全てのメッセージに「スレッドで表示」ボタンを追加
      * @param {boolean} forceRebuild - スレッド情報を強制的に再構築するか（デフォルト: false）
      */
     addButtonsToMessages(forceRebuild = false) {
       // スレッド情報が空の場合、または強制再構築が指定された場合のみ再収集
       if (forceRebuild || this.threadUI.threadBuilder.threads.size === 0) {
-        this.threadUI.threadBuilder.messages.clear();
-        this.threadUI.threadBuilder.threads.clear();
-        this.threadUI.threadBuilder.replyMap.clear();
-        this.threadUI.threadBuilder.childrenMap.clear();
-        this.threadUI.threadBuilder.allMessages = [];
-        this.threadUI.threadBuilder.collectMessages();
-        this.threadUI.threadBuilder.buildThreads();
+        this.threadUI.threadBuilder.rebuildModel();
       }
-      
-      // 全メッセージ要素をチェック
-      const messageElements = document.querySelectorAll('[data-mid]._message');
-      
-      messageElements.forEach(el => {
-        const mid = el.getAttribute('data-mid');
-        if (!mid) return;
-        
-        // 既にボタンが追加されていたらスキップ
-        if (el.querySelector('.cw-threader-show-in-thread-wrapper')) return;
-        
-        // スレッドに含まれているかチェック
-        if (!this.isMessageInThread(mid)) return;
-        
-        // メッセージ要素を絶対位置の基準にする
-        el.style.position = 'relative';
-        
-        const button = this.createShowInThreadButton(mid);
-        el.appendChild(button);
-        this.addedButtons.add(mid);
-      });
+
+      this.reconcileButtons();
     }
 
     /**
@@ -5502,16 +5534,15 @@
     cleanup() {
       const wrappers = document.querySelectorAll('.cw-threader-show-in-thread-wrapper');
       wrappers.forEach(wrapper => wrapper.remove());
+      const hosts = document.querySelectorAll('.cw-threader-has-sit-btn');
+      hosts.forEach(host => host.classList.remove('cw-threader-has-sit-btn'));
       this.addedButtons.clear();
     }
 
     /**
-     * ボタンの表示を更新
+     * ボタンの表示を更新（スレッド情報を強制再構築して差分更新）
      */
     refresh() {
-      // 既存のボタンを削除
-      this.cleanup();
-      // 再度追加（スレッド情報を強制再構築）
       this.addButtonsToMessages(true);
     }
   }
@@ -5545,147 +5576,232 @@
    * - 新規メッセージの追加を検出
    * - 既存メッセージの編集（内容変更）を検出
    * - メッセージの削除を検出
-   * - DOMの安定化を待ってからデータを収集（タイミングずれ防止）
+   * - リビジョン方式のsingle-flightにより、更新実行中に届いた変更も取りこぼさない
+   *   （ChatWorkは送信時に「暫定mid要素の挿入 → 約1.2〜1.6秒後に確定mid要素へ差し替え」を行うため、
+   *     更新中に届いた差し替えを破棄すると暫定midのまま固まってしまう）
    */
   function observeMessages(threadUI, showInThreadButtonManager) {
-    // タイムラインのコンテナを探す
-    const findTimelineContainer = () => {
-      // data-mid を持つ要素の親を探す
-      const messageEl = document.querySelector('[data-mid]');
-      if (messageEl) {
-        // 親をたどってタイムラインコンテナを見つける
-        let parent = messageEl.parentElement;
-        while (parent) {
-          if (parent.children.length > 3) {
-            return parent;
-          }
-          parent = parent.parentElement;
-        }
-      }
-      return document.body;
+    let requestedRevision = 0;       // 変更要求のリビジョン
+    let appliedRevision = 0;         // 反映済みのリビジョン
+    let isRunning = false;           // 更新処理の実行中フラグ
+    let debounceTimer = null;        // Observer専用のデバウンスタイマー
+    let scheduleGeneration = 0;      // スケジュールの世代（後発に追い越されたら破棄）
+    let consecutiveErrorRetries = 0; // 例外発生時の連続リトライ回数
+    let firstRequestAt = 0;          // 現在のデバウンス期間の起点時刻
+
+    // 変更が途切れず届き続けても更新が止まらないようにする上限待ち時間
+    // （メッセージへのホバーだけでもChatWork側が数百msおきにDOMを書き換えるため、
+    //   デバウンスのリセットだけでは更新が永久に走らなくなる）
+    const MAX_DEBOUNCE_WAIT = 3000;
+
+    // 拡張機能所有ツリーの判定に使うセレクタ
+    const OWNED_SELECTOR = '[data-cw-threader-owned], #cw-threader-panel';
+
+    /**
+     * ノード自身が拡張機能所有のルート要素かどうか
+     * 中身は見ない（削除されたネイティブメッセージが内部に拡張機能の要素を含むことがあるため、
+     * querySelector/closestで中身を見ると本物のメッセージ削除を見逃す）
+     * @param {Node} node
+     * @returns {boolean}
+     */
+    const isOwnedRoot = (node) =>
+      node.nodeType === 1 && typeof node.matches === 'function' &&
+      node.matches(OWNED_SELECTOR);
+
+    /**
+     * mutationの対象が拡張機能所有ツリーの内部かどうか
+     * @param {Node} node
+     * @returns {boolean}
+     */
+    const isInsideOwned = (node) => {
+      const el = node.nodeType === 1 ? node : node.parentElement;
+      return !!(el && el.closest && el.closest(OWNED_SELECTOR));
     };
 
-    let isProcessing = false; // 処理中フラグ
-    
     /**
-     * DOMが安定するのを待ってからスレッド更新を実行
-     * 2回のrequestAnimationFrameでブラウザの描画完了を保証してからデータ収集する
+     * 1回分の更新
+     * スレッド構造の再構築は1回だけ行い、その結果をボタンとパネルの両方で使う（二重収集の防止）
      */
-    async function performUpdate() {
-      if (isProcessing) return;
-      isProcessing = true;
-      
+    async function updateOnce() {
+      if (threadUI.isVisible) {
+        // パネル更新の中でスレッド構造が再構築される（不完全データのリトライ完了まで待つ）
+        // ルーム移動で破棄された場合は、前ルームのスレッド構造でボタンを付け替えないよう中断する
+        if ((await threadUI.refresh()) === false) return false;
+      } else {
+        // パネル非表示時はスレッド構造だけ再構築する
+        threadUI.threadBuilder.rebuildModel();
+      }
+
+      // 最新のスレッド構造で「スレッドで表示」ボタンを差分更新
+      if (showInThreadButtonManager) {
+        showInThreadButtonManager.reconcileButtons();
+      }
+      return true;
+    }
+
+    /**
+     * 更新を要求する（リビジョンを進めてスケジュールする）
+     * @param {number} delay - デバウンス待ち時間（ms）
+     */
+    function requestUpdate(delay = 1000) {
+      requestedRevision += 1;
+      if (firstRequestAt === 0) {
+        firstRequestAt = Date.now();
+      }
+      // 最大待ち時間を超えないよう、デバウンスの残り時間で頭打ちにする
+      const remaining = MAX_DEBOUNCE_WAIT - (Date.now() - firstRequestAt);
+      armUpdate(Math.max(0, Math.min(delay, remaining)));
+    }
+
+    /**
+     * 更新の実行をスケジュールする
+     * @param {number} delay - デバウンス待ち時間（ms）
+     */
+    function armUpdate(delay) {
+      const generation = ++scheduleGeneration;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        debounceTimer = null;
+        const run = () => {
+          // 後発のスケジュールに追い越されていたら破棄する
+          if (generation !== scheduleGeneration) return;
+          void drainUpdates();
+        };
+        // DOMが安定するのを待つ（2回のrAFで描画完了を保証）
+        // タブ非表示時はrAFが発火しないためフォールバックする
+        if (document.hidden) {
+          run();
+        } else {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(run);
+          });
+        }
+      }, delay);
+    }
+
+    /**
+     * 更新をsingle-flightで実行する
+     * 実行中に届いた変更要求は破棄せず、完了後に必ず処理する
+     */
+    async function drainUpdates() {
+      if (isRunning) return;
+      isRunning = true;
+      firstRequestAt = 0; // 次のデバウンス期間の起点をリセットする
+
+      const targetRevision = requestedRevision;
+      let failed = false;
+      let discarded = false;
+
       try {
-        // 「スレッドで表示」ボタンを更新
-        if (showInThreadButtonManager) {
-          showInThreadButtonManager.refresh();
+        discarded = (await updateOnce()) === false;
+        if (!discarded) {
+          appliedRevision = targetRevision;
         }
-        
-        // パネルが開いている場合は更新
-        if (threadUI.isVisible) {
-          await threadUI.refresh();
-        }
+        consecutiveErrorRetries = 0;
       } catch (e) {
+        failed = true;
         console.error('[ChatWorkThreader] Error during update:', e);
       } finally {
-        // 次のフレームで処理中フラグを解除（async完了後に解除）
-        requestAnimationFrame(() => {
-          isProcessing = false;
-        });
+        isRunning = false;
+        if (failed) {
+          // 例外時の無制限リトライを防ぐ（最大3回）
+          if (consecutiveErrorRetries < 3) {
+            consecutiveErrorRetries++;
+            armUpdate(1000);
+          }
+        } else if (discarded) {
+          // ルーム移動中だったので、DOMが落ち着くのを待って再試行する
+          armUpdate(1000);
+        } else if (appliedRevision < requestedRevision) {
+          // 実行中に届いた変更を必ず処理する
+          armUpdate(0);
+        }
       }
     }
-    
-    /**
-     * デバウンス付きでスレッド更新をスケジュール
-     * DOMの安定化を待ってから実行する
-     */
-    function scheduleUpdate() {
-      clearTimeout(threadUI._pendingRefreshTimer);
-      threadUI._pendingRefreshTimer = setTimeout(() => {
-        // DOMが安定するのを待つ（2回のrAFで描画完了を保証）
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            performUpdate();
-          });
-        });
-      }, 1000); // 1000ms: ChatWorkの描画が完了するのに十分な待ち時間
-    }
-    
+
     const observer = new MutationObserver((mutations) => {
-      // 処理中の場合はスキップ（自分自身の変更によるトリガーを防ぐ）
-      if (isProcessing) return;
-      
       // メッセージに関連する変更があったかチェック
       let hasRelevantChange = false;
-      
+
       for (const mutation of mutations) {
-        // 拡張機能自身の要素内での変更は無視
-        if (mutation.target?.closest?.('#cw-threader-panel') ||
-            mutation.target?.closest?.('.cw-threader-show-in-thread-wrapper') ||
-            mutation.target?.closest?.('.cw-threader-toggle-btn-wrapper')) {
-          continue;
-        }
-        
+        const target = mutation.target;
+
+        // 拡張機能自身のツリー内部での変更は無視
+        if (isInsideOwned(target)) continue;
+
         if (mutation.type === 'childList') {
-          // 追加されたノードをチェック
-          for (const node of mutation.addedNodes) {
-            if (node.nodeType === 1) {
-              // 拡張機能が追加した要素は除外
-              if (node.classList?.contains('cw-threader-show-in-thread-wrapper')) continue;
-              if (node.classList?.contains('cw-threader-toggle-btn-wrapper')) continue;
-              if (node.id === 'cw-threader-panel') continue;
-              
-              // 新しい [data-mid] 要素が追加された（新規メッセージ）
-              if (node.hasAttribute?.('data-mid') || node.querySelector?.('[data-mid]')) {
+          const addedNodes = mutation.addedNodes;
+          const removedNodes = mutation.removedNodes;
+
+          // 追加・削除されたノードが全て拡張機能所有のルート要素なら、自分自身の変更なので無視
+          let allOwned = (addedNodes.length + removedNodes.length) > 0;
+          if (allOwned) {
+            for (const node of addedNodes) {
+              if (!isOwnedRoot(node)) { allOwned = false; break; }
+            }
+          }
+          if (allOwned) {
+            for (const node of removedNodes) {
+              if (!isOwnedRoot(node)) { allOwned = false; break; }
+            }
+          }
+          if (allOwned) continue;
+
+          // [data-mid] を持つ（または内部に含む）ノードの追加＝新規メッセージ・確定midへの差し替え
+          for (const node of addedNodes) {
+            if (node.nodeType === 1 &&
+                (node.hasAttribute('data-mid') || node.querySelector('[data-mid]'))) {
+              hasRelevantChange = true;
+              break;
+            }
+          }
+
+          // 削除も同様にチェック（メッセージ削除・暫定mid要素の除去）
+          if (!hasRelevantChange) {
+            for (const node of removedNodes) {
+              if (node.nodeType === 1 &&
+                  (node.hasAttribute('data-mid') || node.querySelector('[data-mid]'))) {
                 hasRelevantChange = true;
                 break;
               }
             }
           }
-          if (hasRelevantChange) break;
-          
-          // 削除されたノードもチェック（メッセージ削除）
-          for (const node of mutation.removedNodes) {
-            if (node.nodeType === 1) {
-              if (node.classList?.contains('cw-threader-show-in-thread-wrapper')) continue;
-              if (node.classList?.contains('cw-threader-toggle-btn-wrapper')) continue;
-              if (node.hasAttribute?.('data-mid') || node.querySelector?.('[data-mid]')) {
-                hasRelevantChange = true;
-                break;
-              }
-            }
-          }
-          if (hasRelevantChange) break;
-          
+
           // 既存メッセージ内部の変更を検出（メッセージ編集、内容の遅延描画）
-          // mutation.target は子要素の追加/削除が起きた親要素
-          // この親要素が [data-mid]._message の内部にある場合、メッセージ内容が変更された
-          if (mutation.target?.nodeType === 1 && mutation.target?.closest?.('[data-mid]._message')) {
+          if (!hasRelevantChange && target.nodeType === 1 &&
+              typeof target.closest === 'function' && target.closest('[data-mid]._message')) {
             hasRelevantChange = true;
-            break;
           }
         } else if (mutation.type === 'characterData') {
           // テキストノードが変更された場合（メッセージ編集でテキストが書き換わった場合）
-          const parentEl = mutation.target?.parentElement;
-          if (parentEl?.closest?.('[data-mid]._message')) {
+          const parentEl = target.parentElement;
+          if (parentEl && parentEl.closest && parentEl.closest('[data-mid]._message')) {
             hasRelevantChange = true;
-            break;
           }
         }
+
+        if (hasRelevantChange) break;
       }
 
       if (hasRelevantChange) {
         // デバウンス: 短時間に大量の更新が来た場合に備える
         // 内容の遅延描画にも対応するため、タイマーを都度リセット
-        scheduleUpdate();
+        requestUpdate(1000);
       }
     });
 
-    const container = findTimelineContainer();
-    observer.observe(container, {
+    // タイムラインの実体はReact製SPAで差し替えられうるため、document.body を監視対象にする
+    observer.observe(document.body, {
       childList: true,
       subtree: true,
       characterData: true // メッセージ編集（テキスト変更）を検出
+    });
+
+    // タブが非表示の間に取りこぼした変更を、可視化時に回収する
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        requestUpdate(0);
+      }
     });
 
     // URL（ルーム）変更を監視
@@ -5694,14 +5810,12 @@
       if (window.location.href !== lastUrl) {
         lastUrl = window.location.href;
         // console.log('ChatWork Threader: ルーム変更を検知');
-        
-        // ボタンをクリーンアップして再追加
+
+        // ボタンをクリーンアップし、ボタンとパネルの更新を一括で要求する
         if (showInThreadButtonManager) {
           showInThreadButtonManager.cleanup();
-          setTimeout(() => {
-            showInThreadButtonManager.addButtonsToMessages();
-          }, 1000);
         }
+        requestUpdate(1000);
       }
     });
     urlObserver.observe(document.body, { childList: true, subtree: true });

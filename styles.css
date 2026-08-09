@@ -1277,6 +1277,12 @@ kbd {
   }
 }
 
+/* 「スレッドで表示」ボタンを配置したメッセージ - ボタンの絶対位置の基準にする */
+/* 従来のインラインstyle(position: relative)と同等の優先度を保つため !important を付ける */
+.cw-threader-has-sit-btn {
+  position: relative !important;
+}
+
 /* 「スレッドで表示」ボタン ラッパー - メッセージの左上に配置 */
 .cw-threader-show-in-thread-wrapper {
   position: absolute;
